@@ -1,0 +1,58 @@
+
+#this functions generates assembly and clang IR out of a CL kernel 
+function(generate_opencl_diassembly current_project_name file_name)
+    if(${DUMP_KERNEL_ASSEMBLY} STREQUAL "ON")
+        add_custom_target(${current_project_name}_assembly ALL 
+                          COMMAND clang++ -target amdgcn-amd-amdhsa-opencl -c -S -x cl -O3 ${file_name} )
+        add_custom_target(${current_project_name}_llvm_ir ALL 
+                          COMMAND clang++ -emit-llvm -c -S -x cl -O3 ${file_name} )
+    endif()
+endfunction()
+
+
+#this function copy a file to the output binary dir but is gonna concatenate that with 
+#the current source dir, so the path must be arelative path from the source dir
+function(copy_local_file file_name)
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${CMAKE_CURRENT_SOURCE_DIR}/${file_name} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endfunction()
+
+#this function copies a file given a fullpath
+function(copy_file file_name)
+    add_custom_command(TARGET ${PROJECT_NAME} PRE_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                   ${file_name} $<TARGET_FILE_DIR:${PROJECT_NAME}>)
+endfunction()
+function(set_visual_studio_working_directory_if_needed )
+	if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+		 if ("${CMAKE_BUILD_TYPE}" STREQUAL "")
+		 set(CMAKE_BUILD_TYPE "Debug")
+		 endif()
+		 set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	endif()
+endfunction()
+
+function(init_clang_tidy )
+#lets find clang-tidy
+find_program(
+	CLANG_TIDY_EXE
+	NAMES "clang-tidy"
+	DOC "Path to clang-tidy executable"
+)
+if(NOT CLANG_TIDY_EXE)
+	message(STATUS "clang-tidy not found.")
+else()
+	message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+	set(DO_CLANG_TIDY "${CLANG_TIDY_EXE}" "-checks=*, -cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-pro-bounds-pointer-arithmetic, -android-*, -cppcoreguidelines-pro-type-reinterpret-cast,-clang-analyzer-cplusplus.NewDelete*" PARENT_SCOPE )
+    message(STATUS "${DO_CLANG_TIDY}")
+endif()
+endfunction()
+
+function(enable_clang_tidy_for_project)
+#enabling clang tidy
+if(CLANG_TIDY_EXE)
+  set_target_properties(${PROJECT_NAME}  PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+endif()
+endfunction()
+
