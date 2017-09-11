@@ -10,24 +10,35 @@ namespace lexer {
 static const std::regex MAIN_REGEX(
     R"(\s*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common identifier
                                    // either
-    R"(|\s*([+-]?[\d.]+))");       // here we match digits
+    R"(|\s*([\d.]+))"              // here we match digits
+	R"(|\s*([(){}\+-/\*]))"        // parsing supported ascii
+);       
 
 enum Token {
-  tok_eof = -1,
-  // functions
-  tok_extern = -2,
-  
-  // datatypes
-  tok_int = -3,
-  tok_float = -4,
-  tok_string = -5,
-  tok_identifier = -6,
-  //misc
-  tok_operator = -7,
+	tok_eof = -1,
+	// functions
+	tok_extern = -2,
 
-  // error codes
-  tok_empty_lexer = -2000,
-  tok_no_match = -2001
+	// datatypes
+	tok_int = -3,
+	tok_float = -4,
+	tok_string = -5,
+
+	//data
+	tok_identifier = -6,
+	tok_number = -7,
+	//misc
+	tok_operator = -8,
+	//punctuation
+	tok_open_curly = -9,
+	tok_close_curly = -10,
+	tok_open_round= -11,
+	tok_close_round= -12,
+
+	// error codes
+	tok_empty_lexer = -2000,
+	tok_no_match = -2001,
+	tok_malformed_number = -2002
 };
 
 enum class NumberType { INTEGER = 0, FLOAT = 1 };
@@ -49,7 +60,11 @@ static const std::unordered_map<std::string, Token> KEYWORDS {
                                                         {"+",tok_operator},
                                                         {"-",tok_operator},
                                                         {"*",tok_operator},
-                                                        {"/",tok_operator}
+                                                        {"/",tok_operator},
+														{"{",tok_open_curly},
+														{"}",tok_close_curly},
+														{"(",tok_open_round},
+														{")",tok_close_round},
                                                     };
 //aliases
 using Charmatch = std::match_results<const char*>;
@@ -61,8 +76,8 @@ struct Lexer {
   Lexer(std::regex &reg) : expr(reg) {}
 
   void inline initFromStr(const std::string &str) {
-    m_data = str;
-    start = m_data.c_str();
+    data = str;
+    start = data.c_str();
   }
   int gettok();
 
@@ -73,7 +88,7 @@ struct Lexer {
 
   // regexd classes
   std::regex expr;
-  std::string m_data;
+  std::string data;
   Charmatch  matcher;
   const char *start = nullptr;
 };
