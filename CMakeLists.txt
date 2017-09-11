@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 MESSAGE(STATUS "compiler id ${CMAKE_CXX_COMPILER_ID} ${MSVC}")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
-  set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS}  -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math")
+  set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS}  -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math ")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   # using GCC
   set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS}   -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math")

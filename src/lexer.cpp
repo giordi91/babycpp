@@ -1,8 +1,46 @@
 #include "lexer.h"
+#include <iostream>
 
 namespace babycpp {
 namespace lexer {
-int gettok(Database &D) {
+
+int inline handleNoMatchFromRegex(const char* start)
+{
+    if ((*start == EOF) || (*start == 0)) {
+      return tok_eof;
+    }
+    // log ERROR
+    return tok_no_match;
+
+}
+
+int Lexer::gettok()
+{
+  //making sure the lexer is initialized
+  if (start == nullptr) {
+    return tok_empty_lexer;
+  }
+
+  bool gotMatch = std::regex_search(start, matcher, expr,
+                               std::regex_constants::match_continuous);
+
+  // handling case of not match
+  if (!gotMatch) {
+    return handleNoMatchFromRegex(start);
+  }
+
+  // for (uint32_t i = 1; i < m.size(); ++i) {
+  //  if (m[i].matched) {
+  //    std::cout << m[i] << std::endl;
+  //    running += m.length();
+  //    break;
+  //  }
+  //}
+  return -1;
+}
+
+/*
+//old int gettok(Database &D) {
   // now we skipp all the white spaces
   while (isspace(D.lastChar) != 0) {
     D.lastChar = D.getchar();
@@ -60,6 +98,7 @@ int gettok(Database &D) {
   // D.lastChar = D.getchar();
   // return thisChar;
 }
+*/
 
 } // namespace lexer
 } // namespace babycpp
