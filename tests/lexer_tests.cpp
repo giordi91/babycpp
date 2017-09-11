@@ -112,7 +112,7 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   tok = lex.gettok();
   REQUIRE(tok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::INTEGER);
-  REQUIRE(lex.value.integerNumber== 99);
+  REQUIRE(lex.value.integerNumber == 99);
 
   str = " - 0.314";
   lex.initFromStr(str);
@@ -124,8 +124,7 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   REQUIRE(tok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::FLOAT);
   REQUIRE(lex.value.floatNumber == Approx(0.314));
-  
-  
+
   str = " * 1191";
   lex.initFromStr(str);
   tok = lex.gettok();
@@ -135,7 +134,7 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   tok = lex.gettok();
   REQUIRE(tok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::INTEGER);
-  REQUIRE(lex.value.integerNumber== 1191);
+  REQUIRE(lex.value.integerNumber == 1191);
 
   str = " / 0.1135";
   lex.initFromStr(str);
@@ -147,7 +146,34 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   REQUIRE(tok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::FLOAT);
   REQUIRE(lex.value.floatNumber == Approx(0.1135));
+}
 
+TEST_CASE("Testing extern tok", "[lexer,stream]") {
+  std::string str{" extern sin( float x);"};
+  Lexer lex;
+  lex.initFromStr(str);
 
+  int tok = lex.gettok();
+  REQUIRE(tok == Token::tok_extern);
 
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "sin");
+
+  tok = lex.gettok();
+  std::cout << lex.identifierStr << std::endl;
+  REQUIRE(tok == Token::tok_open_round);
+
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_float);
+
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "x");
+
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_close_round);
+
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_end_statement);
 }

@@ -89,8 +89,10 @@ int Lexer::gettok() {
   // if is not a built in word it must be an identifier or an ascii value
   if (isdigit(extractedString[0])) {
     // procerssing number since variables are not allowed to start with a number
+    start += offset; // eating the token;
     return processNumber(extractedString, *this);
   } else if (isalpha(extractedString[0])) {
+    start += offset; // eating the token;
     identifierStr = extractedString;
     return tok_identifier;
   }
