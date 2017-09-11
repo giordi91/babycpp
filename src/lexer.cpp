@@ -14,6 +14,30 @@ int inline handleNoMatchFromRegex(const char* start)
 
 }
 
+int inline isBuiltInKeyword(const std::string& str)
+{
+    const auto iter = KEYWORDS.find(str);
+    if (iter != KEYWORDS.end())
+    {
+        return iter->second;
+    }
+    return tok_no_match;
+}
+
+inline std::string extractStringFromMatch(const Charmatch& matcher, int* offset)
+{
+    uint32_t matcherSize = matcher.size();
+    for (uint32_t i = 1; i < matcherSize; ++i) {
+      if (matcher[i].matched) {
+        (*offset) = matcher.length();
+        return matcher[i];
+      }
+    }
+    return "";
+}
+
+
+
 int Lexer::gettok()
 {
   //making sure the lexer is initialized
@@ -24,9 +48,20 @@ int Lexer::gettok()
   bool gotMatch = std::regex_search(start, matcher, expr,
                                std::regex_constants::match_continuous);
 
+  //in the offset variable we are going to store how many char will be
+  //eaten by the token
+  int offset;
+  std::string extractedString = extractStringFromMatch(matcher, &offset);
   // handling case of not match
   if (!gotMatch) {
     return handleNoMatchFromRegex(start);
+  }
+
+  //handling builtin word
+  int tok = isBuiltInKeyword(extractedString);
+  if (tok != tok_no_match) {
+    start+=offset; //eating the token;
+    return tok;
   }
 
   // for (uint32_t i = 1; i < m.size(); ++i) {

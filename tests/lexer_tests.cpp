@@ -28,13 +28,29 @@ TEST_CASE("Testing no match", "[lexer]")
   REQUIRE(tok == Token::tok_no_match);
 }
 
-TEST_CASE("Testing opening of stream", "[lexer,stream]")
+TEST_CASE("Testing keyword tok", "[lexer,stream]")
 {
-  const std::string numbers {" int customIdentifier_12314_longName -1.234250 +1023948.00"};
+  //const std::string numbers {" int customIdentifier_12314_longName -1.234250 +1023948.00"};
+  std::string str{" int"};
   Lexer lex;
-  lex.initFromStr(numbers);
+  lex.initFromStr(str);
 
   int tok = lex.gettok();
+  REQUIRE(tok == Token::tok_int);
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_eof);
+
+  str = " float lksdfjlj";
+  lex.initFromStr(str);
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_float);
+  
+  str = "string ";
+  lex.initFromStr(str);
+  tok = lex.gettok();
+  REQUIRE(tok == Token::tok_string);
+  tok = lex.gettok();
+  REQUIRE(tok != Token::tok_eof);
   //bool res =true;
   //while (res) {
 

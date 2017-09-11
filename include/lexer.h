@@ -2,6 +2,7 @@
 #include <fstream>
 #include <regex>
 #include <string>
+#include <unordered_map>
 
 namespace babycpp {
 namespace lexer {
@@ -15,12 +16,14 @@ enum Token {
   tok_eof = -1,
   // functions
   tok_extern = -2,
-  // tok_def = -3,
+  
   // datatypes
   tok_int = -3,
   tok_float = -4,
   tok_string = -5,
   tok_identifier = -6,
+  //misc
+  tok_operator = -7,
 
   // error codes
   tok_empty_lexer = -2000,
@@ -39,7 +42,19 @@ struct Number {
   NumberType type;
 };
 
+static const std::unordered_map<std::string, Token> KEYWORDS {
+                                                        {"int", tok_int}, 
+                                                        {"float", tok_float}, 
+                                                        {"string",tok_string},
+                                                        {"+",tok_operator},
+                                                        {"-",tok_operator},
+                                                        {"*",tok_operator},
+                                                        {"/",tok_operator}
+                                                    };
+//aliases
+using Charmatch = std::match_results<const char*>;
 // int gettok(Database &D);
+
 struct Lexer {
 
   Lexer() : expr(MAIN_REGEX) {}
@@ -59,7 +74,7 @@ struct Lexer {
   // regexd classes
   std::regex expr;
   std::string m_data;
-  std::match_results<const char *> matcher;
+  Charmatch  matcher;
   const char *start = nullptr;
 };
 
