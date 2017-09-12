@@ -8,10 +8,12 @@ namespace babycpp {
 namespace lexer {
 
 	static const std::regex MAIN_REGEX(
-		R"(\s*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common identifier
+		R"([ \t]*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common identifier
 									   // either
-		R"(|\s*([\d.]+))"              // here we match digits
-		R"(|\s*([\(\)\{\}\+-/\*;]))"        // parsing supported ascii
+		R"(|[ \t]*([\d.]+))"              // here we match digits
+		R"(|[ \t]*([\(\)\{\}\+-/\*;]))"   // parsing supported ascii
+		R"(|[ \s]([\r\n|\r|\n]))"           // catching new line combinations
+		
 );       
 
 enum Token {
@@ -39,7 +41,8 @@ enum Token {
 	// error codes
 	tok_empty_lexer = -2000,
 	tok_no_match = -2001,
-	tok_malformed_number = -2002
+	tok_malformed_number = -2002,
+	tok_unsupported_char = -2003,
 };
 
 enum class NumberType { INTEGER = 0, FLOAT = 1 };
@@ -81,6 +84,7 @@ struct Lexer {
   void inline initFromStr(const std::string &str) {
     data = str;
     start = data.c_str();
+	lineNumber = 1;
   }
   int gettok();
 
@@ -88,6 +92,7 @@ struct Lexer {
   int currtok = -1;
   std::string identifierStr;
   Number value;
+  uint32_t lineNumber = 1;
 
   // regexd classes
   std::regex expr;

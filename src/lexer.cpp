@@ -60,6 +60,13 @@ int processNumber(std::string &str, Lexer &L) {
   return tok_number;
 }
 
+bool isNewLine(std::string &identifierStr) {
+  if (identifierStr[0] == '\r' || identifierStr[0] == '\n') {
+    return true;
+  }
+  return false;
+}
+
 int Lexer::gettok() {
   // making sure the lexer is initialized
   if (start == nullptr) {
@@ -78,11 +85,19 @@ int Lexer::gettok() {
     return handleNoMatchFromRegex(start);
   }
 
+  if (isNewLine(extractedString)) {
+    lineNumber++;
+    start += offset; // eating the token;
+    // we skipped the new line and spaces and we go to the new
+    // token
+    return gettok();
+  }
+
   // handling builtin word
   int tok = isBuiltInKeyword(extractedString);
   if (tok != tok_no_match) {
     start += offset; // eating the token;
-	identifierStr = extractedString;
+    identifierStr = extractedString;
     return tok;
   }
 
@@ -97,76 +112,10 @@ int Lexer::gettok() {
     return tok_identifier;
   }
 
-  // for (uint32_t i = 1; i < m.size(); ++i) {
-  //  if (m[i].matched) {
-  //    std::cout << m[i] << std::endl;
-  //    running += m.length();
-  //    break;
-  //  }
-  //}
-  return -1;
+  // should never reach this part of the code since
+  // if not supported we should hit the no match branch
+  return tok_unsupported_char;
 }
-
-/*
-//old int gettok(Database &D) {
-  // now we skipp all the white spaces
-  while (isspace(D.lastChar) != 0) {
-    D.lastChar = D.getchar();
-  }
-
-   if (isalpha(D.lastChar) != 0) {
-    D.identifierStr = static_cast<char>(D.lastChar);
-    // reading next char
-    D.lastChar = D.getchar();
-    // supporting alphanumeric tokens and '_'
-    while ((isalnum(D.lastChar) != 0) || (D.lastChar == '_')) {
-      D.identifierStr += static_cast<char>(D.lastChar);
-      // pulling in next char
-      D.lastChar = D.getchar();
-    }
-
-    //if (D.identifierStr == "def") {
-    //  return tok_def;
-    //}
-    if (D.identifierStr == "extern") {
-      return tok_extern;
-    }
-    return tok_identifier;
-  }
-  return -1;
-  // if ((isdigit(D.lastChar) != 0) || D.lastChar == '.') {
-  //  std::string numStr;
-  //  do {
-  //    numStr += static_cast<char>(D.lastChar);
-  //    D.lastChar = D.getchar();
-  //  } while ((isdigit(D.lastChar) != 0) || D.lastChar == '.');
-
-  //  D.numVal = strtod(numStr.c_str(), nullptr);
-  //  return tok_number;
-  //}
-
-  // if (D.lastChar == '#') {
-  //  // we eat until the end of the line
-  //  do {
-  //    D.lastChar = D.getchar();
-  //  } while (D.lastChar != EOF && D.lastChar != '\n' && D.lastChar != '\r');
-
-  //  if (D.lastChar != EOF) {
-  //    return gettok(D);
-  //  }
-  //}
-
-  //// only remaining things are operators
-  // if (D.lastChar == EOF) {
-  //  return tok_eof;
-  //}
-
-  //// return as asci value
-  // int thisChar = D.lastChar;
-  // D.lastChar = D.getchar();
-  // return thisChar;
-}
-*/
 
 } // namespace lexer
 } // namespace babycpp

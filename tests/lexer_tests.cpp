@@ -161,7 +161,6 @@ TEST_CASE("Testing extern tok", "[lexer,stream]") {
   REQUIRE(lex.identifierStr == "sin");
 
   tok = lex.gettok();
-  std::cout << lex.identifierStr << std::endl;
   REQUIRE(tok == Token::tok_open_round);
 
   tok = lex.gettok();
@@ -176,4 +175,20 @@ TEST_CASE("Testing extern tok", "[lexer,stream]") {
 
   tok = lex.gettok();
   REQUIRE(tok == Token::tok_end_statement);
+}
+
+TEST_CASE("Testing multiline", "[lexer,stream]") {
+	std::string str{ "x \n  2.0" };
+	Lexer lex;
+	lex.initFromStr(str);
+
+	int tok = lex.gettok();
+	REQUIRE(tok == Token::tok_identifier);
+	REQUIRE(lex.identifierStr == "x");
+
+	tok = lex.gettok();
+	REQUIRE(tok == Token::tok_number);
+	REQUIRE(lex.lineNumber== 2);
+	REQUIRE(lex.value.type== NumberType::FLOAT);
+	REQUIRE(lex.value.floatNumber== Approx(2.0));
 }
