@@ -86,7 +86,7 @@ struct Lexer {
     start = data.c_str();
 	lineNumber = 1;
   }
-  int gettok();
+  void gettok();
 
   // lexed data
   int currtok = -1;

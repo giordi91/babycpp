@@ -32,13 +32,13 @@ inline std::string extractStringFromMatch(const Charmatch &matcher,
   return "";
 }
 
-int processNumber(std::string &str, Lexer &L) {
+int processNumber(const std::string &str, Lexer* L) {
   const char *ptr = str.c_str();
   uint32_t cLen = str.length();
   bool dotFound = false;
   for (uint32_t i = 0; i < cLen; ++i) {
     const char c = (*(ptr + i));
-    if (isdigit(c)) {
+    if (isdigit(c) != 0) {
       continue;
     }
     if (c == '.' && !dotFound) {
@@ -51,26 +51,24 @@ int processNumber(std::string &str, Lexer &L) {
   // if we get to this point it is a valid number!
   if (dotFound) {
     // it means is a floating point
-    L.value.floatNumber = std::stof(str);
-    L.value.type = NumberType::FLOAT;
+    L->value.floatNumber = std::stof(str);
+    L->value.type = NumberType::FLOAT;
   } else {
-    L.value.integerNumber = std::stoi(str);
-    L.value.type = NumberType::INTEGER;
+    L->value.integerNumber = std::stoi(str);
+    L->value.type = NumberType::INTEGER;
   }
   return tok_number;
 }
 
-bool isNewLine(std::string &identifierStr) {
-  if (identifierStr[0] == '\r' || identifierStr[0] == '\n') {
-    return true;
-  }
-  return false;
+inline bool isNewLine(const std::string &str) {
+  return (str[0] == '\r' || str[0] == '\n');
 }
 
-int Lexer::gettok() {
+void Lexer::gettok() {
   // making sure the lexer is initialized
   if (start == nullptr) {
-    return tok_empty_lexer;
+    currtok = tok_empty_lexer;
+    return;
   }
 
   bool gotMatch = std::regex_search(start, matcher, expr,
@@ -82,7 +80,8 @@ int Lexer::gettok() {
   std::string extractedString = extractStringFromMatch(matcher, &offset);
   // handling case of not match
   if (!gotMatch) {
-    return handleNoMatchFromRegex(start);
+    currtok =  handleNoMatchFromRegex(start);
+    return;
   }
 
   if (isNewLine(extractedString)) {
@@ -90,7 +89,8 @@ int Lexer::gettok() {
     start += offset; // eating the token;
     // we skipped the new line and spaces and we go to the new
     // token
-    return gettok();
+    gettok();
+    return ;
   }
 
   // handling builtin word
@@ -98,23 +98,23 @@ int Lexer::gettok() {
   if (tok != tok_no_match) {
     start += offset; // eating the token;
     identifierStr = extractedString;
-    return tok;
+    currtok = tok;
+    return ;
   }
 
   // if is not a built in word it must be an identifier or an ascii value
-  if (isdigit(extractedString[0])) {
+  if (isdigit(extractedString[0]) != 0) {
     // procerssing number since variables are not allowed to start with a number
     start += offset; // eating the token;
-    return processNumber(extractedString, *this);
-  } else if (isalpha(extractedString[0])) {
+    currtok = processNumber(extractedString, this);
+    return;
+  }
+  if (isalpha(extractedString[0]) != 0) {
     start += offset; // eating the token;
     identifierStr = extractedString;
-    return tok_identifier;
+    currtok = tok_identifier;
+    return;
   }
-
-  // should never reach this part of the code since
-  // if not supported we should hit the no match branch
-  return tok_unsupported_char;
 }
 
 } // namespace lexer
