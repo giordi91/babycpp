@@ -5,16 +5,19 @@ namespace babycpp {
 namespace parser {
 
 using lexer::Lexer;
+using lexer::Number;
+
+
 // base struct for all ast expr
 struct ExprAST {
   virtual ~ExprAST() = default;
 };
 
 struct NumberExprAST : public ExprAST {
-  NumberExprAST(lexer::Number val) : val(val) {}
+  NumberExprAST(Number val) : val(val) {}
 
   // keeping it public mainly for testabiliy purposes
-  lexer::Number val;
+  Number val;
 };
 
 struct VariableExprAST : public ExprAST {
@@ -53,7 +56,14 @@ struct FunctionAST {
       : proto(proto), body(body) {}
 };
 
+struct Parser {
+  explicit Parser(Lexer* inputLexer):lex(inputLexer){}
 
+  NumberExprAST* parseNumber();
+  const static std::map<char, int> BIN_OP_PRECEDENCE;
+  Lexer* lex;
+
+};
 
 
 } //namespace parser

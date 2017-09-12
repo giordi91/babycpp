@@ -7,14 +7,14 @@
 namespace babycpp {
 namespace lexer {
 
-	static const std::regex MAIN_REGEX(
-		R"([ \t]*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common identifier
-									   // either
-		R"(|[ \t]*([\d.]+))"              // here we match digits
-		R"(|[ \t]*([\(\)\{\}\+-/\*;]))"   // parsing supported ascii
-		R"(|[ \s]([\r\n|\r|\n]))"           // catching new line combinations
-		
-);       
+static const std::regex MAIN_REGEX(
+    R"([ \t]*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common
+                                      // identifier either
+    R"(|[ \t]*([\d.]+))"              // here we match digits
+    R"(|[ \t]*([\(\)\{\}\+-/\*;<]))"  // parsing supported ascii
+    R"(|[ \s]([\r\n|\r|\n]))"         // catching new line combinations
+
+    );
 
 enum Token {
 	tok_eof = -1,
@@ -64,6 +64,7 @@ static const std::unordered_map<std::string, Token> KEYWORDS {
                                                         {"+",tok_operator},
                                                         {"-",tok_operator},
                                                         {"*",tok_operator},
+                                                        {"<",tok_operator},
                                                         {"/",tok_operator},
 														{"{",tok_open_curly},
 														{"}",tok_close_curly},

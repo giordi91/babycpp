@@ -133,6 +133,19 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   REQUIRE(lex.currtok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::FLOAT);
   REQUIRE(lex.value.floatNumber == Approx(0.1135));
+
+
+
+  str = " < 19";
+  lex.initFromStr(str);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_operator);
+  REQUIRE(lex.identifierStr == "<");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.integerNumber == 19);
 }
 
 TEST_CASE("Testing extern tok", "[lexer,stream]") {
