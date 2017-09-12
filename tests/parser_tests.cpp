@@ -19,3 +19,28 @@ TEST_CASE("Testing number parser", "[parser]") {
   REQUIRE(node->val.floatNumber == Approx(1.0));
 }
 
+TEST_CASE("Testing function call", "[parser]") {
+	Lexer lex;
+	lex.initFromStr("testFunction ();");
+	Parser parser(&lex);
+
+	lex.gettok();
+	auto* p = parser.parseIdentifier();
+	REQUIRE(p != nullptr);
+
+	auto * p_casted = dynamic_cast<babycpp::parser::CallExprAST*>(p);
+	REQUIRE(p_casted != nullptr);
+	REQUIRE(p_casted->callee == "testFunction");
+	REQUIRE(p_casted->args.size() == 0) ;
+
+	lex.initFromStr("functionWithWeirdName__324_NOW (    )  ;");
+	lex.gettok();
+	p = parser.parseIdentifier();
+	REQUIRE(p != nullptr);
+
+	p_casted = dynamic_cast<babycpp::parser::CallExprAST*>(p);
+	REQUIRE(p_casted != nullptr);
+	REQUIRE(p_casted->callee == "functionWithWeirdName__324_NOW");
+	REQUIRE(p_casted->args.size() == 0) ;
+
+}

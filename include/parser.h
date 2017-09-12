@@ -60,6 +60,11 @@ struct Parser {
   explicit Parser(Lexer* inputLexer):lex(inputLexer){}
 
   NumberExprAST* parseNumber();
+  ExprAST* parseIdentifier();
+  ExprAST* parseExpression();
+  ExprAST* parseBinOpRHS(int opPrec, ExprAST* LHS);
+  ExprAST* parsePrimary();
+  int getTokPrecedence();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
   Lexer* lex;
 
