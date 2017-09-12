@@ -5,7 +5,7 @@ namespace parser {
 
 using lexer::Token;
 
-const std::map<char, int> Parser::BIN_OP_PRECEDENCE = {
+const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
 
 

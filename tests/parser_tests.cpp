@@ -13,7 +13,7 @@ TEST_CASE("Testing number parser", "[parser]") {
   //getting first token
   lex.gettok();
     
-  auto* node = babycpp::parser::parseNumber();
+  auto* node = parser.parseNumber();
 
   REQUIRE(node->val.type == NumberType::FLOAT);
   REQUIRE(node->val.floatNumber == Approx(1.0));

@@ -1,6 +1,6 @@
 #pragma once
 #include "lexer.h"
-
+#include <unordered_map>
 namespace babycpp {
 namespace parser {
 
@@ -60,7 +60,7 @@ struct Parser {
   explicit Parser(Lexer* inputLexer):lex(inputLexer){}
 
   NumberExprAST* parseNumber();
-  const static std::map<char, int> BIN_OP_PRECEDENCE;
+  const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
   Lexer* lex;
 
 };
