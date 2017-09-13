@@ -168,6 +168,7 @@ ExprAST * Parser::parseExtern()
 		//no need to log error, error already logged
 		return nullptr;
 	}
+	//need to check semicolon at the end;
 	//here we cangenerate the function node;
 }
 
