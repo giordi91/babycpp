@@ -289,3 +289,6 @@ __pycache__/
 
 #folders
 build
+
+#ctags
+tags

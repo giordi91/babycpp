@@ -9,6 +9,9 @@ using lexer::Number;
 
 // base struct for all ast expr
 struct ExprAST {
+  ExprAST()=default;
+  ExprAST(int type):datatype(type){}
+  int datatype;
   virtual ~ExprAST() = default;
 };
 
@@ -39,27 +42,30 @@ struct CallExprAST : public ExprAST {
       : callee(callee), args(args) {}
 };
 
-struct PrototypeAST {
-  std::string name;
-  std::vector<std::string> args;
-
-  PrototypeAST(const std::string &name, const std::vector<std::string> &args)
-      : name(name), args(args) {}
-};
-
-struct FunctionAST {
-  PrototypeAST *proto;
-  ExprAST *body;
-
-  FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
-};
-
 struct Argument {
   Argument(int datatype, std::string &argName)
       : type(datatype), name(argName) {}
   int type;
   std::string name;
 };
+
+struct PrototypeAST : public ExprAST{
+  std::string name;
+  std::vector<Argument> args;
+  bool isExtern=false;
+
+  PrototypeAST(int retType, const std::string &name, const std::vector<Argument> &args,
+                bool externProto)
+      :ExprAST(retType), name(name), args(args), isExtern(externProto) {}
+};
+
+struct FunctionAST : public ExprAST{
+  PrototypeAST *proto;
+  ExprAST *body;
+
+  FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
+};
+
 
 struct Parser {
   explicit Parser(Lexer *inputLexer) : lex(inputLexer) {}
@@ -72,7 +78,7 @@ struct Parser {
 
   int getTokPrecedence();
   ExprAST *parseStatement();
-  ExprAST *parseExtern();
+  PrototypeAST*parseExtern();
   bool parseArguments(std::vector<Argument> &args);
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype

@@ -140,36 +140,39 @@ ExprAST * Parser::parseStatement()
 	return nullptr;
 }
 
-ExprAST * Parser::parseExtern()
-{
-	//eating extern token;
-	lex->gettok();
-	if (lex->currtok != Token::tok_identifier)
-	{
-		std::cout << "expected idnetifier after extern" << std::endl;
-		return nullptr;
-	}
-	
-	//we know that we need a function call so we get started
-	std::string funName = lex->identifierStr;
-	lex->gettok(); //eat identifier
+PrototypeAST *Parser::parseExtern() {
+  // eating extern token;
+  lex->gettok();
+  if (!isDatatype()) {
+    std::cout << "expected return data type after extern" << std::endl;
+    return nullptr;
+  }
+  int datatype = lex->currtok;
+  lex->gettok();//eating datatype
 
-	if (lex->currtok != Token::tok_open_round)
-	{
-		std::cout << "expected ( after extern function name" << std::endl;
-		//should i eat bad identifier here?
-		return nullptr;
-	}
-	//parsing arguments
-	lex->gettok(); //eat parenthesis
-	std::vector<Argument> args;
-	if (!parseArguments(args))
-	{
-		//no need to log error, error already logged
-		return nullptr;
-	}
-	//need to check semicolon at the end;
-	//here we cangenerate the function node;
+  if (lex->currtok != Token::tok_identifier) {
+    std::cout << "expected idnetifier after extern return datatype" << std::endl;
+    return nullptr;
+  }
+  // we know that we need a function call so we get started
+  std::string funName = lex->identifierStr;
+  lex->gettok(); // eat identifier
+
+  if (lex->currtok != Token::tok_open_round) {
+    std::cout << "expected ( after extern function name" << std::endl;
+    // should i eat bad identifier here?
+    return nullptr;
+  }
+  // parsing arguments
+  lex->gettok(); // eat parenthesis
+  std::vector<Argument> args;
+  if (!parseArguments(args)) {
+    // no need to log error, error already logged
+    return nullptr;
+  }
+  // need to check semicolon at the end;
+  // here we cangenerate the function node;
+  return new PrototypeAST( datatype, funName, args, true);
 }
 
 bool Parser::parseArguments(std::vector<Argument>& args)
