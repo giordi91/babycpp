@@ -133,11 +133,18 @@ int Parser::getTokPrecedence() {
 
 ExprAST * Parser::parseStatement()
 {
-	if (lex->currtok == Token::tok_extern)
-	{
-		return parseExtern();
-	}
-	return nullptr;
+  if (lex->currtok == Token::tok_extern) {
+    return parseExtern();
+  }
+
+  if( isDeclarationToken())
+  {
+      //if we have a declaration token, something like int, flaot etc we might have
+      //several cases like, we might have a variable definition, we might have
+      //a function definition etc, this require a bit of look ahead!
+  
+  }
+  return nullptr;
 }
 
 PrototypeAST *Parser::parseExtern() {

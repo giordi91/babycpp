@@ -3,6 +3,7 @@
 #include <regex>
 #include <string>
 #include <unordered_map>
+#include <queue>
 
 namespace babycpp {
 namespace lexer {
@@ -68,6 +69,13 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
 using Charmatch = std::match_results<const char *>;
 // int gettok(Database &D);
 
+struct MovableToken
+{
+    int token;
+    std::string identifierStr;
+    Number value;
+};
+
 struct Lexer {
 
   Lexer() : expr(MAIN_REGEX) {}
@@ -79,6 +87,7 @@ struct Lexer {
     lineNumber = 1;
   }
   void gettok();
+  bool lookAhead(uint32_t count);
 
   // lexed data
   int currtok = -1;
@@ -91,6 +100,9 @@ struct Lexer {
   std::string data;
   Charmatch matcher;
   const char *start = nullptr;
+
+  //act as a buffer for when doing look ahead
+  std::queue<MovableToken> lookAheadToken;
 };
 
 } // namespace lexer

@@ -78,7 +78,7 @@ struct Parser {
 
   int getTokPrecedence();
   ExprAST *parseStatement();
-  PrototypeAST*parseExtern();
+  PrototypeAST *parseExtern();
   bool parseArguments(std::vector<Argument> &args);
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype

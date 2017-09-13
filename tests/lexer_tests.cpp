@@ -6,6 +6,7 @@
 using babycpp::lexer::Lexer;
 using babycpp::lexer::NumberType;
 using babycpp::lexer::Token;
+using babycpp::lexer::MovableToken;
 
 TEST_CASE("Testing empty lexer", "[lexer]") {
   Lexer lex;
@@ -27,9 +28,7 @@ TEST_CASE("Testing no match", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_no_match);
 }
 
-TEST_CASE("Testing keyword tok", "[lexer,stream]") {
-  // const std::string numbers {" int customIdentifier_12314_longName -1.234250
-  // +1023948.00"};
+TEST_CASE("Testing keyword tok", "[lexer]") {
   std::string str{" int"};
   Lexer lex;
   lex.initFromStr(str);
@@ -52,7 +51,7 @@ TEST_CASE("Testing keyword tok", "[lexer,stream]") {
   REQUIRE(lex.currtok != Token::tok_eof);
 }
 
-TEST_CASE("Testing numbers tok", "[lexer,stream]") {
+TEST_CASE("Testing numbers tok", "[lexer]") {
   std::string str{" 12334 "};
   Lexer lex;
   lex.initFromStr(str);
@@ -87,7 +86,7 @@ TEST_CASE("Testing numbers tok", "[lexer,stream]") {
   REQUIRE(lex.value.floatNumber == Approx(3240));
 }
 
-TEST_CASE("Testing operators tok", "[lexer,stream]") {
+TEST_CASE("Testing operators tok", "[lexer]") {
   std::string str{" + 99 "};
   Lexer lex;
   lex.initFromStr(str);
@@ -148,7 +147,7 @@ TEST_CASE("Testing operators tok", "[lexer,stream]") {
   REQUIRE(lex.value.integerNumber == 19);
 }
 
-TEST_CASE("Testing extern tok", "[lexer,stream]") {
+TEST_CASE("Testing extern tok", "[lexer]") {
   std::string str{" extern sin( float x);"};
   Lexer lex;
   lex.initFromStr(str);
@@ -177,7 +176,7 @@ TEST_CASE("Testing extern tok", "[lexer,stream]") {
   REQUIRE(lex.currtok == Token::tok_end_statement);
 }
 
-TEST_CASE("Testing multiline", "[lexer,stream]") {
+TEST_CASE("Testing multiline", "[lexer]") {
 	std::string str{ "x \n  2.0" };
 	Lexer lex;
 	lex.initFromStr(str);
@@ -191,4 +190,52 @@ TEST_CASE("Testing multiline", "[lexer,stream]") {
 	REQUIRE(lex.lineNumber== 2);
 	REQUIRE(lex.value.type== NumberType::FLOAT);
 	REQUIRE(lex.value.floatNumber== Approx(2.0));
+}
+
+TEST_CASE("Testing testing buffering", "[lexer]") {
+
+	std::string str{ "aa 12 cc 3.14 ee" };
+	Lexer lex;
+	lex.initFromStr(str);
+    REQUIRE(lex.lookAheadToken.empty());
+
+    bool res = lex.lookAhead(4);
+    REQUIRE(res == true);
+    REQUIRE(lex.lookAheadToken.size() ==4);
+
+    lex.gettok();
+    REQUIRE(lex.lookAheadToken.size() ==3);
+	REQUIRE(lex.currtok == Token::tok_identifier);
+	REQUIRE(lex.identifierStr== "aa");
+
+    lex.gettok();
+    REQUIRE(lex.lookAheadToken.size() ==2);
+	REQUIRE(lex.currtok == Token::tok_number);
+	REQUIRE(lex.value.type== NumberType::INTEGER);
+	REQUIRE(lex.value.integerNumber== 12);
+
+    lex.gettok();
+    REQUIRE(lex.lookAheadToken.size() ==1);
+	REQUIRE(lex.currtok == Token::tok_identifier);
+	REQUIRE(lex.identifierStr== "cc");
+
+    lex.gettok();
+    REQUIRE(lex.lookAheadToken.empty());
+	REQUIRE(lex.currtok == Token::tok_number);
+	REQUIRE(lex.value.type== NumberType::FLOAT);
+	REQUIRE(lex.value.floatNumber == Approx(3.14));
+
+    //here the buffer should be emtpy
+    lex.gettok();
+    REQUIRE(lex.lookAheadToken.empty());
+	REQUIRE(lex.currtok == Token::tok_identifier);
+	REQUIRE(lex.identifierStr== "ee");
+}
+TEST_CASE("Testing testing too much look ahead", "[lexer]") {
+	std::string str{ "xyz " };
+	Lexer lex;
+	lex.initFromStr(str);
+
+    bool res = lex.lookAhead(10);
+    REQUIRE(res == false);
 }

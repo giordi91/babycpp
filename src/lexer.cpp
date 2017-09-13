@@ -71,6 +71,15 @@ void Lexer::gettok() {
     return;
   }
 
+  if (!lookAheadToken.empty()) {
+      const MovableToken& mov = lookAheadToken.front();
+      currtok = mov.token;
+      identifierStr = mov.identifierStr;
+      value = mov.value;
+      lookAheadToken.pop();
+      return;
+  }
+
   bool gotMatch = std::regex_search(start, matcher, expr,
                                     std::regex_constants::match_continuous);
 
@@ -115,6 +124,31 @@ void Lexer::gettok() {
     currtok = tok_identifier;
     return;
   }
+}
+bool Lexer::lookAhead(uint32_t count)
+{
+    //here we need a temp buffer, we cannot push directly inside
+    //the lookAheadToken queue, otherwise it will be popped right
+    //away from the next gettok(). We write to a temp buffer and then
+    //transfer to the queue, not super pretty, might be a better way
+    std::vector<MovableToken> tempBuffer;
+    tempBuffer.reserve(count);
+
+    for(uint32_t t =0; t<count;++t)
+    {
+        gettok();
+        if(currtok == tok_eof || currtok == tok_no_match)
+        {
+            //lookAheadTooken.clear();
+            return false;
+        }
+        tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
+    }
+
+    for (uint32_t t = 0; t < count; ++t) {
+      lookAheadToken.push(tempBuffer[t]);
+    }
+    return true;
 }
 
 } // namespace lexer
