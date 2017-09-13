@@ -7,7 +7,6 @@ namespace parser {
 using lexer::Lexer;
 using lexer::Number;
 
-
 // base struct for all ast expr
 struct ExprAST {
   virtual ~ExprAST() = default;
@@ -52,24 +51,37 @@ struct FunctionAST {
   PrototypeAST *proto;
   ExprAST *body;
 
-  FunctionAST(PrototypeAST *proto, ExprAST *body)
-      : proto(proto), body(body) {}
+  FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
+};
+
+struct Argument {
+  Argument(int datatype, std::string &argName)
+      : type(datatype), name(argName) {}
+  int type;
+  std::string name;
 };
 
 struct Parser {
-  explicit Parser(Lexer* inputLexer):lex(inputLexer){}
+  explicit Parser(Lexer *inputLexer) : lex(inputLexer) {}
 
-  NumberExprAST* parseNumber();
-  ExprAST* parseIdentifier();
-  ExprAST* parseExpression();
-  ExprAST* parseBinOpRHS(int opPrec, ExprAST* LHS);
-  ExprAST* parsePrimary();
+  NumberExprAST *parseNumber();
+  ExprAST *parseIdentifier();
+  ExprAST *parseExpression();
+  ExprAST *parseBinOpRHS(int opPrec, ExprAST *LHS);
+  ExprAST *parsePrimary();
+
   int getTokPrecedence();
+  ExprAST *parseStatement();
+  ExprAST *parseExtern();
+  bool parseArguments(std::vector<Argument> &args);
+  // this function defines whether or not a token is a declaration
+  // token or not, meaning defining an external function or datatype
+  // interesting to think of cating as "anonymous declaration maybe?"
+  bool isDeclarationToken();
+  bool isDatatype();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
-  Lexer* lex;
-
+  Lexer *lex;
 };
 
-
-} //namespace parser
+} // namespace parser
 } // namespace babycpp

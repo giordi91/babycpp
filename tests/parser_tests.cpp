@@ -44,3 +44,17 @@ TEST_CASE("Testing function call", "[parser]") {
 	REQUIRE(p_casted->args.size() == 0) ;
 
 }
+//TEST_CASE("Testing function with args", "[parser]") {
+//	Lexer lex;
+//	lex.initFromStr("testFunction ();");
+//	Parser parser(&lex);
+
+//	lex.gettok();
+//	auto* p = parser.parseIdentifier();
+//	REQUIRE(p != nullptr);
+
+//	auto * p_casted = dynamic_cast<babycpp::parser::CallExprAST*>(p);
+//	REQUIRE(p_casted != nullptr);
+//	REQUIRE(p_casted->callee == "testFunction");
+//	REQUIRE(p_casted->args.size() == 0);
+//}
