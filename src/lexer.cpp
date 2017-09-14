@@ -76,7 +76,7 @@ void Lexer::gettok() {
       currtok = mov.token;
       identifierStr = mov.identifierStr;
       value = mov.value;
-      lookAheadToken.pop();
+      lookAheadToken.pop_front();
       return;
   }
 
@@ -146,7 +146,7 @@ bool Lexer::lookAhead(uint32_t count)
     }
 
     for (uint32_t t = 0; t < count; ++t) {
-      lookAheadToken.push(tempBuffer[t]);
+      lookAheadToken.push_back(tempBuffer[t]);
     }
     return true;
 }

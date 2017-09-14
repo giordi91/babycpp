@@ -1,19 +1,19 @@
 #pragma once
 #include <fstream>
+#include <queue>
 #include <regex>
 #include <string>
 #include <unordered_map>
-#include <queue>
 
 namespace babycpp {
 namespace lexer {
 
 static const std::regex MAIN_REGEX(
-    R"([ \t]*([[:alpha:]]\w*\b[*]?))" // here we try to catch a common
-                                      // identifier either
-    R"(|[ \t]*([\d.]+))"              // here we match digits
-    R"(|[ \t]*([\(\)\{\}\+-/\*;,<]))" // parsing supported ascii
-    R"(|[ \s]([\r\n|\r|\n]))"         // catching new line combinations
+    R"([ \t]*([[:alpha:]]\w*\b[*]?))"  // here we try to catch a common
+                                       // identifier either
+    R"(|[ \t]*([\d.]+))"               // here we match digits
+    R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
+    R"(|[ \s]([\r\n|\r|\n]))"          // catching new line combinations
 
 );
 
@@ -32,13 +32,14 @@ enum Token {
   tok_number = -7,
   // misc
   tok_operator = -8,
+  tok_assigment_operator = -9,
   // punctuation
-  tok_open_curly = -9,
-  tok_close_curly = -10,
-  tok_open_round = -11,
-  tok_close_round = -12,
-  tok_end_statement = -13,
-  tok_comma = -14,
+  tok_open_curly = -10,
+  tok_close_curly = -11,
+  tok_open_round = -12,
+  tok_close_round = -13,
+  tok_end_statement = -14,
+  tok_comma = -15,
 
   // error codes
   tok_empty_lexer = -2000,
@@ -60,20 +61,22 @@ struct Number {
 };
 
 static const std::unordered_map<std::string, Token> KEYWORDS{
-	{"int", tok_int},       {"float", tok_float},    {"string", tok_string},
-	{"+", tok_operator},    {"-", tok_operator},     {"*", tok_operator},
-	{"<", tok_operator},    {"/", tok_operator},     {"{", tok_open_curly},
-	{"}", tok_close_curly}, {"(", tok_open_round},   {")", tok_close_round},
-	{"extern", tok_extern}, {";", tok_end_statement}, {",",tok_comma} };
+    {"int", tok_int},       {"float", tok_float},
+    {"string", tok_string}, {"+", tok_operator},
+    {"-", tok_operator},    {"*", tok_operator},
+    {"<", tok_operator},    {"/", tok_operator},
+    {"{", tok_open_curly},  {"}", tok_close_curly},
+    {"(", tok_open_round},  {")", tok_close_round},
+    {"extern", tok_extern}, {";", tok_end_statement},
+    {",", tok_comma},       {"=", tok_assigment_operator}};
 // aliases
 using Charmatch = std::match_results<const char *>;
 // int gettok(Database &D);
 
-struct MovableToken
-{
-    int token;
-    std::string identifierStr;
-    Number value;
+struct MovableToken {
+  int token;
+  std::string identifierStr;
+  Number value;
 };
 
 struct Lexer {
@@ -101,8 +104,8 @@ struct Lexer {
   Charmatch matcher;
   const char *start = nullptr;
 
-  //act as a buffer for when doing look ahead
-  std::queue<MovableToken> lookAheadToken;
+  // act as a buffer for when doing look ahead
+  std::deque<MovableToken> lookAheadToken;
 };
 
 } // namespace lexer

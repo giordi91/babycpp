@@ -9,8 +9,8 @@ using lexer::Number;
 
 // base struct for all ast expr
 struct ExprAST {
-  ExprAST()=default;
-  ExprAST(int type):datatype(type){}
+  ExprAST() = default;
+  ExprAST(int type) : datatype(type) {}
   int datatype;
   virtual ~ExprAST() = default;
 };
@@ -24,7 +24,9 @@ struct NumberExprAST : public ExprAST {
 
 struct VariableExprAST : public ExprAST {
   std::string name;
-  VariableExprAST(const std::string &name) : name{name} {}
+  ExprAST *value;
+  VariableExprAST(const std::string &name, ExprAST *invalue, int type)
+      : ExprAST(type),name{name}, value(invalue) {}
 };
 
 struct BinaryExprAST : public ExprAST {
@@ -49,23 +51,22 @@ struct Argument {
   std::string name;
 };
 
-struct PrototypeAST : public ExprAST{
+struct PrototypeAST : public ExprAST {
   std::string name;
   std::vector<Argument> args;
-  bool isExtern=false;
+  bool isExtern = false;
 
-  PrototypeAST(int retType, const std::string &name, const std::vector<Argument> &args,
-                bool externProto)
-      :ExprAST(retType), name(name), args(args), isExtern(externProto) {}
+  PrototypeAST(int retType, const std::string &name,
+               const std::vector<Argument> &args, bool externProto)
+      : ExprAST(retType), name(name), args(args), isExtern(externProto) {}
 };
 
-struct FunctionAST : public ExprAST{
+struct FunctionAST : public ExprAST {
   PrototypeAST *proto;
   ExprAST *body;
 
   FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
 };
-
 
 struct Parser {
   explicit Parser(Lexer *inputLexer) : lex(inputLexer) {}
@@ -80,6 +81,9 @@ struct Parser {
   ExprAST *parseStatement();
   PrototypeAST *parseExtern();
   bool parseArguments(std::vector<Argument> &args);
+  ExprAST *parseFunction();
+  ExprAST *parseVariableDefinition();
+  ExprAST *parseDeclaration();
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype
   // interesting to think of cating as "anonymous declaration maybe?"

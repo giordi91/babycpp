@@ -65,3 +65,24 @@ TEST_CASE("Testing extern call", "[parser]") {
   REQUIRE(arg.name == "x");
   REQUIRE(arg.type == Token::tok_float);
 }
+
+TEST_CASE("Testing function definition", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("int x = 2;");
+  Parser parser(&lex);
+  lex.gettok();
+
+  auto *p = parser.parseDeclaration();
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<babycpp::parser::VariableExprAST*>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->name == "x");
+  REQUIRE(p_casted->datatype== Token::tok_int);
+  REQUIRE(p_casted->value != nullptr);
+
+  auto* v_casted = dynamic_cast<babycpp::parser::NumberExprAST*>(p_casted->value);
+  REQUIRE(v_casted!= nullptr);
+  REQUIRE(v_casted->val.type == NumberType::INTEGER);
+  REQUIRE(v_casted->val.integerNumber == 2);
+}

@@ -145,6 +145,17 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_number);
   REQUIRE(lex.value.type == NumberType::INTEGER);
   REQUIRE(lex.value.integerNumber == 19);
+
+  str = " = 3242235";
+  lex.initFromStr(str);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_assigment_operator);
+  REQUIRE(lex.identifierStr == "=");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.integerNumber == 3242235);
 }
 
 TEST_CASE("Testing extern tok", "[lexer]") {
