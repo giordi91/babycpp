@@ -1,5 +1,6 @@
 #include "catch.hpp"
 #include <parser.h>
+#include <iostream>
 
 using babycpp::lexer::Lexer;
 using babycpp::lexer::NumberType;
@@ -66,7 +67,7 @@ TEST_CASE("Testing extern call", "[parser]") {
   REQUIRE(arg.type == Token::tok_float);
 }
 
-TEST_CASE("Testing function definition", "[parser]") {
+TEST_CASE("Testing variable definition", "[parser]") {
   Lexer lex;
   lex.initFromStr("int x = 2;");
   Parser parser(&lex);
@@ -85,4 +86,18 @@ TEST_CASE("Testing function definition", "[parser]") {
   REQUIRE(v_casted!= nullptr);
   REQUIRE(v_casted->val.type == NumberType::INTEGER);
   REQUIRE(v_casted->val.integerNumber == 2);
+}
+
+TEST_CASE("Testing expression", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("x * y");
+  Parser parser(&lex);
+  lex.gettok();
+
+  auto *p = parser.parseExpression();
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<babycpp::parser::BinaryExprAST*>(p);
+  REQUIRE(p_casted != nullptr);
+
 }

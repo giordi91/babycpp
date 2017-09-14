@@ -132,53 +132,50 @@ int Parser::getTokPrecedence() {
   return -1;
 }
 
-ExprAST * Parser::parseDeclaration()
-{
-      //if we have a declaration token, something like int, flaot etc we might have
-      //several cases like, we might have a variable definition, we might have
-      //a function definition etc, this require a bit of look ahead!
-	  int datatype = lex->currtok;
-	  lex->gettok();//eating datatype
-	  //looking ahead 2 tokens, which should give us the identifier
-	  //and the next token
+ExprAST *Parser::parseDeclaration() {
+  // if we have a declaration token, something like int, flaot etc we might have
+  // several cases like, we might have a variable definition, we might have
+  // a function definition etc, this require a bit of look ahead!
+  int datatype = lex->currtok;
+  lex->gettok(); // eating datatype
+  // looking ahead 2 tokens, which should give us the identifier
+  // and the next token
 
-	  //const lexer::MovableToken& nextTok= lex->lookAheadToken[0];
-	  if (lex->currtok== Token::tok_identifier)
-	  {
-		  std::string identifier = lex->identifierStr;
-		  lex->gettok();//eat identifier;
-		  //we got an identifier great, now the next token will
-		  //tell us wheter is a function prototype or a variable
-		  ExprAST* definitionNode = nullptr;
-		  switch (lex->currtok)
-		  {
-		  default: {
-		      //error
-		      return nullptr; }
-		  case Token::tok_open_curly:
-		      return parseFunction();
-		  case Token::tok_assigment_operator:
-		  {
-		      //this can be, a direct value assigment
-		      //like int x = 10;
-		      //it can be a math expression like :
-		      //int x = 10 + y;
-		      //it can be a function call
-		      //int x = getMagicNumber();
-			  lex->gettok();//eat = operator
-		      auto* RHS= parseExpression();
-			  return new VariableExprAST(identifier,RHS,datatype);
-		  }
-		  //not supported yet
-		  //case Token::tok_end_statement:
-		  //    return parseVariableDefinition();
-		  }
+  // const lexer::MovableToken& nextTok= lex->lookAheadToken[0];
+  if (lex->currtok == Token::tok_identifier) {
+    std::string identifier = lex->identifierStr;
+    lex->gettok(); // eat identifier;
+    // we got an identifier great, now the next token will
+    // tell us wheter is a function prototype or a variable
+    switch (lex->currtok) {
+    default: {
+      // error
+      return nullptr;
+    }
+    case Token::tok_open_curly:
+      //TODO PARSE PROPERLY FUNCTION
+      return parseFunction();
+    case Token::tok_assigment_operator: {
+      // this can be, a direct value assigment
+      // like int x = 10;
+      // it can be a math expression like :
+      // int x = 10 + y;
+      // it can be a function call
+      // int x = getMagicNumber();
+      lex->gettok(); // eat = operator
+      auto *RHS = parseExpression();
+      return new VariableExprAST(identifier, RHS, datatype);
+    }
+      // not supported yet
+      // case Token::tok_end_statement:
+      //    return parseVariableDefinition();
+    }
 
-		  //we got here so we parsed something
-	  } 
+    // we got here so we parsed something
+  }
 
-	  //error
-	  return nullptr;
+  // error
+  return nullptr;
 }
 
 ExprAST * Parser::parseStatement()
