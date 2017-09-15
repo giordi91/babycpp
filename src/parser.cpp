@@ -35,7 +35,7 @@ ExprAST *Parser::parseIdentifier() {
   }
   lex->gettok(); // eating paren;
   std::vector<ExprAST *> args;
-  if (tok == Token::tok_close_round) {
+  if (lex->currtok != Token::tok_close_round) {
     // must be a function call we eat until we find the
     // corresponding closing paren
     while (true) {
@@ -44,7 +44,7 @@ ExprAST *Parser::parseIdentifier() {
         return nullptr;
       }
       args.push_back(arg);
-      if (lex->currtok == Token::tok_close_curly) {
+      if (lex->currtok == Token::tok_close_round) {
         break;
       }
 
@@ -77,7 +77,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
       return LHS;
     }
 
-    int binOp = lex->currtok;
+	std::string op = lex->identifierStr;
     lex->gettok();
     ExprAST *RHS = parsePrimary();
     if (RHS == nullptr) {
@@ -94,7 +94,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
       }
     }
 
-    LHS = new BinaryExprAST(binOp, LHS, RHS);
+    LHS = new BinaryExprAST(op, LHS, RHS);
   }
 }
 
@@ -118,7 +118,7 @@ ExprAST *Parser::parsePrimary() {
 
 int Parser::getTokPrecedence() {
   if (lex->currtok != Token::tok_operator) {
-    std::cout << "error given token is not an operator, cannot get precednece";
+    //TODO explaing the -1 here
     return -1;
   }
 

@@ -11,7 +11,7 @@ using lexer::Number;
 struct ExprAST {
   ExprAST() = default;
   ExprAST(int type) : datatype(type) {}
-  int datatype;
+  int datatype = 0;
   virtual ~ExprAST() = default;
 };
 
@@ -30,9 +30,9 @@ struct VariableExprAST : public ExprAST {
 };
 
 struct BinaryExprAST : public ExprAST {
-  char op;
+  std::string op;
   ExprAST *lhs, *rhs;
-  BinaryExprAST(char op, ExprAST *lhs, ExprAST *rhs)
+  BinaryExprAST(std::string& op, ExprAST *lhs, ExprAST *rhs)
       : op(op), lhs(lhs), rhs(rhs) {}
 };
 
