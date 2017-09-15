@@ -292,3 +292,7 @@ build
 
 #ctags
 tags
+
+#clion 
+cmake-build-debug
+cmake-build-release
