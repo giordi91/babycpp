@@ -84,6 +84,7 @@ struct Parser {
   ExprAST *parseFunction();
   ExprAST *parseVariableDefinition();
   ExprAST *parseDeclaration();
+    ExprAST* parseParen();
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype
   // interesting to think of cating as "anonymous declaration maybe?"

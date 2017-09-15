@@ -21,7 +21,7 @@ NumberExprAST *Parser::parseNumber() {
 
 ExprAST *Parser::parseIdentifier() {
 
-  //if (isDeclarationToken()) {
+  // if (isDeclarationToken()) {
   //}
   const std::string idstr = lex->identifierStr;
   // look ahead and eat identifier;
@@ -31,7 +31,7 @@ ExprAST *Parser::parseIdentifier() {
   if (tok != Token::tok_open_round) {
     // fix this!! need to know what the variable type is
     // or if is being referenced
-    return new VariableExprAST(idstr,nullptr,0);
+    return new VariableExprAST(idstr, nullptr, 0);
   }
   lex->gettok(); // eating paren;
   std::vector<ExprAST *> args;
@@ -77,7 +77,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
       return LHS;
     }
 
-	std::string op = lex->identifierStr;
+    std::string op = lex->identifierStr;
     lex->gettok();
     ExprAST *RHS = parsePrimary();
     if (RHS == nullptr) {
@@ -110,15 +110,17 @@ ExprAST *Parser::parsePrimary() {
   case Token::tok_number: {
     return parseNumber();
   }
-  //need to parse parens
-  //case Token::tok_open_round
-	
+  case Token::tok_open_round: {
+    return parseParen();
+  }
+    // need to parse parens
+    // case Token::tok_open_round
   }
 }
 
 int Parser::getTokPrecedence() {
   if (lex->currtok != Token::tok_operator) {
-    //TODO explaing the -1 here
+    // TODO explaing the -1 here
     return -1;
   }
 
@@ -153,7 +155,7 @@ ExprAST *Parser::parseDeclaration() {
       return nullptr;
     }
     case Token::tok_open_curly:
-      //TODO PARSE PROPERLY FUNCTION
+      // TODO PARSE PROPERLY FUNCTION
       return parseFunction();
     case Token::tok_assigment_operator: {
       // this can be, a direct value assigment
@@ -178,21 +180,16 @@ ExprAST *Parser::parseDeclaration() {
   return nullptr;
 }
 
-ExprAST * Parser::parseStatement()
-{
+ExprAST *Parser::parseStatement() {
   if (lex->currtok == Token::tok_extern) {
     return parseExtern();
   }
 
-  if( isDeclarationToken())
-  {
-	  return parseDeclaration();
+  if (isDeclarationToken()) {
+    return parseDeclaration();
 
-	  //error 
-	  return nullptr;
-	  
-	  
-  
+    // error
+    return nullptr;
   }
   return nullptr;
 }
@@ -205,10 +202,11 @@ PrototypeAST *Parser::parseExtern() {
     return nullptr;
   }
   int datatype = lex->currtok;
-  lex->gettok();//eating datatype
+  lex->gettok(); // eating datatype
 
   if (lex->currtok != Token::tok_identifier) {
-    std::cout << "expected idnetifier after extern return datatype" << std::endl;
+    std::cout << "expected idnetifier after extern return datatype"
+              << std::endl;
     return nullptr;
   }
   // we know that we need a function call so we get started
@@ -229,67 +227,54 @@ PrototypeAST *Parser::parseExtern() {
   }
   // need to check semicolon at the end;
   // here we cangenerate the function node;
-  return new PrototypeAST( datatype, funName, args, true);
+  return new PrototypeAST(datatype, funName, args, true);
 }
 
-bool Parser::parseArguments(std::vector<Argument>& args)
-{
-	int datatype;
-	std::string argName;
-	while (true)
-	{ 
-		if (lex->currtok == Token::tok_close_round)
-		{
-			//no args 
-			return true;
-		}
-		//we expect to see seq of data_type identifier comma
-		if (!isDatatype())
-		{
-			std::cout << "expected data type identifier for argument" << std::endl;
-			return false;
-		}
-		//saving datatype
-		datatype = lex->currtok;
-		lex->gettok(); //eat datatype 
+bool Parser::parseArguments(std::vector<Argument> &args) {
+  int datatype;
+  std::string argName;
+  while (true) {
+    if (lex->currtok == Token::tok_close_round) {
+      // no args
+      return true;
+    }
+    // we expect to see seq of data_type identifier comma
+    if (!isDatatype()) {
+      std::cout << "expected data type identifier for argument" << std::endl;
+      return false;
+    }
+    // saving datatype
+    datatype = lex->currtok;
+    lex->gettok(); // eat datatype
 
-		if (lex->currtok != Token::tok_identifier)
-		{
-			std::cout << "expected identifier name for argument" << std::endl;
-			return false;
-		}
+    if (lex->currtok != Token::tok_identifier) {
+      std::cout << "expected identifier name for argument" << std::endl;
+      return false;
+    }
 
-		//storing name
-		argName = lex->identifierStr;
-		lex->gettok(); //eating identifier name
+    // storing name
+    argName = lex->identifierStr;
+    lex->gettok(); // eating identifier name
 
-		//finally checking if we have a comma or paren 
-		if (lex->currtok == Token::tok_comma)
-		{
-			lex->gettok();//eating the comma
-			//checking if we have a paren if so we  have
-			//an error
-			if (lex->currtok == Token::tok_close_curly)
-			{
-				std::cout << "expected data type idnetifier after comma" << std::endl;
-				return false;
-			}
-		}
-		//if we got here we have a sanitized argument
-		args.emplace_back(Argument(datatype, argName));
-	}
-	return true;
+    // finally checking if we have a comma or paren
+    if (lex->currtok == Token::tok_comma) {
+      lex->gettok(); // eating the comma
+      // checking if we have a paren if so we  have
+      // an error
+      if (lex->currtok == Token::tok_close_curly) {
+        std::cout << "expected data type idnetifier after comma" << std::endl;
+        return false;
+      }
+    }
+    // if we got here we have a sanitized argument
+    args.emplace_back(Argument(datatype, argName));
+  }
+  return true;
 }
 
-ExprAST * Parser::parseFunction()
-{
-	return nullptr;
-}
+ExprAST *Parser::parseFunction() { return nullptr; }
 
-ExprAST * Parser::parseVariableDefinition()
-{
-	return nullptr;
-}
+ExprAST *Parser::parseVariableDefinition() { return nullptr; }
 
 bool Parser::isDeclarationToken() {
   int tok = lex->currtok;
@@ -298,10 +283,20 @@ bool Parser::isDeclarationToken() {
   return isDatatype || isExtern;
 }
 
-bool Parser::isDatatype()
-{
+bool Parser::isDatatype() {
   int tok = lex->currtok;
-  return ( tok == Token::tok_float || tok == Token::tok_int);
+  return (tok == Token::tok_float || tok == Token::tok_int);
+}
+
+ExprAST *Parser::parseParen() {
+  lex->gettok();//eating paren
+  auto* exp = parseExpression();
+  if(lex->currtok != Token::tok_close_round)
+  {
+    std::cout<<"error:, expected close parent after expression";
+    return nullptr;
+  }
+  return exp;
 }
 
 } // namespace parser
