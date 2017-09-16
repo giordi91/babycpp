@@ -195,6 +195,9 @@ ExprAST *Parser::parseDeclaration() {
 ExprAST *Parser::parseStatement() {
 
   ExprAST *exp = nullptr;
+  if (lex->currtok == Token::tok_eof) {
+    return nullptr;
+  }
   if (lex->currtok == Token::tok_extern) {
     exp = parseExtern();
   }
@@ -212,7 +215,7 @@ ExprAST *Parser::parseStatement() {
     exp = parseExpression();
   }
   // TODO(giordi) support statement starting with parenthesis
-  // if (lex->currtok == Token::tok_open_curly){}
+  // if (lex->currtok == Token::tok_open_paren){}
 
   if (lex->currtok != Token::tok_end_statement) {
     std::cout << "expecting semicolon at end of statement" << std::endl;
@@ -380,7 +383,7 @@ PrototypeAST *Parser::parsePrototype() {
     return nullptr;
   }
   // need to check semicolon at the end;
-  // here we cangenerate the function node;
+  // here we can generate the prototype node;
   return new PrototypeAST(datatype, funName, args, true);
 }
 

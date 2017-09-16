@@ -55,14 +55,13 @@ TEST_CASE("Testing extern call", "[parser]") {
   auto *p = parser.parseExtern();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<babycpp::parser::PrototypeAST *>(p);
-  REQUIRE(p_casted != nullptr);
-  REQUIRE(p_casted->datatype == Token::tok_float);
-  REQUIRE(p_casted->name == "sin");
-  REQUIRE(p_casted->isExtern == true);
-  REQUIRE(p_casted->args.size() == 1);
+  REQUIRE(p != nullptr);
+  REQUIRE(p->datatype == Token::tok_float);
+  REQUIRE(p->name == "sin");
+  REQUIRE(p->isExtern == true);
+  REQUIRE(p->args.size() == 1);
 
-  Argument arg = p_casted->args[0];
+  Argument arg = p->args[0];
   REQUIRE(arg.name == "x");
   REQUIRE(arg.type == Token::tok_float);
 }
@@ -335,4 +334,8 @@ TEST_CASE("Testing simple function with return", "[parser]") {
       dynamic_cast<babycpp::parser::VariableExprAST *>(statement);
   REQUIRE(statement_casted != nullptr);
   REQUIRE(statement_casted->name == "avg");
+
+  auto *p_eof = parser.parseStatement();
+  REQUIRE(p_eof == nullptr);
+  REQUIRE(lex.currtok == Token::tok_eof);
 }
