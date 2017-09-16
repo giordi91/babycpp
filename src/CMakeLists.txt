@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.6.0)
 
 project(${MAIN_LIB_NAME})   
 
-    #find_package(LLVM REQUIRED CONFIG)
+    find_package(LLVM REQUIRED CONFIG)
 
-    #message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    #message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
     #options
     option(BUILD_TESTS "Wheter or not to build the tests" ON)
 
@@ -42,7 +42,7 @@ project(${MAIN_LIB_NAME})
 
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
-    #llvm_map_components_to_libnames(llvm_libs support core irreader)
+    llvm_map_components_to_libnames(llvm_libs support core irreader)
 
     # Link against LLVM libraries
     target_link_libraries(${PROJECT_NAME} ${llvm_libs})
