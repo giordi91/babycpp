@@ -26,13 +26,13 @@ struct VariableExprAST : public ExprAST {
   std::string name;
   ExprAST *value;
   VariableExprAST(const std::string &name, ExprAST *invalue, int type)
-      : ExprAST(type),name{name}, value(invalue) {}
+      : ExprAST(type), name{name}, value(invalue) {}
 };
 
 struct BinaryExprAST : public ExprAST {
   std::string op;
   ExprAST *lhs, *rhs;
-  BinaryExprAST(std::string& op, ExprAST *lhs, ExprAST *rhs)
+  BinaryExprAST(std::string &op, ExprAST *lhs, ExprAST *rhs)
       : op(op), lhs(lhs), rhs(rhs) {}
 };
 
@@ -68,13 +68,20 @@ struct FunctionAST : public ExprAST {
   FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
 };
 
+struct ParserFlags {
+    bool processed_assigment :1;
+};
+
 struct Parser {
-  explicit Parser(Lexer *inputLexer) : lex(inputLexer) {}
+  explicit Parser(Lexer *inputLexer) : lex(inputLexer)
+  {
+    flags.processed_assigment=false;
+  }
 
   NumberExprAST *parseNumber();
   ExprAST *parseIdentifier();
   ExprAST *parseExpression();
-  ExprAST *parseBinOpRHS(int opPrec, ExprAST *LHS);
+  ExprAST *parseBinOpRHS(int givenPrec, ExprAST *LHS);
   ExprAST *parsePrimary();
 
   int getTokPrecedence();
@@ -84,7 +91,7 @@ struct Parser {
   ExprAST *parseFunction();
   ExprAST *parseVariableDefinition();
   ExprAST *parseDeclaration();
-    ExprAST* parseParen();
+  ExprAST *parseParen();
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype
   // interesting to think of cating as "anonymous declaration maybe?"
@@ -92,6 +99,7 @@ struct Parser {
   bool isDatatype();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
   Lexer *lex;
+  ParserFlags flags;
 };
 
 } // namespace parser

@@ -65,6 +65,21 @@ ExprAST *Parser::parseExpression() {
   if (LHS == nullptr) {
     return nullptr;
   }
+  if (lex->currtok == Token::tok_assigment_operator) {
+    if (!flags.processed_assigment ) {
+
+      flags.processed_assigment = true;
+      lex->gettok(); // eating assignment operator;
+
+      auto* RHS =parseExpression();
+      return new VariableExprAST(lex->identifierStr,RHS,0);
+    } else {
+
+      std::cout << "error,  cannot have multiple assignment in a statement"
+                << std::endl;
+      return nullptr;
+    }
+  }
   return parseBinOpRHS(0, LHS);
 }
 
@@ -120,7 +135,7 @@ ExprAST *Parser::parsePrimary() {
 
 int Parser::getTokPrecedence() {
   if (lex->currtok != Token::tok_operator) {
-    // TODO explaing the -1 here
+    // TODO(giordi) explaing the -1 here
     return -1;
   }
 
@@ -155,10 +170,10 @@ ExprAST *Parser::parseDeclaration() {
       return nullptr;
     }
     case Token::tok_open_curly:
-      // TODO PARSE PROPERLY FUNCTION
+      // TODO(giordi) parse function properly
       return parseFunction();
     case Token::tok_assigment_operator: {
-      // this can be, a direct value assigment
+      // this can be, a direct value assignment
       // like int x = 10;
       // it can be a math expression like :
       // int x = 10 + y;
@@ -181,17 +196,30 @@ ExprAST *Parser::parseDeclaration() {
 }
 
 ExprAST *Parser::parseStatement() {
+
+  ExprAST *exp = nullptr;
   if (lex->currtok == Token::tok_extern) {
-    return parseExtern();
+    exp = parseExtern();
   }
 
   if (isDeclarationToken()) {
-    return parseDeclaration();
-
-    // error
-    return nullptr;
+    exp = parseDeclaration();
   }
-  return nullptr;
+
+  if (lex->currtok == Token::tok_identifier) {
+    exp = parseExpression();
+  }
+
+  if (lex->currtok != Token::tok_end_statement) {
+    std::cout << "expecting semicolon at end of statement" << std::endl;
+    return exp;
+  }
+
+  lex->gettok(); // eating comma
+  //clearing flags, if they start to increase i will
+  //change this to a clear flags
+  flags.processed_assigment = false;
+  return exp;
 }
 
 PrototypeAST *Parser::parseExtern() {
@@ -205,7 +233,7 @@ PrototypeAST *Parser::parseExtern() {
   lex->gettok(); // eating datatype
 
   if (lex->currtok != Token::tok_identifier) {
-    std::cout << "expected idnetifier after extern return datatype"
+    std::cout << "expected identifier after extern return datatype"
               << std::endl;
     return nullptr;
   }
@@ -262,7 +290,7 @@ bool Parser::parseArguments(std::vector<Argument> &args) {
       // checking if we have a paren if so we  have
       // an error
       if (lex->currtok == Token::tok_close_curly) {
-        std::cout << "expected data type idnetifier after comma" << std::endl;
+        std::cout << "expected data type identifier after comma" << std::endl;
         return false;
       }
     }
@@ -278,8 +306,8 @@ ExprAST *Parser::parseVariableDefinition() { return nullptr; }
 
 bool Parser::isDeclarationToken() {
   int tok = lex->currtok;
-  int isDatatype = tok == Token::tok_float || tok == Token::tok_int;
-  int isExtern = tok == Token::tok_extern;
+  bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
+  bool isExtern = tok == Token::tok_extern;
   return isDatatype || isExtern;
 }
 
@@ -289,11 +317,10 @@ bool Parser::isDatatype() {
 }
 
 ExprAST *Parser::parseParen() {
-  lex->gettok();//eating paren
-  auto* exp = parseExpression();
-  if(lex->currtok != Token::tok_close_round)
-  {
-    std::cout<<"error:, expected close parent after expression";
+  lex->gettok(); // eating paren
+  auto *exp = parseExpression();
+  if (lex->currtok != Token::tok_close_round) {
+    std::cout << "error:, expected close parent after expression";
     return nullptr;
   }
   return exp;

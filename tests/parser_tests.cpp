@@ -248,24 +248,33 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
   REQUIRE(lhs_x != nullptr);
   REQUIRE(lhs_x->name == "x");
 
-  auto *rhs_2yz = dynamic_cast<babycpp::parser::BinaryExprAST*>(firstBin->rhs);
-  REQUIRE(rhs_2yz!= nullptr);
+  auto *rhs_2yz = dynamic_cast<babycpp::parser::BinaryExprAST *>(firstBin->rhs);
+  REQUIRE(rhs_2yz != nullptr);
   REQUIRE(rhs_2yz->op == "*");
 
-  auto *lhs_2 = dynamic_cast<babycpp::parser::NumberExprAST*>(rhs_2yz->lhs);
-  REQUIRE(lhs_2!= nullptr);
+  auto *lhs_2 = dynamic_cast<babycpp::parser::NumberExprAST *>(rhs_2yz->lhs);
+  REQUIRE(lhs_2 != nullptr);
   REQUIRE(lhs_2->val.type == NumberType::FLOAT);
-  REQUIRE(lhs_2->val.floatNumber== Approx(2.0f));
+  REQUIRE(lhs_2->val.floatNumber == Approx(2.0f));
 
-  auto *rhs_yz = dynamic_cast<babycpp::parser::BinaryExprAST*>(rhs_2yz->rhs);
-  REQUIRE(rhs_yz!= nullptr);
+  auto *rhs_yz = dynamic_cast<babycpp::parser::BinaryExprAST *>(rhs_2yz->rhs);
+  REQUIRE(rhs_yz != nullptr);
   REQUIRE(rhs_yz->op == "+");
 
-  auto *lhs_y = dynamic_cast<babycpp::parser::VariableExprAST*>(rhs_yz->lhs);
-  REQUIRE(lhs_y!= nullptr);
+  auto *lhs_y = dynamic_cast<babycpp::parser::VariableExprAST *>(rhs_yz->lhs);
+  REQUIRE(lhs_y != nullptr);
   REQUIRE(lhs_y->name == "y");
 
-  auto *rhs_z = dynamic_cast<babycpp::parser::VariableExprAST*>(rhs_yz->rhs);
-  REQUIRE(rhs_z!= nullptr);
+  auto *rhs_z = dynamic_cast<babycpp::parser::VariableExprAST *>(rhs_yz->rhs);
+  REQUIRE(rhs_z != nullptr);
   REQUIRE(rhs_z->name == "z");
+}
+TEST_CASE("Testing expression from top level", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("x = y + z;");
+  Parser parser(&lex);
+  lex.gettok();
+
+  auto *p = parser.parseStatement();
+  REQUIRE(p != nullptr);
 }
