@@ -7,18 +7,23 @@ namespace parser {
 using lexer::Lexer;
 using lexer::Number;
 
+struct ASTFlags {
+  bool isReturn : 1;
+};
+
 // base struct for all ast expr
 struct ExprAST {
   ExprAST() = default;
   ExprAST(int type) : datatype(type) {}
-  int datatype = 0;
   virtual ~ExprAST() = default;
+  int datatype = 0;
+  ASTFlags flags;
 };
 
 struct NumberExprAST : public ExprAST {
   NumberExprAST(Number val) : val(val) {}
 
-  // keeping it public mainly for testabiliy purposes
+  // keeping it public mainly for testability purposes
   Number val;
 };
 
@@ -63,19 +68,19 @@ struct PrototypeAST : public ExprAST {
 
 struct FunctionAST : public ExprAST {
   PrototypeAST *proto;
-  ExprAST *body;
+  std::vector<ExprAST *> body;
 
-  FunctionAST(PrototypeAST *proto, ExprAST *body) : proto(proto), body(body) {}
+  FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
+      : proto(inproto), body(inbody) {}
 };
 
 struct ParserFlags {
-    bool processed_assigment :1;
+  bool processed_assigment : 1;
 };
 
 struct Parser {
-  explicit Parser(Lexer *inputLexer) : lex(inputLexer)
-  {
-    flags.processed_assigment=false;
+  explicit Parser(Lexer *inputLexer) : lex(inputLexer) {
+    flags.processed_assigment = false;
   }
 
   NumberExprAST *parseNumber();
@@ -88,13 +93,13 @@ struct Parser {
   ExprAST *parseStatement();
   PrototypeAST *parseExtern();
   bool parseArguments(std::vector<Argument> &args);
-  ExprAST *parseFunction();
-  ExprAST *parseVariableDefinition();
+  FunctionAST  *parseFunction();
+  PrototypeAST *parsePrototype();
   ExprAST *parseDeclaration();
   ExprAST *parseParen();
   // this function defines whether or not a token is a declaration
   // token or not, meaning defining an external function or datatype
-  // interesting to think of cating as "anonymous declaration maybe?"
+  // interesting to think of casting as "anonymous declaration maybe?"
   bool isDeclarationToken();
   bool isDatatype();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;

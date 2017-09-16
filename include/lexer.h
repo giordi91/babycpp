@@ -40,6 +40,7 @@ enum Token {
   tok_close_round = -13,
   tok_end_statement = -14,
   tok_comma = -15,
+  tok_return= -16,
 
   // error codes
   tok_empty_lexer = -2000,
@@ -68,10 +69,10 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
     {"{", tok_open_curly},  {"}", tok_close_curly},
     {"(", tok_open_round},  {")", tok_close_round},
     {"extern", tok_extern}, {";", tok_end_statement},
-    {",", tok_comma},       {"=", tok_assigment_operator}};
+    {",", tok_comma},       {"=", tok_assigment_operator},
+    {"return", tok_return}};
 // aliases
 using Charmatch = std::match_results<const char *>;
-// int gettok(Database &D);
 
 struct MovableToken {
   int token;
@@ -98,7 +99,7 @@ struct Lexer {
   Number value;
   uint32_t lineNumber = 1;
 
-  // regexd classes
+  // regex classes
   std::regex expr;
   std::string data;
   Charmatch matcher;

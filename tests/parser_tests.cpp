@@ -277,4 +277,62 @@ TEST_CASE("Testing expression from top level", "[parser]") {
 
   auto *p = parser.parseStatement();
   REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->value != nullptr);
+
+  auto *value_p =
+      dynamic_cast<babycpp::parser::BinaryExprAST *>(p_casted->value);
+  REQUIRE(value_p != nullptr);
+  REQUIRE(value_p->op == "+");
+
+  auto *value_lhs =
+      dynamic_cast<babycpp::parser::VariableExprAST *>(value_p->lhs);
+  REQUIRE(value_lhs != nullptr);
+  REQUIRE(value_lhs->name == "y");
+  REQUIRE(value_lhs->value == nullptr);
+  REQUIRE(value_lhs->datatype == 0);
+
+  auto *value_rhs =
+      dynamic_cast<babycpp::parser::VariableExprAST *>(value_p->rhs);
+  REQUIRE(value_rhs != nullptr);
+  REQUIRE(value_rhs->name == "z");
+  REQUIRE(value_rhs->value == nullptr);
+  REQUIRE(value_rhs->datatype == 0);
+
+  // TODO(giordi) re-enable this test when there is a proper
+  // error handling and suppression output
+  // lex.initFromStr("x = y + z = 3;");
+  // p = parser.parseStatement();
+  // REQUIRE(p == nullptr);
+}
+
+TEST_CASE("Testing simple function", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("float average(float a, float b) \n { \n"
+                  "avg = (a+b)/2.0;}");
+  Parser parser(&lex);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p != nullptr);
+}
+
+TEST_CASE("Testing simple function with return", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("float average(float a, float b) \n { \n"
+                  "avg = (a+b)/2.0; return avg;}");
+  Parser parser(&lex);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p != nullptr);
+  REQUIRE(p->body.size() == 2);
+
+  auto *statement = p->body[1];
+  REQUIRE(statement->flags.isReturn == true);
+  auto *statement_casted =
+      dynamic_cast<babycpp::parser::VariableExprAST *>(statement);
+  REQUIRE(statement_casted != nullptr);
+  REQUIRE(statement_casted->name == "avg");
 }

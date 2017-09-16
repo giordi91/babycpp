@@ -66,19 +66,18 @@ ExprAST *Parser::parseExpression() {
     return nullptr;
   }
   if (lex->currtok == Token::tok_assigment_operator) {
-    if (!flags.processed_assigment ) {
+    if (!flags.processed_assigment) {
 
       flags.processed_assigment = true;
       lex->gettok(); // eating assignment operator;
 
-      auto* RHS =parseExpression();
-      return new VariableExprAST(lex->identifierStr,RHS,0);
-    } else {
-
-      std::cout << "error,  cannot have multiple assignment in a statement"
-                << std::endl;
-      return nullptr;
+      auto *RHS = parseExpression();
+      return new VariableExprAST(lex->identifierStr, RHS, 0);
     }
+
+    std::cout << "error,  cannot have multiple assignment in a statement"
+              << std::endl;
+    return nullptr;
   }
   return parseBinOpRHS(0, LHS);
 }
@@ -128,8 +127,6 @@ ExprAST *Parser::parsePrimary() {
   case Token::tok_open_round: {
     return parseParen();
   }
-    // need to parse parens
-    // case Token::tok_open_round
   }
 }
 
@@ -201,6 +198,11 @@ ExprAST *Parser::parseStatement() {
   if (lex->currtok == Token::tok_extern) {
     exp = parseExtern();
   }
+  if (lex->currtok == Token::tok_return) {
+    lex->gettok(); // eat return
+    exp = parseExpression();
+    exp->flags.isReturn = true;
+  }
 
   if (isDeclarationToken()) {
     exp = parseDeclaration();
@@ -209,15 +211,17 @@ ExprAST *Parser::parseStatement() {
   if (lex->currtok == Token::tok_identifier) {
     exp = parseExpression();
   }
+  // TODO(giordi) support statement starting with parenthesis
+  // if (lex->currtok == Token::tok_open_curly){}
 
   if (lex->currtok != Token::tok_end_statement) {
     std::cout << "expecting semicolon at end of statement" << std::endl;
     return exp;
   }
 
-  lex->gettok(); // eating comma
-  //clearing flags, if they start to increase i will
-  //change this to a clear flags
+  lex->gettok(); // eating semicolon;
+  // clearing flags, if they start to increase i will
+  // change this to a clear flags
   flags.processed_assigment = false;
   return exp;
 }
@@ -229,33 +233,7 @@ PrototypeAST *Parser::parseExtern() {
     std::cout << "expected return data type after extern" << std::endl;
     return nullptr;
   }
-  int datatype = lex->currtok;
-  lex->gettok(); // eating datatype
-
-  if (lex->currtok != Token::tok_identifier) {
-    std::cout << "expected identifier after extern return datatype"
-              << std::endl;
-    return nullptr;
-  }
-  // we know that we need a function call so we get started
-  std::string funName = lex->identifierStr;
-  lex->gettok(); // eat identifier
-
-  if (lex->currtok != Token::tok_open_round) {
-    std::cout << "expected ( after extern function name" << std::endl;
-    // should i eat bad identifier here?
-    return nullptr;
-  }
-  // parsing arguments
-  lex->gettok(); // eat parenthesis
-  std::vector<Argument> args;
-  if (!parseArguments(args)) {
-    // no need to log error, error already logged
-    return nullptr;
-  }
-  // need to check semicolon at the end;
-  // here we cangenerate the function node;
-  return new PrototypeAST(datatype, funName, args, true);
+  return parsePrototype();
 }
 
 bool Parser::parseArguments(std::vector<Argument> &args) {
@@ -263,7 +241,8 @@ bool Parser::parseArguments(std::vector<Argument> &args) {
   std::string argName;
   while (true) {
     if (lex->currtok == Token::tok_close_round) {
-      // no args
+      // no args or done with args
+      lex->gettok(); // eat )
       return true;
     }
     // we expect to see seq of data_type identifier comma
@@ -300,9 +279,52 @@ bool Parser::parseArguments(std::vector<Argument> &args) {
   return true;
 }
 
-ExprAST *Parser::parseFunction() { return nullptr; }
+FunctionAST *Parser::parseFunction() {
+  // we start by parsing the prototype;
+  auto *proto = parsePrototype();
+  if (proto == nullptr) {
+    // error should be handled by parseProto function;
+    return nullptr;
+  }
+  // setting the prototype as not extern
+  proto->isExtern = false;
 
-ExprAST *Parser::parseVariableDefinition() { return nullptr; }
+  // we expect an open curly brace starting the body of the function
+  if (lex->currtok != Token::tok_open_curly) {
+    std::cout << "error expected { after function prototype" << std::endl;
+    return nullptr;
+  }
+
+  lex->gettok(); // eating curly
+  int SECURITY = 2000;
+  int counter = 0;
+  std::vector<ExprAST *> statements;
+  while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
+    auto *curr_statement = parseStatement();
+    if (curr_statement == nullptr) {
+      // error should be handled by parse statement;
+      return nullptr;
+    }
+    statements.push_back(curr_statement);
+
+    // check if we are at end of file
+    if (lex->currtok == Token::tok_eof) {
+      std::cout << "error, expected } got EOF" << std::endl;
+      return nullptr;
+    }
+  }
+
+  // here we should have all the statements, expected }
+  // if not it means something went wrong or we hit the
+  // security limit
+  if (lex->currtok != Token::tok_close_curly) {
+    std::cout << "error: expected } at end of function body" << std::endl;
+    return nullptr;
+  }
+
+  lex->gettok(); // eat }
+  return new FunctionAST(proto, statements);
+}
 
 bool Parser::isDeclarationToken() {
   int tok = lex->currtok;
@@ -320,10 +342,46 @@ ExprAST *Parser::parseParen() {
   lex->gettok(); // eating paren
   auto *exp = parseExpression();
   if (lex->currtok != Token::tok_close_round) {
-    std::cout << "error:, expected close parent after expression";
+    std::cout << "error:, expected close paren after expression";
     return nullptr;
   }
+  lex->gettok(); // eating )
   return exp;
+}
+
+PrototypeAST *Parser::parsePrototype() {
+
+  if (!isDatatype()) {
+    std::cout << "expected return data type after extern" << std::endl;
+    return nullptr;
+  }
+  int datatype = lex->currtok;
+  lex->gettok(); // eating datatype
+
+  if (lex->currtok != Token::tok_identifier) {
+    std::cout << "expected identifier after extern return datatype"
+              << std::endl;
+    return nullptr;
+  }
+  // we know that we need a function call so we get started
+  std::string funName = lex->identifierStr;
+  lex->gettok(); // eat identifier
+
+  if (lex->currtok != Token::tok_open_round) {
+    std::cout << "expected ( after extern function name" << std::endl;
+    // should i eat bad identifier here?
+    return nullptr;
+  }
+  // parsing arguments
+  lex->gettok(); // eat parenthesis
+  std::vector<Argument> args;
+  if (!parseArguments(args)) {
+    // no need to log error, error already logged
+    return nullptr;
+  }
+  // need to check semicolon at the end;
+  // here we cangenerate the function node;
+  return new PrototypeAST(datatype, funName, args, true);
 }
 
 } // namespace parser
