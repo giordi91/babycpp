@@ -2,8 +2,14 @@ cmake_minimum_required(VERSION 3.6)
 
 project(tests)   
 
+    find_package(LLVM REQUIRED CONFIG)
+
+    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
-    include_directories(${CMAKE_SOURCE_DIR}/include ${LLVM_ROOT}/include)
+    include_directories(${CMAKE_SOURCE_DIR}/include ${LLVM_INCLUDE_DIRS})
+    add_definitions(${LLVM_DEFINITIONS})
 	
 
 	#defining standard compiling flags
@@ -11,7 +17,12 @@ project(tests)
 
 	#adding the executable
     add_executable(${PROJECT_NAME} ${SOURCE_FILES} )
-    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME}) 
+
+    # Find the libraries that correspond to the LLVM components
+    # that we wish to use
+    llvm_map_components_to_libnames(llvm_libs support core irreader)
+
+    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs}) 
 
     
     file(GLOB files "test_data/*.txt")

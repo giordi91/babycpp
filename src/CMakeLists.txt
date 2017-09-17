@@ -10,7 +10,7 @@ project(${MAIN_LIB_NAME})
     option(BUILD_TESTS "Wheter or not to build the tests" ON)
 
     #just an overal log of the passed options
-    MESSAGE( STATUS "LLVM PATH :                   " ${LLVM_ROOT})
+    MESSAGE( STATUS "LLVM PATH :                   " ${LLVM_DIR})
     MESSAGE( STATUS "Building with the following options")
     MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
 
@@ -33,7 +33,7 @@ project(${MAIN_LIB_NAME})
     include_directories(${LLVM_INCLUDE_DIRS})
     add_definitions(${LLVM_DEFINITIONS})
 
-    include_directories(${CMAKE_SOURCE_DIR}/include ${LLVM_ROOT}/include)
+    include_directories(${CMAKE_SOURCE_DIR}/include ${LLVM_INCLUDE_DIRS})
     #defining standard compiling flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -fno-exceptions")
 
