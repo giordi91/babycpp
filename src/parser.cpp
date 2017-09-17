@@ -20,6 +20,7 @@ using codegen::Argument;
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
 
+//UTILITY
 inline bool isDatatype(int tok) {
   return (tok == Token::tok_float || tok == Token::tok_int);
 }
@@ -47,6 +48,7 @@ inline int getTokPrecedence(Lexer *lex) {
   return -1;
 }
 
+// PARSING
 NumberExprAST *Parser::parseNumber() {
   if (lex->currtok != Token::tok_number) {
     return nullptr;
@@ -57,17 +59,12 @@ NumberExprAST *Parser::parseNumber() {
 }
 
 ExprAST *Parser::parseIdentifier() {
-
-  // if (isDeclarationToken(lex->currtok)) {
-  //}
   const std::string idstr = lex->identifierStr;
   // look ahead and eat identifier;
   lex->gettok();
 
   int tok = lex->currtok;
   if (tok != Token::tok_open_round) {
-    // fix this!! need to know what the variable type is
-    // or if is being referenced
     return new VariableExprAST(idstr, nullptr, 0);
   }
   lex->gettok(); // eating paren;
@@ -168,7 +165,7 @@ ExprAST *Parser::parsePrimary() {
 }
 
 ExprAST *Parser::parseDeclaration() {
-  // if we have a declaration token, something like int, flaot etc we might have
+  // if we have a declaration token, something like int, float etc we might have
   // several cases like, we might have a variable definition, we might have
   // a function definition etc, this require a bit of look ahead!
   int datatype = lex->currtok;
@@ -181,7 +178,7 @@ ExprAST *Parser::parseDeclaration() {
     std::string identifier = lex->identifierStr;
     lex->gettok(); // eat identifier;
     // we got an identifier great, now the next token will
-    // tell us wheter is a function prototype or a variable
+    // tell us whether is a function prototype or a variable
     switch (lex->currtok) {
     default: {
       // error

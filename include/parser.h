@@ -5,18 +5,18 @@
 
 namespace babycpp {
 
+// forward declare from codegen
 namespace codegen {
-    struct ExprAST;
-    struct NumberExprAST;
-    struct PrototypeAST;
-    struct FunctionAST;
+struct ExprAST;
+struct NumberExprAST;
+struct PrototypeAST;
+struct FunctionAST;
 }
 
 namespace parser {
 
 using lexer::Lexer;
 using lexer::Number;
-
 
 struct ParserFlags {
   bool processed_assigment : 1;

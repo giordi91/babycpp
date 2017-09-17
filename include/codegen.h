@@ -78,5 +78,10 @@ struct FunctionAST : public ExprAST {
       : proto(inproto), body(inbody) {}
 };
 
+struct Codegenerator {
+
+
+};
+
 } // namespace codegen
 } // namespace babycpp
