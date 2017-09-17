@@ -1,14 +1,51 @@
 #include "parser.h"
+#include "codegen.h"
 
 #include <iostream>
 
 namespace babycpp {
 namespace parser {
 
+// bool parseArguments(std::vector<Argument> &args);
 using lexer::Token;
+using codegen::ExprAST;
+using codegen::NumberExprAST;
+using codegen::VariableExprAST;
+using codegen::CallExprAST;
+using codegen::BinaryExprAST;
+using codegen::PrototypeAST;
+using codegen::FunctionAST;
+using codegen::Argument;
 
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
+
+inline bool isDatatype(int tok) {
+  return (tok == Token::tok_float || tok == Token::tok_int);
+}
+// this function defines whether or not a token is a declaration
+// token or not, meaning defining an external function or datatype.
+// interesting to think of casting as "anonymous declaration maybe?"
+inline bool isDeclarationToken(int tok) {
+  bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
+  bool isExtern = tok == Token::tok_extern;
+  return isDatatype || isExtern;
+}
+inline int getTokPrecedence(Lexer *lex) {
+  if (lex->currtok != Token::tok_operator) {
+    // TODO(giordi) explain the -1 here
+    return -1;
+  }
+
+  const char op = lex->identifierStr[0];
+  auto iter = Parser::BIN_OP_PRECEDENCE.find(op);
+  if (iter != Parser::BIN_OP_PRECEDENCE.end()) {
+    return iter->second;
+  }
+  // should never reach this since all edge cases are taken by
+  // the tok check
+  return -1;
+}
 
 NumberExprAST *Parser::parseNumber() {
   if (lex->currtok != Token::tok_number) {
@@ -21,7 +58,7 @@ NumberExprAST *Parser::parseNumber() {
 
 ExprAST *Parser::parseIdentifier() {
 
-  // if (isDeclarationToken()) {
+  // if (isDeclarationToken(lex->currtok)) {
   //}
   const std::string idstr = lex->identifierStr;
   // look ahead and eat identifier;
@@ -84,7 +121,7 @@ ExprAST *Parser::parseExpression() {
 
 ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
   while (true) {
-    int tokPrec = getTokPrecedence();
+    int tokPrec = getTokPrecedence(lex);
 
     // if this bin op is less then the current one  we eat it;
     if (tokPrec < givenPrec) {
@@ -100,7 +137,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
 
     // if the bin op binds less tightly with RHS than the OP
     // afer RHS, let the pending op take RHS its LHS
-    int nextPrec = getTokPrecedence();
+    int nextPrec = getTokPrecedence(lex);
     if (tokPrec < nextPrec) {
       RHS = parseBinOpRHS(tokPrec + 1, RHS);
       if (RHS == nullptr) {
@@ -128,22 +165,6 @@ ExprAST *Parser::parsePrimary() {
     return parseParen();
   }
   }
-}
-
-int Parser::getTokPrecedence() {
-  if (lex->currtok != Token::tok_operator) {
-    // TODO(giordi) explaing the -1 here
-    return -1;
-  }
-
-  const char op = lex->identifierStr[0];
-  auto iter = BIN_OP_PRECEDENCE.find(op);
-  if (iter != BIN_OP_PRECEDENCE.end()) {
-    return iter->second;
-  }
-  // should never reach this since all edge cases are taken by
-  // the tok check
-  return -1;
 }
 
 ExprAST *Parser::parseDeclaration() {
@@ -207,7 +228,7 @@ ExprAST *Parser::parseStatement() {
     exp->flags.isReturn = true;
   }
 
-  if (isDeclarationToken()) {
+  if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
   }
 
@@ -232,14 +253,14 @@ ExprAST *Parser::parseStatement() {
 PrototypeAST *Parser::parseExtern() {
   // eating extern token;
   lex->gettok();
-  if (!isDatatype()) {
+  if (!isDatatype(lex->currtok)) {
     std::cout << "expected return data type after extern" << std::endl;
     return nullptr;
   }
   return parsePrototype();
 }
 
-bool Parser::parseArguments(std::vector<Argument> &args) {
+bool parseArguments(Lexer *lex, std::vector<Argument> &args) {
   int datatype;
   std::string argName;
   while (true) {
@@ -249,7 +270,7 @@ bool Parser::parseArguments(std::vector<Argument> &args) {
       return true;
     }
     // we expect to see seq of data_type identifier comma
-    if (!isDatatype()) {
+    if (!isDatatype(lex->currtok)) {
       std::cout << "expected data type identifier for argument" << std::endl;
       return false;
     }
@@ -329,18 +350,6 @@ FunctionAST *Parser::parseFunction() {
   return new FunctionAST(proto, statements);
 }
 
-bool Parser::isDeclarationToken() {
-  int tok = lex->currtok;
-  bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
-  bool isExtern = tok == Token::tok_extern;
-  return isDatatype || isExtern;
-}
-
-bool Parser::isDatatype() {
-  int tok = lex->currtok;
-  return (tok == Token::tok_float || tok == Token::tok_int);
-}
-
 ExprAST *Parser::parseParen() {
   lex->gettok(); // eating paren
   auto *exp = parseExpression();
@@ -354,7 +363,7 @@ ExprAST *Parser::parseParen() {
 
 PrototypeAST *Parser::parsePrototype() {
 
-  if (!isDatatype()) {
+  if (!isDatatype(lex->currtok)) {
     std::cout << "expected return data type after extern" << std::endl;
     return nullptr;
   }
@@ -378,7 +387,7 @@ PrototypeAST *Parser::parsePrototype() {
   // parsing arguments
   lex->gettok(); // eat parenthesis
   std::vector<Argument> args;
-  if (!parseArguments(args)) {
+  if (!parseArguments(lex, args)) {
     // no need to log error, error already logged
     return nullptr;
   }
@@ -386,6 +395,9 @@ PrototypeAST *Parser::parsePrototype() {
   // here we can generate the prototype node;
   return new PrototypeAST(datatype, funName, args, true);
 }
+//////////////////////////////////////////////////
+//// CODE GEN
+//////////////////////////////////////////////////
 
 } // namespace parser
 } // namespace babycpp

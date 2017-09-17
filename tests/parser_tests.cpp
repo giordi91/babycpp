@@ -1,12 +1,22 @@
 #include "catch.hpp"
 #include <iostream>
 #include <parser.h>
+#include <codegen.h>
 
 using babycpp::lexer::Lexer;
 using babycpp::lexer::NumberType;
 using babycpp::lexer::Token;
-using babycpp::parser::Argument;
 using babycpp::parser::Parser;
+using babycpp::codegen::Argument;
+
+using babycpp::codegen::ExprAST;
+using babycpp::codegen::NumberExprAST;
+using babycpp::codegen::VariableExprAST;
+using babycpp::codegen::CallExprAST;
+using babycpp::codegen::BinaryExprAST;
+using babycpp::codegen::PrototypeAST;
+using babycpp::codegen::FunctionAST;
+using babycpp::codegen::Argument;
 
 TEST_CASE("Testing number parser", "[parser]") {
   Lexer lex;
@@ -30,7 +40,7 @@ TEST_CASE("Testing function call", "[parser]") {
   auto *p = parser.parseIdentifier();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<babycpp::parser::CallExprAST *>(p);
+  auto *p_casted = dynamic_cast<CallExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->callee == "testFunction");
   REQUIRE(p_casted->args.size() == 0);
@@ -40,7 +50,7 @@ TEST_CASE("Testing function call", "[parser]") {
   p = parser.parseIdentifier();
   REQUIRE(p != nullptr);
 
-  p_casted = dynamic_cast<babycpp::parser::CallExprAST *>(p);
+  p_casted = dynamic_cast<CallExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->callee == "functionWithWeirdName__324_NOW");
   REQUIRE(p_casted->args.size() == 0);
@@ -75,14 +85,14 @@ TEST_CASE("Testing variable definition", "[parser]") {
   auto *p = parser.parseDeclaration();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(p);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->name == "x");
   REQUIRE(p_casted->datatype == Token::tok_int);
   REQUIRE(p_casted->value != nullptr);
 
   auto *v_casted =
-      dynamic_cast<babycpp::parser::NumberExprAST *>(p_casted->value);
+      dynamic_cast<NumberExprAST *>(p_casted->value);
   REQUIRE(v_casted != nullptr);
   REQUIRE(v_casted->val.type == NumberType::INTEGER);
   REQUIRE(v_casted->val.integerNumber == 2);
@@ -97,11 +107,11 @@ TEST_CASE("Testing expression", "[parser]") {
   auto *p = parser.parseExpression();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<babycpp::parser::BinaryExprAST *>(p);
+  auto *p_casted = dynamic_cast<BinaryExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   auto *lhs = p_casted->lhs;
   REQUIRE(lhs != nullptr);
-  auto *lhs_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(lhs);
+  auto *lhs_casted = dynamic_cast<VariableExprAST *>(lhs);
   REQUIRE(lhs_casted != nullptr);
   REQUIRE(lhs_casted->name == "x");
   REQUIRE(lhs_casted->value == nullptr);
@@ -109,7 +119,7 @@ TEST_CASE("Testing expression", "[parser]") {
 
   auto *rhs = p_casted->rhs;
   REQUIRE(rhs != nullptr);
-  auto *rhs_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(rhs);
+  auto *rhs_casted = dynamic_cast<VariableExprAST *>(rhs);
   REQUIRE(rhs_casted != nullptr);
   REQUIRE(rhs_casted->name == "y");
   REQUIRE(rhs_casted->value == nullptr);
@@ -127,7 +137,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
   auto *p = parser.parseExpression();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<babycpp::parser::CallExprAST *>(p);
+  auto *p_casted = dynamic_cast<CallExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->callee == "testFunction");
   REQUIRE(p_casted->datatype == 0);
@@ -139,7 +149,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
   p = parser.parseExpression();
   REQUIRE(p != nullptr);
 
-  p_casted = dynamic_cast<babycpp::parser::CallExprAST *>(p);
+  p_casted = dynamic_cast<CallExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->callee == "newFunction");
   REQUIRE(p_casted->datatype == 0);
@@ -149,21 +159,21 @@ TEST_CASE("Testing expression for function call", "[parser]") {
   // definition arguments so we don't know the type we can
   // only check the name, they are of instance variable
   auto *arg1 =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(p_casted->args[0]);
+      dynamic_cast<VariableExprAST *>(p_casted->args[0]);
   REQUIRE(arg1 != nullptr);
   REQUIRE(arg1->datatype == 0);
   REQUIRE(arg1->name == "x");
   REQUIRE(arg1->value == nullptr);
 
   auto *arg2 =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(p_casted->args[1]);
+      dynamic_cast<VariableExprAST *>(p_casted->args[1]);
   REQUIRE(arg2 != nullptr);
   REQUIRE(arg2->datatype == 0);
   REQUIRE(arg2->name == "y124");
   REQUIRE(arg2->value == nullptr);
 
   auto *arg3 =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(p_casted->args[2]);
+      dynamic_cast<VariableExprAST *>(p_casted->args[2]);
   REQUIRE(arg3 != nullptr);
   REQUIRE(arg3->datatype == 0);
   REQUIRE(arg3->name == "minusGravity");
@@ -178,21 +188,21 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
 
   auto *p = parser.parseDeclaration();
   REQUIRE(p != nullptr);
-  auto *p_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(p);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->datatype == Token::tok_float);
   REQUIRE(p_casted->name == "meaningOfLife");
 
   auto *RHS = p_casted->value;
   REQUIRE(RHS != nullptr);
-  auto *RHS_casted = dynamic_cast<babycpp::parser::CallExprAST *>(RHS);
+  auto *RHS_casted = dynamic_cast<CallExprAST *>(RHS);
   REQUIRE(RHS_casted != nullptr);
   REQUIRE(RHS_casted->callee == "computeMeaningOfLife");
   REQUIRE(RHS_casted->datatype == 0);
   REQUIRE(RHS_casted->args.size() == 1);
 
   auto *arg1 =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(RHS_casted->args[0]);
+      dynamic_cast<VariableExprAST *>(RHS_casted->args[0]);
   REQUIRE(arg1 != nullptr);
   REQUIRE(arg1->datatype == 0);
   REQUIRE(arg1->name == "me");
@@ -207,27 +217,27 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 
   auto *p = parser.parseExpression();
   REQUIRE(p != nullptr);
-  auto *firstBin = dynamic_cast<babycpp::parser::BinaryExprAST *>(p);
+  auto *firstBin = dynamic_cast<BinaryExprAST *>(p);
   REQUIRE(firstBin != nullptr);
   REQUIRE(firstBin->op == "+");
 
-  auto *lhs_x2y = dynamic_cast<babycpp::parser::BinaryExprAST *>(firstBin->lhs);
+  auto *lhs_x2y = dynamic_cast<BinaryExprAST *>(firstBin->lhs);
   REQUIRE(lhs_x2y != nullptr);
-  auto *lhs_x = dynamic_cast<babycpp::parser::VariableExprAST *>(lhs_x2y->lhs);
+  auto *lhs_x = dynamic_cast<VariableExprAST *>(lhs_x2y->lhs);
   REQUIRE(lhs_x != nullptr);
   REQUIRE(lhs_x->name == "x");
 
-  auto *lhs_2y = dynamic_cast<babycpp::parser::BinaryExprAST *>(lhs_x2y->rhs);
+  auto *lhs_2y = dynamic_cast<BinaryExprAST *>(lhs_x2y->rhs);
   REQUIRE(lhs_2y != nullptr);
   REQUIRE(lhs_2y->op == "*");
 
-  auto *lhs_2 = dynamic_cast<babycpp::parser::NumberExprAST *>(lhs_2y->lhs);
+  auto *lhs_2 = dynamic_cast<NumberExprAST *>(lhs_2y->lhs);
   REQUIRE(lhs_2 != nullptr);
   REQUIRE(lhs_2->datatype == 0);
   REQUIRE(lhs_2->val.type == NumberType::INTEGER);
   REQUIRE(lhs_2->val.integerNumber == 2);
 
-  auto *lhs_y = dynamic_cast<babycpp::parser::VariableExprAST *>(lhs_2y->rhs);
+  auto *lhs_y = dynamic_cast<VariableExprAST *>(lhs_2y->rhs);
   REQUIRE(lhs_y != nullptr);
   REQUIRE(lhs_y->name == "y");
 }
@@ -239,32 +249,32 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
 
   auto *p = parser.parseExpression();
   REQUIRE(p != nullptr);
-  auto *firstBin = dynamic_cast<babycpp::parser::BinaryExprAST *>(p);
+  auto *firstBin = dynamic_cast<BinaryExprAST *>(p);
   REQUIRE(firstBin != nullptr);
   REQUIRE(firstBin->op == "+");
 
-  auto *lhs_x = dynamic_cast<babycpp::parser::VariableExprAST *>(firstBin->lhs);
+  auto *lhs_x = dynamic_cast<VariableExprAST *>(firstBin->lhs);
   REQUIRE(lhs_x != nullptr);
   REQUIRE(lhs_x->name == "x");
 
-  auto *rhs_2yz = dynamic_cast<babycpp::parser::BinaryExprAST *>(firstBin->rhs);
+  auto *rhs_2yz = dynamic_cast<BinaryExprAST *>(firstBin->rhs);
   REQUIRE(rhs_2yz != nullptr);
   REQUIRE(rhs_2yz->op == "*");
 
-  auto *lhs_2 = dynamic_cast<babycpp::parser::NumberExprAST *>(rhs_2yz->lhs);
+  auto *lhs_2 = dynamic_cast<NumberExprAST *>(rhs_2yz->lhs);
   REQUIRE(lhs_2 != nullptr);
   REQUIRE(lhs_2->val.type == NumberType::FLOAT);
   REQUIRE(lhs_2->val.floatNumber == Approx(2.0f));
 
-  auto *rhs_yz = dynamic_cast<babycpp::parser::BinaryExprAST *>(rhs_2yz->rhs);
+  auto *rhs_yz = dynamic_cast<BinaryExprAST *>(rhs_2yz->rhs);
   REQUIRE(rhs_yz != nullptr);
   REQUIRE(rhs_yz->op == "+");
 
-  auto *lhs_y = dynamic_cast<babycpp::parser::VariableExprAST *>(rhs_yz->lhs);
+  auto *lhs_y = dynamic_cast<VariableExprAST *>(rhs_yz->lhs);
   REQUIRE(lhs_y != nullptr);
   REQUIRE(lhs_y->name == "y");
 
-  auto *rhs_z = dynamic_cast<babycpp::parser::VariableExprAST *>(rhs_yz->rhs);
+  auto *rhs_z = dynamic_cast<VariableExprAST *>(rhs_yz->rhs);
   REQUIRE(rhs_z != nullptr);
   REQUIRE(rhs_z->name == "z");
 }
@@ -276,24 +286,24 @@ TEST_CASE("Testing expression from top level", "[parser]") {
 
   auto *p = parser.parseStatement();
   REQUIRE(p != nullptr);
-  auto *p_casted = dynamic_cast<babycpp::parser::VariableExprAST *>(p);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->value != nullptr);
 
   auto *value_p =
-      dynamic_cast<babycpp::parser::BinaryExprAST *>(p_casted->value);
+      dynamic_cast<BinaryExprAST *>(p_casted->value);
   REQUIRE(value_p != nullptr);
   REQUIRE(value_p->op == "+");
 
   auto *value_lhs =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(value_p->lhs);
+      dynamic_cast<VariableExprAST *>(value_p->lhs);
   REQUIRE(value_lhs != nullptr);
   REQUIRE(value_lhs->name == "y");
   REQUIRE(value_lhs->value == nullptr);
   REQUIRE(value_lhs->datatype == 0);
 
   auto *value_rhs =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(value_p->rhs);
+      dynamic_cast<VariableExprAST *>(value_p->rhs);
   REQUIRE(value_rhs != nullptr);
   REQUIRE(value_rhs->name == "z");
   REQUIRE(value_rhs->value == nullptr);
@@ -331,7 +341,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   auto *statement = p->body[1];
   REQUIRE(statement->flags.isReturn == true);
   auto *statement_casted =
-      dynamic_cast<babycpp::parser::VariableExprAST *>(statement);
+      dynamic_cast<VariableExprAST *>(statement);
   REQUIRE(statement_casted != nullptr);
   REQUIRE(statement_casted->name == "avg");
 

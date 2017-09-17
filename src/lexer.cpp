@@ -139,7 +139,7 @@ bool Lexer::lookAhead(uint32_t count)
         gettok();
         if(currtok == tok_eof || currtok == tok_no_match)
         {
-            //lookAheadTooken.clear();
+            //lookAheadToken.clear();
             return false;
         }
         tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
