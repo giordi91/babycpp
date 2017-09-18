@@ -23,6 +23,7 @@ using lexer::Number;
 
 struct ASTFlags {
   bool isReturn : 1;
+  bool isDefinition : 1;
 };
 
 struct Argument {
@@ -51,7 +52,6 @@ struct NumberExprAST : public ExprAST {
   }
   llvm::Value *codegen(Codegenerator *gen) const override;
 
-  // keeping it public mainly for testability purposes
   Number val;
 };
 
@@ -68,6 +68,8 @@ struct BinaryExprAST : public ExprAST {
   ExprAST *lhs, *rhs;
   explicit BinaryExprAST(std::string &op, ExprAST *lhs, ExprAST *rhs)
       : op(op), lhs(lhs), rhs(rhs) {}
+
+  llvm::Value *codegen(Codegenerator *gen) const override;
 };
 
 struct CallExprAST : public ExprAST {
@@ -111,6 +113,7 @@ struct Codegenerator {
     os.flush();
     return outs;
   }
+
 
   lexer::Lexer lexer;
   parser::Parser parser;

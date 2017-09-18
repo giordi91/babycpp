@@ -26,6 +26,47 @@ Codegenerator::Codegenerator()
     : lexer(), parser(&lexer), context(), builder(context),
       module("", context) {}
 llvm::Value *VariableExprAST::codegen(Codegenerator *gen) const {
+
+  // first we try to see if the variable is already defined at scope
+  // level
+  Value *v = gen->namedValues[name];
+  // here we extract the variable from the scope.
+  // if we get a nullptr and the variable is not a definition
+  // we got an error
+  if (v == nullptr && !flags.isDefinition) {
+    std::cout << "Error variable " << name << " not defined" << std::endl;
+    return nullptr;
+  }
+
+  // if we get here it means the variable needs to be defined
+  // TODO(giordi) implement alloca for variable definition
+  return v;
+}
+
+llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) const {
+  // generating code recursively for left and right end side
+  Value *L = lhs->codegen(gen);
+  Value *R = rhs->codegen(gen);
+
+  if (L == nullptr || R == nullptr) {
+    return nullptr;
+  }
+
+  // checking the operator to generate the correct operation
+  if (op == "+") {
+    return gen->builder.CreateFAdd(L, R, "addtmp");
+  } else if (op == "-") {
+    return gen->builder.CreateFSub(L, R, "subtmp");
+  } else if (op == "*") {
+    return gen->builder.CreateFMul(L, R, "multmp");
+  } else if (op == "/") {
+    return gen->builder.CreateFDiv(L, R, "multmp");
+  } else if (op == "<") {
+    L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
+    return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
+                                     "booltmp");
+  }
+  std::cout << "error unrecognized operator" << std::endl;
   return nullptr;
 }
 } // namespace codegen

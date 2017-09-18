@@ -156,7 +156,28 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 3242235);
 }
+TEST_CASE("Testing * operator with no space", "[lexer]") {
 
+  //in a situation like this, although pointers are not supported
+  //yet, there is the chance that "x*" will be parsed as a pointer
+  //and not as an operator
+  std::string str{" x*4 "};
+  Lexer lex;
+  lex.initFromStr(str);
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "x");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_operator);
+  REQUIRE(lex.identifierStr == "*");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.type == Token::tok_int);
+  REQUIRE(lex.value.integerNumber == 4);
+}
 TEST_CASE("Testing extern tok", "[lexer]") {
   std::string str{" extern sin( float x);"};
   Lexer lex;
@@ -186,7 +207,7 @@ TEST_CASE("Testing extern tok", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_end_statement);
 }
 
-TEST_CASE("Testing multiline", "[lexer]") {
+TEST_CASE("Testing multi line", "[lexer]") {
 	std::string str{ "x \n  2.0" };
 	Lexer lex;
 	lex.initFromStr(str);

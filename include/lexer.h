@@ -9,7 +9,7 @@ namespace babycpp {
 namespace lexer {
 
 static const std::regex MAIN_REGEX(
-    R"([ \t]*([[:alpha:]]\w*\b[*]?))"  // here we try to catch a common
+    R"([ \t]*([[:alpha:]]\w*\b))"  // here we try to catch a common
                                        // identifier either
     R"(|[ \t]*([\d.]+))"               // here we match digits
     R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
@@ -83,8 +83,8 @@ struct MovableToken {
 
 struct Lexer {
 
-  Lexer() : expr(MAIN_REGEX) {}
-  Lexer(std::regex &reg) : expr(reg) {}
+  explicit Lexer() : expr(MAIN_REGEX) {}
+  explicit Lexer(std::regex &reg) : expr(reg) {}
 
   inline void initFromStr(const std::string &str) {
     data = str;
