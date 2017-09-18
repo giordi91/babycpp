@@ -39,7 +39,7 @@ struct ExprAST {
   ExprAST() = default;
   ExprAST(int type) : datatype(type) {}
   virtual ~ExprAST() = default;
-  virtual llvm::Value *codegen(Codegenerator *gen) const { return nullptr; };
+  virtual llvm::Value *codegen(Codegenerator *gen) { return nullptr; };
 
   int datatype = 0;
   ASTFlags flags;
@@ -50,7 +50,7 @@ struct NumberExprAST : public ExprAST {
     // TODO(giordi) add assert for it to be a datatype token
     datatype = val.type;
   }
-  llvm::Value *codegen(Codegenerator *gen) const override;
+  llvm::Value *codegen(Codegenerator *gen) override;
 
   Number val;
 };
@@ -60,7 +60,7 @@ struct VariableExprAST : public ExprAST {
   ExprAST *value;
   explicit VariableExprAST(const std::string &name, ExprAST *invalue, int type)
       : ExprAST(type), name{name}, value(invalue) {}
-  llvm::Value *codegen(Codegenerator *gen) const override;
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 struct BinaryExprAST : public ExprAST {
@@ -69,7 +69,7 @@ struct BinaryExprAST : public ExprAST {
   explicit BinaryExprAST(std::string &op, ExprAST *lhs, ExprAST *rhs)
       : op(op), lhs(lhs), rhs(rhs) {}
 
-  llvm::Value *codegen(Codegenerator *gen) const override;
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 struct CallExprAST : public ExprAST {
@@ -88,7 +88,7 @@ struct PrototypeAST : public ExprAST {
   explicit PrototypeAST(int retType, const std::string &name,
                         const std::vector<Argument> &args, bool externProto)
       : ExprAST(retType), name(name), args(args), isExtern(externProto) {}
-    llvm::Value *codegen(Codegenerator *gen) const override;
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 struct FunctionAST : public ExprAST {
@@ -97,7 +97,7 @@ struct FunctionAST : public ExprAST {
 
   explicit FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
       : proto(inproto), body(inbody) {}
-    llvm::Value *codegen(Codegenerator *gen) const override;
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 struct Codegenerator {
@@ -116,6 +116,9 @@ struct Codegenerator {
     return outs;
   }
 
+  int omogenizeOperation(ExprAST *L, ExprAST *R,
+	  llvm::Value** Lvalue,
+	  llvm::Value** Rvalue);
 
   lexer::Lexer lexer;
   parser::Parser parser;

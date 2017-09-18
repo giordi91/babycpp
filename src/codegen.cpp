@@ -9,7 +9,7 @@ namespace codegen {
 
 using llvm::Value;
 
-Value *NumberExprAST::codegen(Codegenerator *gen) const {
+Value *NumberExprAST::codegen(Codegenerator *gen) {
 
   if (val.type == Token::tok_float) {
     return llvm::ConstantFP::get(gen->context, llvm::APFloat(val.floatNumber));
@@ -26,7 +26,7 @@ Value *NumberExprAST::codegen(Codegenerator *gen) const {
 Codegenerator::Codegenerator()
     : lexer(), parser(&lexer), context(), builder(context),
       module("", context) {}
-llvm::Value *VariableExprAST::codegen(Codegenerator *gen) const {
+llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
   // first we try to see if the variable is already defined at scope
   // level
@@ -44,7 +44,34 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) const {
   return v;
 }
 
-llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) const {
+int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
+                                      llvm::Value **Lvalue,
+                                      llvm::Value **Rvalue) {
+
+  int Ltype = L->datatype;
+  int Rtype = L->datatype;
+
+  if (Ltype == 0 || Rtype == 0) {
+    std::cout << "error cannot deduce output type of operation" << std::endl;
+    return -1;
+  }
+
+  if (Ltype == Rtype) {
+    // same type nothing to do here
+    return Ltype;
+  }
+
+  if (Ltype == Token::tok_float && Rtype == Token::tok_int) {
+    // need to convert R side
+    *Rvalue = builder.CreateUIToFP(*Rvalue, llvm::Type::getFloatTy(context),
+                                   "intToFPcast");
+  } else if (Rtype == Token::tok_float && Ltype == Token::tok_int) {
+    // need to convert L side
+    *Lvalue = builder.CreateUIToFP(*Lvalue, llvm::Type::getFloatTy(context),
+                                   "intToFPcast");
+  }
+}
+llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   // generating code recursively for left and right end side
   Value *L = lhs->codegen(gen);
   Value *R = rhs->codegen(gen);
@@ -52,6 +79,8 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) const {
   if (L == nullptr || R == nullptr) {
     return nullptr;
   }
+  
+  datatype = gen->omogenizeOperation(lhs,rhs, &L,&R);
 
   // checking the operator to generate the correct operation
   if (op == "+") {
@@ -63,6 +92,7 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) const {
   } else if (op == "/") {
     return gen->builder.CreateFDiv(L, R, "divtmp");
   } else if (op == "<") {
+    // TODO(giordi) fix this, to return int?
     L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
     return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
                                      "booltmp");
@@ -71,11 +101,25 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) const {
   return nullptr;
 }
 
-llvm::Value *PrototypeAST::codegen(Codegenerator *gen) const {
-  std::vector<llvm::Type *> Doubles(args.size(),
-                                    llvm::Type::getDoubleTy(gen->context));
-  auto *funcType = llvm::FunctionType::get(
-      llvm::Type::getDoubleTy(gen->context), Doubles, false);
+inline llvm::Type *getType(int type, Codegenerator *gen) {
+  if (type == Token::tok_float) {
+    return llvm::Type::getFloatTy(gen->context);
+  } else {
+    return llvm::Type::getInt32Ty(gen->context);
+  }
+}
+
+llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
+  uint32_t argSize = args.size();
+  std::vector<llvm::Type *> funcArgs(argSize);
+  // generating args with correct type
+  for (uint32_t t = 0; t < argSize; ++t) {
+    const auto &astArg = args[t];
+    funcArgs[t] = getType(astArg.type, gen);
+  }
+
+  llvm::Type *returnType = getType(datatype, gen);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
 
   auto *function = llvm::Function::Create(
       funcType, llvm::Function::ExternalLinkage, name, &gen->module);
@@ -87,14 +131,14 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) const {
   return function;
 }
 
-llvm::Value *FunctionAST::codegen(Codegenerator *gen) const {
+llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   //// First, check for an existing function from a previous 'extern'
   /// declaration.
   llvm::Function *function = gen->module.getFunction(proto->name);
 
   if (function == nullptr) {
     Value *p = proto->codegen(gen);
-    function = static_cast<llvm::Function*>(p);
+    function = static_cast<llvm::Function *>(p);
   }
   if (function == nullptr) {
     std::cout << "error generating protoype code gen" << std::endl;
