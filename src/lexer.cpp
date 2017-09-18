@@ -52,10 +52,10 @@ int processNumber(const std::string &str, Lexer* L) {
   if (dotFound) {
     // it means is a floating point
     L->value.floatNumber = std::stof(str);
-    L->value.type = NumberType::FLOAT;
+    L->value.type = Token::tok_float;
   } else {
     L->value.integerNumber = std::stoi(str);
-    L->value.type = NumberType::INTEGER;
+    L->value.type = Token::tok_int;
   }
   return tok_number;
 }

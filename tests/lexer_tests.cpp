@@ -4,7 +4,6 @@
 #include <lexer.h>
 
 using babycpp::lexer::Lexer;
-using babycpp::lexer::NumberType;
 using babycpp::lexer::Token;
 using babycpp::lexer::MovableToken;
 
@@ -58,15 +57,15 @@ TEST_CASE("Testing numbers tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 12334);
 
   str = "0.3234214";
   lex.initFromStr(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::FLOAT);
-  REQUIRE(lex.value.floatNumber == Approx(0.3234214));
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(0.3234214f));
 
   str = "0.3.4214";
   lex.initFromStr(str);
@@ -82,8 +81,8 @@ TEST_CASE("Testing numbers tok", "[lexer]") {
   lex.initFromStr(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::FLOAT);
-  REQUIRE(lex.value.floatNumber == Approx(3240));
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(3240.0f));
 }
 
 TEST_CASE("Testing operators tok", "[lexer]") {
@@ -97,7 +96,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 99);
 
   str = " - 0.314";
@@ -108,8 +107,8 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::FLOAT);
-  REQUIRE(lex.value.floatNumber == Approx(0.314));
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(0.314f));
 
   str = " * 1191";
   lex.initFromStr(str);
@@ -119,7 +118,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 1191);
 
   str = " / 0.1135";
@@ -130,8 +129,8 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::FLOAT);
-  REQUIRE(lex.value.floatNumber == Approx(0.1135));
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(0.1135f));
 
 
 
@@ -143,7 +142,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 19);
 
   str = " = 3242235";
@@ -154,7 +153,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
-  REQUIRE(lex.value.type == NumberType::INTEGER);
+  REQUIRE(lex.value.type == Token::tok_int);
   REQUIRE(lex.value.integerNumber == 3242235);
 }
 
@@ -199,8 +198,8 @@ TEST_CASE("Testing multiline", "[lexer]") {
 	lex.gettok();
 	REQUIRE(lex.currtok == Token::tok_number);
 	REQUIRE(lex.lineNumber== 2);
-	REQUIRE(lex.value.type== NumberType::FLOAT);
-	REQUIRE(lex.value.floatNumber== Approx(2.0));
+	REQUIRE(lex.value.type== Token::tok_float);
+	REQUIRE(lex.value.floatNumber== Approx(2.0f));
 }
 
 TEST_CASE("Testing testing buffering", "[lexer]") {
@@ -222,7 +221,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
     lex.gettok();
     REQUIRE(lex.lookAheadToken.size() ==2);
 	REQUIRE(lex.currtok == Token::tok_number);
-	REQUIRE(lex.value.type== NumberType::INTEGER);
+	REQUIRE(lex.value.type== Token::tok_int);
 	REQUIRE(lex.value.integerNumber== 12);
 
     lex.gettok();
@@ -233,8 +232,8 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
     lex.gettok();
     REQUIRE(lex.lookAheadToken.empty());
 	REQUIRE(lex.currtok == Token::tok_number);
-	REQUIRE(lex.value.type== NumberType::FLOAT);
-	REQUIRE(lex.value.floatNumber == Approx(3.14));
+	REQUIRE(lex.value.type== Token::tok_float);
+	REQUIRE(lex.value.floatNumber == Approx(3.14f));
 
     //here the buffer should be emtpy
     lex.gettok();

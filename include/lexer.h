@@ -15,7 +15,7 @@ static const std::regex MAIN_REGEX(
     R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
     R"(|[ \s]([\r\n|\r|\n]))"          // catching new line combinations
 
-);
+    );
 
 enum Token {
   tok_eof = -1,
@@ -40,7 +40,7 @@ enum Token {
   tok_close_round = -13,
   tok_end_statement = -14,
   tok_comma = -15,
-  tok_return= -16,
+  tok_return = -16,
 
   // error codes
   tok_empty_lexer = -2000,
@@ -49,7 +49,7 @@ enum Token {
   tok_unsupported_char = -2003,
 };
 
-enum class NumberType { INTEGER = 0, FLOAT = 1 };
+// enum class NumberType { INTEGER = 0, FLOAT = 1 };
 
 struct Number {
   // using a anonymous union to be able to read the data
@@ -58,7 +58,8 @@ struct Number {
     float floatNumber;
     int integerNumber;
   };
-  NumberType type;
+  // one of the tokens defining a number type
+  Token type;
 };
 
 static const std::unordered_map<std::string, Token> KEYWORDS{

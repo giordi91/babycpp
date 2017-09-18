@@ -6,7 +6,6 @@
 
 using babycpp::codegen::Codegenerator;
 using babycpp::lexer::Lexer;
-using babycpp::lexer::NumberType;
 using babycpp::lexer::Token;
 using babycpp::parser::Parser;
 
@@ -38,7 +37,4 @@ TEST_CASE("Testing code gen number int", "[codegen]") {
   std::string outs= gen.printLlvmValue(val);
   REQUIRE(outs == "i32 39");
 
-
-  //REQUIRE(node->val.type == NumberType::FLOAT);
-  //REQUIRE(node->val.floatNumber == Approx(1.0));
 }

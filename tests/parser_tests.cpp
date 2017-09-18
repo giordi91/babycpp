@@ -4,7 +4,6 @@
 #include <parser.h>
 
 using babycpp::lexer::Lexer;
-using babycpp::lexer::NumberType;
 using babycpp::lexer::Token;
 using babycpp::parser::Parser;
 using babycpp::codegen::Argument;
@@ -27,7 +26,7 @@ TEST_CASE("Testing number parser", "[parser]") {
 
   auto *node = parser.parseNumber();
 
-  REQUIRE(node->val.type == NumberType::FLOAT);
+  REQUIRE(node->val.type == Token::tok_float);
   REQUIRE(node->val.floatNumber == Approx(1.0));
 }
 
@@ -94,7 +93,7 @@ TEST_CASE("Testing variable definition", "[parser]") {
   auto *v_casted =
       dynamic_cast<NumberExprAST *>(p_casted->value);
   REQUIRE(v_casted != nullptr);
-  REQUIRE(v_casted->val.type == NumberType::INTEGER);
+  REQUIRE(v_casted->val.type == Token::tok_int);
   REQUIRE(v_casted->val.integerNumber == 2);
 }
 
@@ -233,9 +232,10 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 
   auto *lhs_2 = dynamic_cast<NumberExprAST *>(lhs_2y->lhs);
   REQUIRE(lhs_2 != nullptr);
-  //TODO(giordi) change number type to just use token
+  //here both the datatype of the expr and the specific type
+  //of the number are set to int
   REQUIRE(lhs_2->datatype == Token::tok_int);
-  REQUIRE(lhs_2->val.type == NumberType::INTEGER);
+  REQUIRE(lhs_2->val.type == Token::tok_int);
   REQUIRE(lhs_2->val.integerNumber == 2);
 
   auto *lhs_y = dynamic_cast<VariableExprAST *>(lhs_2y->rhs);
@@ -264,7 +264,7 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
 
   auto *lhs_2 = dynamic_cast<NumberExprAST *>(rhs_2yz->lhs);
   REQUIRE(lhs_2 != nullptr);
-  REQUIRE(lhs_2->val.type == NumberType::FLOAT);
+  REQUIRE(lhs_2->val.type == Token::tok_float);
   REQUIRE(lhs_2->val.floatNumber == Approx(2.0f));
 
   auto *rhs_yz = dynamic_cast<BinaryExprAST *>(rhs_2yz->rhs);

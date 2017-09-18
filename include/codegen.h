@@ -14,6 +14,7 @@
 namespace babycpp {
 
 using lexer::Lexer;
+using lexer::Token;
 using parser::Parser;
 
 namespace codegen {
@@ -45,11 +46,8 @@ struct ExprAST {
 
 struct NumberExprAST : public ExprAST {
   explicit NumberExprAST(Number val) : val(val) {
-    if (val.type == lexer::NumberType::FLOAT) {
-      datatype = lexer::Token::tok_float;
-    } else {
-      datatype = lexer::Token::tok_int;
-    }
+    // TODO(giordi) add assert for it to be a datatype token
+    datatype = val.type;
   }
   llvm::Value *codegen(Codegenerator *gen) const override;
 
