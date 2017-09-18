@@ -20,7 +20,7 @@ TEST_CASE("Testing code gen number float", "[codegen]") {
   auto * val = node->codegen(&gen);
   REQUIRE(val!= nullptr);
 
-  std::string outs= gen.printLlvmValue(val);
+  std::string outs= gen.printLlvmData(val);
   REQUIRE(outs == "float 1.000000e+00");
 }
 TEST_CASE("Testing code gen number int", "[codegen]") {
@@ -34,7 +34,7 @@ TEST_CASE("Testing code gen number int", "[codegen]") {
   auto * val = node->codegen(&gen);
   REQUIRE(val!= nullptr);
 
-  std::string outs= gen.printLlvmValue(val);
+  std::string outs= gen.printLlvmData(val);
   REQUIRE(outs == "i32 39");
 
 }
@@ -56,7 +56,7 @@ TEST_CASE("Testing number variable ref gen", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
+  std::string outs = gen.printLlvmData(v);
   REQUIRE(outs == "float %x");
 
 }
@@ -76,7 +76,7 @@ TEST_CASE("Testing binop codegen plus", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
+  std::string outs = gen.printLlvmData(v);
   REQUIRE(outs == "  %addtmp = fadd float %x, 2.000000e+00");
 }
 
@@ -95,7 +95,7 @@ TEST_CASE("Testing binop codegen -", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
+  std::string outs = gen.printLlvmData(v);
   REQUIRE(outs == "  %subtmp = fsub float %yy, 2.000000e+00");
 }
 
@@ -114,7 +114,7 @@ TEST_CASE("Testing binop codegen *", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
+  std::string outs = gen.printLlvmData(v);
   REQUIRE(outs == "  %multmp = fmul float %temp, 4.000000e+00");
 }
 
@@ -133,8 +133,8 @@ TEST_CASE("Testing binop codegen /", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
-  REQUIRE(outs == "  %multmp = fdiv float %temp, 1.000000e+01");
+  std::string outs = gen.printLlvmData(v);
+  REQUIRE(outs == "  %divtmp = fdiv float %temp, 1.000000e+01");
 }
 TEST_CASE("Testing binop codegen <", "[codegen]") {
   Codegenerator gen;
@@ -151,9 +151,23 @@ TEST_CASE("Testing binop codegen <", "[codegen]") {
   REQUIRE(v!= nullptr);
 
   //converting Value to string and check result
-  std::string outs = gen.printLlvmValue(v);
+  std::string outs = gen.printLlvmData(v);
   //here we are only checking the last result, where we convert from bool to double
   //since we only support doubles, when we will have a function the whole body
   //will be there
   REQUIRE(outs == "  %booltmp = uitofp i1 %cmptmp to double");
+}
+
+TEST_CASE("Testing function codegen simple add", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float test(float x){ x+1.0;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  //auto v = p->codegen(&gen);
+  //std::string outs = gen.printLlvmData(v);
+  //std::string expected{"\ndefine float @test(float %x) {\nentry:\n  %addtmp = fadd float %x, 1.000000e+00\n  ret double %addtmp\n}\n"};
+
+  //REQUIRE(outs == expected);
 }

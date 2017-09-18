@@ -88,6 +88,7 @@ struct PrototypeAST : public ExprAST {
   explicit PrototypeAST(int retType, const std::string &name,
                         const std::vector<Argument> &args, bool externProto)
       : ExprAST(retType), name(name), args(args), isExtern(externProto) {}
+    llvm::Value *codegen(Codegenerator *gen) const override;
 };
 
 struct FunctionAST : public ExprAST {
@@ -96,6 +97,7 @@ struct FunctionAST : public ExprAST {
 
   explicit FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
       : proto(inproto), body(inbody) {}
+    llvm::Value *codegen(Codegenerator *gen) const override;
 };
 
 struct Codegenerator {
@@ -106,7 +108,7 @@ struct Codegenerator {
     // getting first token so the parser is ready to go
     lexer.gettok();
   };
-  static std::string printLlvmValue(llvm::Value *v) {
+  static std::string printLlvmData(llvm::Value *v) {
     std::string outs;
     llvm::raw_string_ostream os(outs);
     v->print(os, false);
