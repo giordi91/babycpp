@@ -1,7 +1,7 @@
 #include "catch.hpp"
+#include <codegen.h>
 #include <iostream>
 #include <parser.h>
-#include <codegen.h>
 
 using babycpp::lexer::Lexer;
 using babycpp::lexer::NumberType;
@@ -233,7 +233,8 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 
   auto *lhs_2 = dynamic_cast<NumberExprAST *>(lhs_2y->lhs);
   REQUIRE(lhs_2 != nullptr);
-  REQUIRE(lhs_2->datatype == 0);
+  //TODO(giordi) change number type to just use token
+  REQUIRE(lhs_2->datatype == Token::tok_int);
   REQUIRE(lhs_2->val.type == NumberType::INTEGER);
   REQUIRE(lhs_2->val.integerNumber == 2);
 

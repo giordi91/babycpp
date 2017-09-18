@@ -85,7 +85,7 @@ struct Lexer {
   Lexer() : expr(MAIN_REGEX) {}
   Lexer(std::regex &reg) : expr(reg) {}
 
-  void inline initFromStr(const std::string &str) {
+  inline void initFromStr(const std::string &str) {
     data = str;
     start = data.c_str();
     lineNumber = 1;
