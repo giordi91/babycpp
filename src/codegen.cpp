@@ -191,7 +191,15 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
       }
     }
   }
-  verifyFunction(*function);
+
+  std::string outs;
+  llvm::raw_string_ostream os(outs);
+  bool res = verifyFunction(*function, &os);
+  if (res) {
+    os.flush();
+    std::cout << "error " <<outs<<std::endl;
+    return nullptr;
+  }
   return function;
 }
 
