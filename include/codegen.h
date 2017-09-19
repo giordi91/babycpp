@@ -36,12 +36,8 @@ struct Argument {
 struct Codegenerator;
 // base struct for all ast expr
 struct ExprAST {
-  ExprAST() {
-    flags.isReturn = 0;
-  };
-  ExprAST(int type) : datatype(type) {
-    flags.isReturn = 0;
-  }
+  ExprAST() { flags.isReturn = 0; };
+  ExprAST(int type) : datatype(type) { flags.isReturn = 0; }
   virtual ~ExprAST() = default;
   virtual llvm::Value *codegen(Codegenerator *gen) { return nullptr; };
 
@@ -82,6 +78,7 @@ struct CallExprAST : public ExprAST {
 
   explicit CallExprAST(const std::string &callee, std::vector<ExprAST *> &args)
       : ExprAST(), callee(callee), args(args) {}
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 struct PrototypeAST : public ExprAST {
@@ -122,7 +119,7 @@ struct Codegenerator {
 
   int omogenizeOperation(ExprAST *L, ExprAST *R, llvm::Value **Lvalue,
                          llvm::Value **Rvalue);
-
+  static bool compareASTArgWithLLVMArg(ExprAST *astArg, llvm::Argument* llvmArg);
   lexer::Lexer lexer;
   parser::Parser parser;
 
@@ -131,6 +128,7 @@ struct Codegenerator {
   llvm::Module module;
 
   std::unordered_map<std::string, llvm::Value *> namedValues;
+  static const std::unordered_map<int, int> AST_LLVM_MAP;
 };
 
 } // namespace codegen

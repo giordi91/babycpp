@@ -157,7 +157,6 @@ TEST_CASE("Testing binop codegen <", "[codegen]") {
 
 TEST_CASE("Testing function codegen simple add", "[codegen]") {
 
-	std::cout << "@####################" << std::endl;
   Codegenerator gen;
   gen.initFromString("float test(float x){ return x+1.0;}");
   auto p = gen.parser.parseFunction();
@@ -181,7 +180,6 @@ TEST_CASE("Testing function codegen conversion", "[codegen]") {
 	auto v = p->codegen(&gen);
 	REQUIRE(v != nullptr);
 	std::string outs = gen.printLlvmData(v);
-	std::cout << outs << std::endl;
 	std::string expected = 
 		"\ndefine float @complexAdd(float %x, i32 %y) {\n"
 		"entry:\n"

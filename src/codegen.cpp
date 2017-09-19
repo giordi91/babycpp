@@ -9,6 +9,11 @@ namespace codegen {
 
 using llvm::Value;
 
+const std::unordered_map<int, int> Codegenerator::AST_LLVM_MAP{
+    {Token::tok_float, llvm::Type::TypeID::FloatTyID},
+    {Token::tok_int, llvm::Type::TypeID::IntegerTyID},
+};
+
 Value *NumberExprAST::codegen(Codegenerator *gen) {
 
   if (val.type == Token::tok_float) {
@@ -34,23 +39,19 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
   // we got an error
-  if (v == nullptr && datatype ==0) {
+  if (v == nullptr && datatype == 0) {
     std::cout << "Error variable " << name << " not defined" << std::endl;
     return nullptr;
   }
 
-  if (datatype ==0)
-  {
-	  if (v->getType()->getTypeID() == llvm::Type::FloatTyID) {
-		  datatype = Token::tok_float;
-	  }
-	  else {
-		  datatype = Token::tok_int;
-	  }
-  }
-  else
-  {
-	  std::cout << "not definition " << name << std::endl;
+  if (datatype == 0) {
+    if (v->getType()->getTypeID() == llvm::Type::FloatTyID) {
+      datatype = Token::tok_float;
+    } else {
+      datatype = Token::tok_int;
+    }
+  } else {
+    std::cout << "not definition " << name << std::endl;
   }
 
   // if we get here it means the variable needs to be defined
@@ -79,20 +80,19 @@ int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
     // need to convert R side
     *Rvalue = builder.CreateUIToFP(*Rvalue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
-	//TODO(giordi) implement wraning log
-	//std::cout << "warning: implicit conversion int->float" << std::endl;
-	return Token::tok_float;
+    // TODO(giordi) implement wraning log
+    // std::cout << "warning: implicit conversion int->float" << std::endl;
+    return Token::tok_float;
   } else if (Rtype == Token::tok_float && Ltype == Token::tok_int) {
     // need to convert L side
     *Lvalue = builder.CreateUIToFP(*Lvalue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
-	//TODO(giordi) implement wraning log
-	//std::cout << "warning: implicit conversion int->float" << std::endl;
-	return Token::tok_float;
+    // TODO(giordi) implement wraning log
+    // std::cout << "warning: implicit conversion int->float" << std::endl;
+    return Token::tok_float;
   }
 
-
-  //should never reach this
+  // should never reach this
   return -1;
 }
 llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
@@ -193,6 +193,53 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   }
   verifyFunction(*function);
   return function;
+}
+
+bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
+                                             llvm::Argument *llvmArg) {
+  auto found = AST_LLVM_MAP.find(astArg->datatype);
+  if (found != AST_LLVM_MAP.end()) {
+    if (found->second == llvmArg->getType()->getTypeID()) {
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+
+llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
+  // lests try to get the function
+  llvm::Function *calleeF = gen->module.getFunction(callee);
+  if (calleeF == nullptr) {
+    std::cout << "error function not defined" << std::endl;
+    return nullptr;
+  }
+
+  // checking function signature
+  if (calleeF->arg_size() != args.size()) {
+    std::cout << "error function call with wrong number of args" << std::endl;
+    return nullptr;
+  }
+  uint32_t argSize = args.size();
+  std::vector<Value *> argValues;
+  argValues.reserve(argSize);
+  for (uint32_t t = 0; t < argSize; ++t) {
+    // check type
+    llvm::Argument *currFunctionArg = calleeF->args().begin() + t;
+    if (!Codegenerator::compareASTArgWithLLVMArg(args[t], currFunctionArg)) {
+      std::cout << "mismatch type for function call argument" << std::endl;
+      return nullptr;
+    }
+    // if we got here the type is correct, so we can push the argument
+    Value *argValuePtr = args[t]->codegen(gen);
+    if (argValuePtr == nullptr) {
+      std::cout << "error in genrating code for function argument" << std::endl;
+      return nullptr;
+    }
+    argValues.push_back(argValuePtr);
+  }
+
+  return gen->builder.CreateCall(calleeF, argValues, "calltmp");
 }
 
 } // namespace codegen
