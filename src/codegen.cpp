@@ -34,9 +34,23 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
   // we got an error
-  if (v == nullptr && !flags.isDefinition) {
+  if (v == nullptr && datatype ==0) {
     std::cout << "Error variable " << name << " not defined" << std::endl;
     return nullptr;
+  }
+
+  if (datatype ==0)
+  {
+	  if (v->getType()->getTypeID() == llvm::Type::FloatTyID) {
+		  datatype = Token::tok_float;
+	  }
+	  else {
+		  datatype = Token::tok_int;
+	  }
+  }
+  else
+  {
+	  std::cout << "not definition " << name << std::endl;
   }
 
   // if we get here it means the variable needs to be defined
@@ -49,7 +63,7 @@ int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
                                       llvm::Value **Rvalue) {
 
   int Ltype = L->datatype;
-  int Rtype = L->datatype;
+  int Rtype = R->datatype;
 
   if (Ltype == 0 || Rtype == 0) {
     std::cout << "error cannot deduce output type of operation" << std::endl;
@@ -65,11 +79,21 @@ int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
     // need to convert R side
     *Rvalue = builder.CreateUIToFP(*Rvalue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
+	//TODO(giordi) implement wraning log
+	//std::cout << "warning: implicit conversion int->float" << std::endl;
+	return Token::tok_float;
   } else if (Rtype == Token::tok_float && Ltype == Token::tok_int) {
     // need to convert L side
     *Lvalue = builder.CreateUIToFP(*Lvalue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
+	//TODO(giordi) implement wraning log
+	//std::cout << "warning: implicit conversion int->float" << std::endl;
+	return Token::tok_float;
   }
+
+
+  //should never reach this
+  return -1;
 }
 llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   // generating code recursively for left and right end side
@@ -79,8 +103,8 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   if (L == nullptr || R == nullptr) {
     return nullptr;
   }
-  
-  datatype = gen->omogenizeOperation(lhs,rhs, &L,&R);
+
+  datatype = gen->omogenizeOperation(lhs, rhs, &L, &R);
 
   // checking the operator to generate the correct operation
   if (op == "+") {

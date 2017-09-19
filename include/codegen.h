@@ -36,8 +36,12 @@ struct Argument {
 struct Codegenerator;
 // base struct for all ast expr
 struct ExprAST {
-  ExprAST() = default;
-  ExprAST(int type) : datatype(type) {}
+  ExprAST() {
+    flags.isReturn = 0;
+  };
+  ExprAST(int type) : datatype(type) {
+    flags.isReturn = 0;
+  }
   virtual ~ExprAST() = default;
   virtual llvm::Value *codegen(Codegenerator *gen) { return nullptr; };
 
@@ -46,7 +50,7 @@ struct ExprAST {
 };
 
 struct NumberExprAST : public ExprAST {
-  explicit NumberExprAST(Number val) : val(val) {
+  explicit NumberExprAST(Number val) : ExprAST(), val(val) {
     // TODO(giordi) add assert for it to be a datatype token
     datatype = val.type;
   }
@@ -67,7 +71,7 @@ struct BinaryExprAST : public ExprAST {
   std::string op;
   ExprAST *lhs, *rhs;
   explicit BinaryExprAST(std::string &op, ExprAST *lhs, ExprAST *rhs)
-      : op(op), lhs(lhs), rhs(rhs) {}
+      : ExprAST(), op(op), lhs(lhs), rhs(rhs) {}
 
   llvm::Value *codegen(Codegenerator *gen) override;
 };
@@ -77,7 +81,7 @@ struct CallExprAST : public ExprAST {
   std::vector<ExprAST *> args;
 
   explicit CallExprAST(const std::string &callee, std::vector<ExprAST *> &args)
-      : callee(callee), args(args) {}
+      : ExprAST(), callee(callee), args(args) {}
 };
 
 struct PrototypeAST : public ExprAST {
@@ -96,7 +100,7 @@ struct FunctionAST : public ExprAST {
   std::vector<ExprAST *> body;
 
   explicit FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
-      : proto(inproto), body(inbody) {}
+      : ExprAST(), proto(inproto), body(inbody) {}
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
@@ -116,9 +120,8 @@ struct Codegenerator {
     return outs;
   }
 
-  int omogenizeOperation(ExprAST *L, ExprAST *R,
-	  llvm::Value** Lvalue,
-	  llvm::Value** Rvalue);
+  int omogenizeOperation(ExprAST *L, ExprAST *R, llvm::Value **Lvalue,
+                         llvm::Value **Rvalue);
 
   lexer::Lexer lexer;
   parser::Parser parser;

@@ -77,7 +77,6 @@ TEST_CASE("Testing binop codegen plus", "[codegen]") {
   REQUIRE(outs == "  %addtmp = fadd float %x, 2.000000e+00");
 }
 
-/*
 TEST_CASE("Testing binop codegen -", "[codegen]") {
   Codegenerator gen;
   gen.initFromString("(yy-2.0)");
@@ -158,6 +157,7 @@ TEST_CASE("Testing binop codegen <", "[codegen]") {
 
 TEST_CASE("Testing function codegen simple add", "[codegen]") {
 
+	std::cout << "@####################" << std::endl;
   Codegenerator gen;
   gen.initFromString("float test(float x){ return x+1.0;}");
   auto p = gen.parser.parseFunction();
@@ -182,6 +182,12 @@ TEST_CASE("Testing function codegen conversion", "[codegen]") {
 	REQUIRE(v != nullptr);
 	std::string outs = gen.printLlvmData(v);
 	std::cout << outs << std::endl;
-
+	std::string expected = 
+		"\ndefine float @complexAdd(float %x, i32 %y) {\n"
+		"entry:\n"
+		"  %intToFPcast = uitofp i32 %y to float\n"
+		"  %addtmp = fadd float %x, %intToFPcast\n"
+		"  ret float %addtmp\n"
+		"}\n";
+  REQUIRE(outs == expected);
 }
-*/
