@@ -170,7 +170,7 @@ TEST_CASE("Testing function codegen simple add", "[codegen]") {
 
   REQUIRE(outs == expected);
 }
-TEST_CASE("Testing function codegen conversion", "[codegen]") {
+TEST_CASE("Testing function codegen mutable variable", "[codegen]") {
 
 	Codegenerator gen;
 	gen.initFromString("float complexAdd(float x, int y){ return x+y;}");
@@ -188,4 +188,19 @@ TEST_CASE("Testing function codegen conversion", "[codegen]") {
 		"  ret float %addtmp\n"
 		"}\n";
   REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing function codegen conversion", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float average(float a, float b) \n { \n"
+                         "float avg = (a+b)/2.0; return avg;}");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  std::cout<<outs<<std::endl;
 }

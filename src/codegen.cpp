@@ -51,11 +51,13 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
       datatype = Token::tok_int;
     }
   } else {
+    //if we got here, it means the variable has a known datatype
+    //but has not been defined yet, this only happens for variable
+    //definitions, so we need to define it, we are gonna do that with
+    //alloca
     std::cout << "not definition " << name << std::endl;
   }
 
-  // if we get here it means the variable needs to be defined
-  // TODO(giordi) implement alloca for variable definition
   return v;
 }
 
