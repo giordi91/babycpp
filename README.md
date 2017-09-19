@@ -34,3 +34,22 @@ First of all some nomeclature:
 **parentheses_expression** = "(" expression ")"
 
 **function_call** = identifier "(" [{identifier} ","}] ")"
+
+
+# Static typing
+
+The way I decided to handle static typing is with a bottom up approach. Each statement is evaluated indipendently and whatever reference might be needed in the current statement must be defined in any previous statement. 
+
+Starting from the bottom, types will be compared between operation taking a left and right hand side, implicit conversion will be added when necessary and the type of the operator AST node will be tagged with the resulting type of the operation. Right now, the language supports only integers and floats which simplify life a lot.
+Here is a simple example. We have a simple statement of type y* (x + 2), the AST looks something like the following:
+
+##
+
+![alt text](https://github.com/giordi91/babycpp/blob/master/images/graph1.png "Basic AST: step 1")
+
+##
+The nodes are color coded based on the type, each node has a type field, most of the AST after parsing is "data less", meaning that we don't know what type the variables are, the only known nodes are the VariableAST nodes that comes from a declaration, for example:
+```c++
+int x = 20;
+```
+The following will boil down to a VariableAST node, whith a value pointing to the right hand side, which is a NumberAST node or can be an expression, the datatype is known at parse time and gets set accordingly. Type is also know for NumberAST nodes and function arguments. 
