@@ -17,7 +17,6 @@ using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
 using babycpp::codegen::VariableExprAST;
 
-
 TEST_CASE("Testing number parser", "[parser]") {
   Lexer lex;
   Parser parser(&lex);
@@ -178,7 +177,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 
 TEST_CASE("Testing identifier and  function call", "[parser]") {
   Lexer lex;
-  lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me)");
+  lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
   Parser parser(&lex);
   lex.gettok();
 
@@ -341,4 +340,25 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   auto *p_eof = parser.parseStatement();
   REQUIRE(p_eof == nullptr);
   REQUIRE(lex.currtok == Token::tok_eof);
+}
+
+TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - 2.0; return temp;}");
+  Parser parser(&lex);
+  lex.gettok();
+  auto *p = parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  auto *statement = p->body[0];
+  auto *statement_casted = dynamic_cast<VariableExprAST *>(statement);
+  REQUIRE(statement_casted != nullptr);
+  REQUIRE(statement_casted->name == "temp");
+  REQUIRE(statement_casted->datatype == Token::tok_float);
+
+  ExprAST *val = statement_casted->value;
+  REQUIRE(val != nullptr);
+
+  auto *statement2 = p->body[1];
+  int i=0;
 }

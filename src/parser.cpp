@@ -106,7 +106,15 @@ ExprAST *Parser::parseExpression() {
       lex->gettok(); // eating assignment operator;
 
       auto *RHS = parseExpression();
-      return new VariableExprAST(lex->identifierStr, RHS, 0);
+      VariableExprAST *LHScasted = dynamic_cast<VariableExprAST *>(LHS);
+      if (LHScasted == nullptr)
+      {
+        std::cout<<"error, LHS of '=' operator must be a variable"<<std::endl;
+        return nullptr;
+      }
+
+      LHScasted->value = RHS;
+      return LHS;
     }
 
     std::cout << "error,  cannot have multiple assignment in a statement"
@@ -196,7 +204,10 @@ ExprAST *Parser::parseDeclaration() {
       // int x = getMagicNumber();
       lex->gettok(); // eat = operator
       auto *RHS = parseExpression();
-      return new VariableExprAST(identifier, RHS, datatype);
+      ExprAST* node = new VariableExprAST(identifier, RHS, datatype);
+      node->flags.isDefinition=true;
+
+      return node ;
     }
       // not supported yet
       // case Token::tok_end_statement:

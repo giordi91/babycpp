@@ -61,13 +61,42 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  if (datatype == 0) {
+  if (flags.isDefinition == true) {
+    llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
+                                  gen->currentScope->getEntryBlock().begin());
+    llvm::Type *varType = getType(datatype, gen);
+    v = tempBuilder.CreateAlloca(varType, 0, name.c_str());
+    gen->namedValues[name.c_str()] = v;
+
+    if (value == nullptr) {
+      std::cout << "error: expected value for value definition" << std::endl;
+      return nullptr;
+    }
+
+    Value *valGen = value->codegen(gen);
+    // return gen->builder.CreateLoad(v, name.c_str());
+    return gen->builder.CreateStore(valGen, v);
+  } else if (datatype == 0) {
     if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
       datatype = Token::tok_float;
     } else {
       datatype = Token::tok_int;
     }
-	return v;
+
+    //now at this point ,we might have a simple variable for
+    //which we gen a load, or we might have an assigment
+    //if it is the case ,we have a value which is not nullptr
+    if(value != nullptr)
+    {
+      Value *valGen = value->codegen(gen);
+      // return gen->builder.CreateLoad(v, name.c_str());
+      return gen->builder.CreateStore(valGen, v);
+    }
+    else {
+      // generating a load
+      return gen->builder.CreateLoad(v, name.c_str());
+    }
+    return v;
   } else {
     std::cout << "not definition " << name << std::endl;
   }
@@ -75,17 +104,10 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // if we get here it means the variable needs to be defined
   // TODO(giordi) implement alloca for variable definition
 
-  if (gen->currentScope == nullptr) {
-	  std::cout << "got no scope for variable declaration" << std::endl;
-    return nullptr;
-  }
-
-  llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
-                                gen->currentScope->getEntryBlock().begin());
-  llvm::Type *varType = getType(datatype, gen);
-  v = tempBuilder.CreateAlloca(varType, 0, name.c_str());
-  gen->namedValues[name.c_str()] = v;
-  return gen->builder.CreateLoad(v, name.c_str());
+  // if (gen->currentScope == nullptr) {
+  //  std::cout << "got no scope for variable declaration" << std::endl;
+  //  return nullptr;
+  //}
 }
 
 int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
@@ -230,10 +252,12 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   bool res = verifyFunction(*function, &os);
   if (res) {
     os.flush();
-    std::cout << "error " << outs << std::endl;
-	std::cout << "============================" << std::endl;
-	gen->printLlvmData(function);
-	std::cout << "============================" << std::endl;
+    std::cout << "error verifying function" << outs << std::endl;
+    std::cout << "here what was generated" << std::endl;
+    // std::string outs;
+    // llvm::raw_string_ostream os(outs);
+    // gen->printLlvmData(function);
+    gen->module.print(llvm::errs(), nullptr);
     return nullptr;
   }
   return function;
