@@ -53,7 +53,6 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // first we try to see if the variable is already defined at scope
   // level
   llvm::AllocaInst *v = gen->namedValues[name];
-  v->getAllocatedType();
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
   // we got an error
@@ -68,12 +67,24 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     } else {
       datatype = Token::tok_int;
     }
+	return v;
   } else {
     std::cout << "not definition " << name << std::endl;
   }
 
   // if we get here it means the variable needs to be defined
   // TODO(giordi) implement alloca for variable definition
+
+  if (gen->currentScope == nullptr) {
+	  std::cout << "got no scope for variable declaration" << std::endl;
+    return nullptr;
+  }
+
+  llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
+                                gen->currentScope->getEntryBlock().begin());
+  llvm::Type *varType = getType(datatype, gen);
+  v = tempBuilder.CreateAlloca(varType, 0, name.c_str());
+  gen->namedValues[name.c_str()] = v;
   return gen->builder.CreateLoad(v, name.c_str());
 }
 
@@ -194,7 +205,8 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   int counter = 0;
   for (auto &arg : function->args()) {
     // Create an alloca for this variable.
-    llvm::AllocaInst *alloca = gen->createEntryBlockAlloca(function, arg.getName(), proto->args[counter++].type);
+    llvm::AllocaInst *alloca = gen->createEntryBlockAlloca(
+        function, arg.getName(), proto->args[counter++].type);
 
     // Store the initial value into the alloca.
     gen->builder.CreateStore(&arg, alloca);
@@ -203,6 +215,7 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
     gen->namedValues[arg.getName()] = alloca;
   }
 
+  gen->currentScope = function;
   for (auto &b : body) {
     if (Value *RetVal = b->codegen(gen)) {
       if (b->flags.isReturn) {
@@ -210,6 +223,7 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
       }
     }
   }
+  gen->currentScope = nullptr;
 
   std::string outs;
   llvm::raw_string_ostream os(outs);
@@ -217,6 +231,9 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   if (res) {
     os.flush();
     std::cout << "error " << outs << std::endl;
+	std::cout << "============================" << std::endl;
+	gen->printLlvmData(function);
+	std::cout << "============================" << std::endl;
     return nullptr;
   }
   return function;

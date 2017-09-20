@@ -138,6 +138,7 @@ struct Codegenerator {
 
   std::unordered_map<std::string, llvm::AllocaInst*> namedValues;
   static const std::unordered_map<int, int> AST_LLVM_MAP;
+  llvm::Function* currentScope = nullptr;
 };
 
 } // namespace codegen
