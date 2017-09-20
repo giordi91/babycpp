@@ -36,8 +36,14 @@ struct Argument {
 struct Codegenerator;
 // base struct for all ast expr
 struct ExprAST {
-  ExprAST() { flags.isReturn = 0; };
-  ExprAST(int type) : datatype(type) { flags.isReturn = 0; }
+  ExprAST() {
+    flags.isReturn = 0;
+    flags.isDefinition = 0;
+  };
+  ExprAST(int type) : datatype(type) {
+    flags.isReturn = 0;
+    flags.isDefinition = 0;
+  }
   virtual ~ExprAST() = default;
   virtual llvm::Value *codegen(Codegenerator *gen) { return nullptr; };
 
@@ -117,9 +123,20 @@ struct Codegenerator {
     return outs;
   }
 
+  static void dumpLlvmData(llvm::Value *v, const std::string &path) {
+    const std::string outs = printLlvmData(v);
+    std::ofstream out(path);
+    out << outs;
+    out.close();
+  }
+  llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *function,
+                                           const std::string &varName,
+                                           int type);
+
   int omogenizeOperation(ExprAST *L, ExprAST *R, llvm::Value **Lvalue,
                          llvm::Value **Rvalue);
-  static bool compareASTArgWithLLVMArg(ExprAST *astArg, llvm::Argument* llvmArg);
+  static bool compareASTArgWithLLVMArg(ExprAST *astArg,
+                                       llvm::Argument *llvmArg);
   lexer::Lexer lexer;
   parser::Parser parser;
 
@@ -127,8 +144,9 @@ struct Codegenerator {
   llvm::IRBuilder<> builder;
   llvm::Module module;
 
-  std::unordered_map<std::string, llvm::Value *> namedValues;
+  std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
   static const std::unordered_map<int, int> AST_LLVM_MAP;
+  llvm::Function *currentScope = nullptr;
 };
 
 } // namespace codegen

@@ -14,6 +14,22 @@ const std::unordered_map<int, int> Codegenerator::AST_LLVM_MAP{
     {Token::tok_int, llvm::Type::TypeID::IntegerTyID},
 };
 
+inline llvm::Type *getType(int type, Codegenerator *gen) {
+  if (type == Token::tok_float) {
+    return llvm::Type::getFloatTy(gen->context);
+  } else {
+    return llvm::Type::getInt32Ty(gen->context);
+  }
+}
+llvm::AllocaInst *
+Codegenerator::createEntryBlockAlloca(llvm::Function *function,
+                                      const std::string &varName, int type) {
+  llvm::IRBuilder<> tempBuilder(&function->getEntryBlock(),
+                                function->getEntryBlock().begin());
+  llvm::Type *varType = getType(type, this);
+  return tempBuilder.CreateAlloca(varType, 0, varName.c_str());
+}
+
 Value *NumberExprAST::codegen(Codegenerator *gen) {
 
   if (val.type == Token::tok_float) {
@@ -31,11 +47,12 @@ Value *NumberExprAST::codegen(Codegenerator *gen) {
 Codegenerator::Codegenerator()
     : lexer(), parser(&lexer), context(), builder(context),
       module("", context) {}
+
 llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
   // first we try to see if the variable is already defined at scope
   // level
-  Value *v = gen->namedValues[name];
+  llvm::AllocaInst *v = gen->namedValues[name];
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
   // we got an error
@@ -44,21 +61,49 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  if (datatype == 0) {
-    if (v->getType()->getTypeID() == llvm::Type::FloatTyID) {
+  if (flags.isDefinition == true) {
+    llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
+                                  gen->currentScope->getEntryBlock().begin());
+    llvm::Type *varType = getType(datatype, gen);
+    v = tempBuilder.CreateAlloca(varType, 0, name.c_str());
+    gen->namedValues[name.c_str()] = v;
+
+    if (value == nullptr) {
+      std::cout << "error: expected value for value definition" << std::endl;
+      return nullptr;
+    }
+
+    Value *valGen = value->codegen(gen);
+    // return gen->builder.CreateLoad(v, name.c_str());
+    return gen->builder.CreateStore(valGen, v);
+  } else if (datatype == 0) {
+    if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
       datatype = Token::tok_float;
     } else {
       datatype = Token::tok_int;
     }
+
+    // now at this point ,we might have a simple variable for
+    // which we gen a load, or we might have an assigment
+    // if it is the case ,we have a value which is not nullptr
+    if (value != nullptr) {
+      Value *valGen = value->codegen(gen);
+      // return gen->builder.CreateLoad(v, name.c_str());
+      return gen->builder.CreateStore(valGen, v);
+    } else {
+      // generating a load
+      return gen->builder.CreateLoad(v, name.c_str());
+    }
   } else {
-    //if we got here, it means the variable has a known datatype
-    //but has not been defined yet, this only happens for variable
-    //definitions, so we need to define it, we are gonna do that with
-    //alloca
+    // if we got here, it means the variable has a known datatype
+    // but has not been defined yet, this only happens for variable
+    // definitions, so we need to define it, we are gonna do that with
+    // alloca
     std::cout << "not definition " << name << std::endl;
+    return nullptr;
   }
 
-  return v;
+  return nullptr;
 }
 
 int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
@@ -127,14 +172,6 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   return nullptr;
 }
 
-inline llvm::Type *getType(int type, Codegenerator *gen) {
-  if (type == Token::tok_float) {
-    return llvm::Type::getFloatTy(gen->context);
-  } else {
-    return llvm::Type::getInt32Ty(gen->context);
-  }
-}
-
 llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   uint32_t argSize = args.size();
   std::vector<llvm::Type *> funcArgs(argSize);
@@ -183,9 +220,20 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
   // Record the function arguments in the NamedValues map.
   gen->namedValues.clear();
-  for (auto &arg : function->args())
-    gen->namedValues[arg.getName()] = &arg;
+  int counter = 0;
+  for (auto &arg : function->args()) {
+    // Create an alloca for this variable.
+    llvm::AllocaInst *alloca = gen->createEntryBlockAlloca(
+        function, arg.getName(), proto->args[counter++].type);
 
+    // Store the initial value into the alloca.
+    gen->builder.CreateStore(&arg, alloca);
+
+    // Add arguments to variable symbol table.
+    gen->namedValues[arg.getName()] = alloca;
+  }
+
+  gen->currentScope = function;
   for (auto &b : body) {
     if (Value *RetVal = b->codegen(gen)) {
       if (b->flags.isReturn) {
@@ -193,13 +241,19 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
       }
     }
   }
+  gen->currentScope = nullptr;
 
   std::string outs;
   llvm::raw_string_ostream os(outs);
   bool res = verifyFunction(*function, &os);
   if (res) {
     os.flush();
-    std::cout << "error " <<outs<<std::endl;
+    std::cout << "error verifying function" << outs << std::endl;
+    std::cout << "here what was generated" << std::endl;
+    // std::string outs;
+    // llvm::raw_string_ostream os(outs);
+    // gen->printLlvmData(function);
+    gen->module.print(llvm::errs(), nullptr);
     return nullptr;
   }
   return function;

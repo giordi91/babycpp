@@ -3,19 +3,19 @@
 #include <iostream>
 #include <parser.h>
 
+using babycpp::codegen::Argument;
 using babycpp::lexer::Lexer;
 using babycpp::lexer::Token;
 using babycpp::parser::Parser;
-using babycpp::codegen::Argument;
 
-using babycpp::codegen::ExprAST;
-using babycpp::codegen::NumberExprAST;
-using babycpp::codegen::VariableExprAST;
-using babycpp::codegen::CallExprAST;
-using babycpp::codegen::BinaryExprAST;
-using babycpp::codegen::PrototypeAST;
-using babycpp::codegen::FunctionAST;
 using babycpp::codegen::Argument;
+using babycpp::codegen::BinaryExprAST;
+using babycpp::codegen::CallExprAST;
+using babycpp::codegen::ExprAST;
+using babycpp::codegen::FunctionAST;
+using babycpp::codegen::NumberExprAST;
+using babycpp::codegen::PrototypeAST;
+using babycpp::codegen::VariableExprAST;
 
 TEST_CASE("Testing number parser", "[parser]") {
   Lexer lex;
@@ -90,8 +90,7 @@ TEST_CASE("Testing variable definition", "[parser]") {
   REQUIRE(p_casted->datatype == Token::tok_int);
   REQUIRE(p_casted->value != nullptr);
 
-  auto *v_casted =
-      dynamic_cast<NumberExprAST *>(p_casted->value);
+  auto *v_casted = dynamic_cast<NumberExprAST *>(p_casted->value);
   REQUIRE(v_casted != nullptr);
   REQUIRE(v_casted->val.type == Token::tok_int);
   REQUIRE(v_casted->val.integerNumber == 2);
@@ -157,22 +156,19 @@ TEST_CASE("Testing expression for function call", "[parser]") {
   // checking the argsss, args of function call are not
   // definition arguments so we don't know the type we can
   // only check the name, they are of instance variable
-  auto *arg1 =
-      dynamic_cast<VariableExprAST *>(p_casted->args[0]);
+  auto *arg1 = dynamic_cast<VariableExprAST *>(p_casted->args[0]);
   REQUIRE(arg1 != nullptr);
   REQUIRE(arg1->datatype == 0);
   REQUIRE(arg1->name == "x");
   REQUIRE(arg1->value == nullptr);
 
-  auto *arg2 =
-      dynamic_cast<VariableExprAST *>(p_casted->args[1]);
+  auto *arg2 = dynamic_cast<VariableExprAST *>(p_casted->args[1]);
   REQUIRE(arg2 != nullptr);
   REQUIRE(arg2->datatype == 0);
   REQUIRE(arg2->name == "y124");
   REQUIRE(arg2->value == nullptr);
 
-  auto *arg3 =
-      dynamic_cast<VariableExprAST *>(p_casted->args[2]);
+  auto *arg3 = dynamic_cast<VariableExprAST *>(p_casted->args[2]);
   REQUIRE(arg3 != nullptr);
   REQUIRE(arg3->datatype == 0);
   REQUIRE(arg3->name == "minusGravity");
@@ -181,7 +177,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 
 TEST_CASE("Testing identifier and  function call", "[parser]") {
   Lexer lex;
-  lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me)");
+  lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
   Parser parser(&lex);
   lex.gettok();
 
@@ -200,8 +196,7 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
   REQUIRE(RHS_casted->datatype == 0);
   REQUIRE(RHS_casted->args.size() == 1);
 
-  auto *arg1 =
-      dynamic_cast<VariableExprAST *>(RHS_casted->args[0]);
+  auto *arg1 = dynamic_cast<VariableExprAST *>(RHS_casted->args[0]);
   REQUIRE(arg1 != nullptr);
   REQUIRE(arg1->datatype == 0);
   REQUIRE(arg1->name == "me");
@@ -232,8 +227,8 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 
   auto *lhs_2 = dynamic_cast<NumberExprAST *>(lhs_2y->lhs);
   REQUIRE(lhs_2 != nullptr);
-  //here both the datatype of the expr and the specific type
-  //of the number are set to int
+  // here both the datatype of the expr and the specific type
+  // of the number are set to int
   REQUIRE(lhs_2->datatype == Token::tok_int);
   REQUIRE(lhs_2->val.type == Token::tok_int);
   REQUIRE(lhs_2->val.integerNumber == 2);
@@ -291,20 +286,17 @@ TEST_CASE("Testing expression from top level", "[parser]") {
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->value != nullptr);
 
-  auto *value_p =
-      dynamic_cast<BinaryExprAST *>(p_casted->value);
+  auto *value_p = dynamic_cast<BinaryExprAST *>(p_casted->value);
   REQUIRE(value_p != nullptr);
   REQUIRE(value_p->op == "+");
 
-  auto *value_lhs =
-      dynamic_cast<VariableExprAST *>(value_p->lhs);
+  auto *value_lhs = dynamic_cast<VariableExprAST *>(value_p->lhs);
   REQUIRE(value_lhs != nullptr);
   REQUIRE(value_lhs->name == "y");
   REQUIRE(value_lhs->value == nullptr);
   REQUIRE(value_lhs->datatype == 0);
 
-  auto *value_rhs =
-      dynamic_cast<VariableExprAST *>(value_p->rhs);
+  auto *value_rhs = dynamic_cast<VariableExprAST *>(value_p->rhs);
   REQUIRE(value_rhs != nullptr);
   REQUIRE(value_rhs->name == "z");
   REQUIRE(value_rhs->value == nullptr);
@@ -341,12 +333,32 @@ TEST_CASE("Testing simple function with return", "[parser]") {
 
   auto *statement = p->body[1];
   REQUIRE(statement->flags.isReturn == true);
-  auto *statement_casted =
-      dynamic_cast<VariableExprAST *>(statement);
+  auto *statement_casted = dynamic_cast<VariableExprAST *>(statement);
   REQUIRE(statement_casted != nullptr);
   REQUIRE(statement_casted->name == "avg");
 
   auto *p_eof = parser.parseStatement();
   REQUIRE(p_eof == nullptr);
   REQUIRE(lex.currtok == Token::tok_eof);
+}
+
+TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
+  Lexer lex;
+  lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - 2.0; return temp;}");
+  Parser parser(&lex);
+  lex.gettok();
+  auto *p = parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  auto *statement = p->body[0];
+  auto *statement_casted = dynamic_cast<VariableExprAST *>(statement);
+  REQUIRE(statement_casted != nullptr);
+  REQUIRE(statement_casted->name == "temp");
+  REQUIRE(statement_casted->datatype == Token::tok_float);
+
+  ExprAST *val = statement_casted->value;
+  REQUIRE(val != nullptr);
+
+  auto *statement2 = p->body[1];
+  int i=0;
 }
