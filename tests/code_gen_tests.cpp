@@ -9,6 +9,13 @@ using babycpp::lexer::Lexer;
 using babycpp::lexer::Token;
 using babycpp::parser::Parser;
 
+inline std::string getFile(const ::std::string &path) {
+
+  std::ifstream t(path);
+  std::string str((std::istreambuf_iterator<char>(t)),
+                  std::istreambuf_iterator<char>());
+  return str;
+}
 TEST_CASE("Testing code gen number float", "[codegen]") {
 
   Codegenerator gen;
@@ -42,10 +49,19 @@ TEST_CASE("Testing number variable ref gen", "[codegen]") {
   Codegenerator gen;
   gen.initFromString("x");
 
-  // creating an argument called X in database
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("x");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "x");
+  gen.namedValues[a->getName().str()] = a;
 
   // doing the parsing
   auto *p = gen.parser.parseIdentifier();
@@ -55,7 +71,7 @@ TEST_CASE("Testing number variable ref gen", "[codegen]") {
 
   // converting Value to string and check result
   std::string outs = gen.printLlvmData(v);
-  REQUIRE(outs == "float %x");
+  REQUIRE(outs == "  %x = load float, float* %x");
 }
 
 TEST_CASE("Testing binop codegen plus", "[codegen]") {
@@ -65,10 +81,20 @@ TEST_CASE("Testing binop codegen plus", "[codegen]") {
   auto p = gen.parser.parseParen();
   REQUIRE(p != nullptr);
 
-  // adding x variable
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("x");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "x");
+  gen.namedValues[a->getName().str()] = a;
+
   llvm::Value *v = p->codegen(&gen);
   REQUIRE(v != nullptr);
 
@@ -84,10 +110,20 @@ TEST_CASE("Testing binop codegen -", "[codegen]") {
   auto p = gen.parser.parseParen();
   REQUIRE(p != nullptr);
 
-  // adding x variable
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("yy");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "yy");
+  gen.namedValues[a->getName().str()] = a;
+
   llvm::Value *v = p->codegen(&gen);
   REQUIRE(v != nullptr);
 
@@ -103,10 +139,20 @@ TEST_CASE("Testing binop codegen *", "[codegen]") {
   auto p = gen.parser.parseParen();
   REQUIRE(p != nullptr);
 
-  // adding x variable
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("temp");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "temp");
+  gen.namedValues[a->getName().str()] = a;
+
   llvm::Value *v = p->codegen(&gen);
   REQUIRE(v != nullptr);
 
@@ -122,10 +168,20 @@ TEST_CASE("Testing binop codegen /", "[codegen]") {
   auto p = gen.parser.parseParen();
   REQUIRE(p != nullptr);
 
-  // adding x variable
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("temp");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "temp");
+  gen.namedValues[a->getName().str()] = a;
+
   llvm::Value *v = p->codegen(&gen);
   REQUIRE(v != nullptr);
 
@@ -140,18 +196,28 @@ TEST_CASE("Testing binop codegen <", "[codegen]") {
   auto p = gen.parser.parseParen();
   REQUIRE(p != nullptr);
 
-  // adding x variable
-  llvm::Argument a{llvm::Type::getFloatTy(gen.context)};
-  a.setName("z");
-  gen.namedValues[a.getName().str()] = &a;
+  // adding dummy var
+  llvm::IRBuilder<> tmpb(gen.context);
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  tmpb.SetInsertPoint(block);
+  auto a = tmpb.CreateAlloca(llvm::Type::getFloatTy(gen.context), 0, "z");
+  gen.namedValues[a->getName().str()] = a;
+
   llvm::Value *v = p->codegen(&gen);
   REQUIRE(v != nullptr);
 
   // converting Value to string and check result
   std::string outs = gen.printLlvmData(v);
   // here we are only checking the last result, where we convert from bool to
-  // double  since we only support doubles, when we will have a function the whole
-  // body  will be there
+  // double  since we only support doubles, when we will have a function the
+  // whole body  will be there
   REQUIRE(outs == "  %booltmp = uitofp i1 %cmptmp to double");
 }
 
@@ -165,27 +231,22 @@ TEST_CASE("Testing function codegen simple add", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  std::string expected{"\ndefine float @test(float %x) {\nentry:\n  %addtmp = "
-                       "fadd float %x, 1.000000e+00\n  ret float %addtmp\n}\n"};
+  // gen.dumpLlvmData(v, "simpleAdd.ll");
 
+  std::string expected = getFile("tests/simpleAdd.ll");
   REQUIRE(outs == expected);
 }
 TEST_CASE("Testing function codegen conversion", "[codegen]") {
 
-	Codegenerator gen;
-	gen.initFromString("float complexAdd(float x, int y){ return x+y;}");
-	auto p = gen.parser.parseFunction();
-	REQUIRE(p != nullptr);
+  Codegenerator gen;
+  gen.initFromString("float complexAdd(float x, int y){ return x+y;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
 
-	auto v = p->codegen(&gen);
-	REQUIRE(v != nullptr);
-	std::string outs = gen.printLlvmData(v);
-	std::string expected = 
-		"\ndefine float @complexAdd(float %x, i32 %y) {\n"
-		"entry:\n"
-		"  %intToFPcast = uitofp i32 %y to float\n"
-		"  %addtmp = fadd float %x, %intToFPcast\n"
-		"  ret float %addtmp\n"
-		"}\n";
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  gen.dumpLlvmData(v, "complexAdd.ll");
+  std::string expected = getFile("tests/complexAdd.ll");
   REQUIRE(outs == expected);
 }

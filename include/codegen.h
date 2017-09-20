@@ -117,6 +117,15 @@ struct Codegenerator {
     return outs;
   }
 
+  static void dumpLlvmData(llvm::Value*v, const std::string& path)
+  {
+	  const std::string outs = printLlvmData(v);
+	  std::ofstream out(path);
+	  out << outs;
+	  out.close();
+  }
+  llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *function, const std::string& varName, int type);
+
   int omogenizeOperation(ExprAST *L, ExprAST *R, llvm::Value **Lvalue,
                          llvm::Value **Rvalue);
   static bool compareASTArgWithLLVMArg(ExprAST *astArg, llvm::Argument* llvmArg);
@@ -127,7 +136,7 @@ struct Codegenerator {
   llvm::IRBuilder<> builder;
   llvm::Module module;
 
-  std::unordered_map<std::string, llvm::Value *> namedValues;
+  std::unordered_map<std::string, llvm::AllocaInst*> namedValues;
   static const std::unordered_map<int, int> AST_LLVM_MAP;
 };
 
