@@ -1,8 +1,6 @@
-#include <iostream>
-
 #include "catch.hpp"
-
 #include <codegen.h>
+#include <iostream>
 
 using babycpp::codegen::Codegenerator;
 using babycpp::lexer::Lexer;
