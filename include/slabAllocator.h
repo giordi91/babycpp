@@ -51,7 +51,13 @@ struct SlabAllocator : Allocator {
    * @return  newly allocated slab
    */
   Slab &allocateSlab();
-  virtual ~SlabAllocator() = default;
+  virtual ~SlabAllocator()
+  {
+	  //freeing all slab except first one
+	  clear();
+	  //freeing last surviving slab
+	  delete[] currentSlab->data;
+  };
 
   /**
    * Automatically computes the offet between the base
