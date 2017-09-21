@@ -17,7 +17,7 @@ const uint32_t SLAB_SIZE = 1 << 21;
 // Allocator interface
 struct SlabAllocator : Allocator {
   explicit SlabAllocator(int slabSizeInByte = SLAB_SIZE);
-  void *alloc(uint32_t byteSize) override { return nullptr; };
+  void *alloc(uint32_t byteSize) override;
   void clear() override{};
   Slab& allocateSlab();
 
