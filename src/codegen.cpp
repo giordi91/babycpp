@@ -103,7 +103,6 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  return nullptr;
 }
 
 int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
