@@ -16,14 +16,19 @@ namespace babycpp {
 
     FactoryAST() = default;
 
-    template <typename T, typename... Args> T *allocateASTNode(Args... args) {
+    template <typename T, typename... Args> T *allocASTNode(Args... args) {
       return new T(args...);
     }
     template <typename T> T test() { return T(); };
+
+    template <typename... Args>
+    codegen::VariableExprAST *allocVariableAST(Args &&... args) {
+      return allocASTNode<codegen::VariableExprAST>(
+          std::forward<Args...>(args));
+    }
+
+    SlabAllocator alloc;
   };
 
-      using allocVariableAST = codegen::VariableExprAST *(allocateASTNode)(
-          codegen::VariableExprAST, std::string &, codegen::ExprAST *, int);
-      SlabAllocator alloc;
   } // namespace memory
 } // namespace babycpp
