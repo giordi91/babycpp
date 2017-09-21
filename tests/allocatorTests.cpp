@@ -93,12 +93,67 @@ TEST_CASE("Testing cleaning memory", "[memory]") {
   REQUIRE(slab.slabs.size() == 1);
 }
 
-TEST_CASE("Testing ", "[memory]") {
+TEST_CASE("Testing factory nodes", "[memory]") {
 
   using babycpp::codegen::VariableExprAST;
+  using babycpp::codegen::NumberExprAST;
+  using babycpp::codegen::BinaryExprAST;
+  using babycpp::codegen::CallExprAST;
+  using babycpp::codegen::PrototypeAST;
+  using babycpp::codegen::FunctionAST;
+  using babycpp::codegen::ExprAST;
+  using babycpp::codegen::Argument;
+  using babycpp::parser::Number;
+  using babycpp::lexer::Token;
+
   std::string t = "test";
   babycpp::memory::FactoryAST f;
-  VariableExprAST *res = f.allocVariableAST(t, nullptr, 0);
+  auto *res = f.allocVariableAST(t, nullptr, 0);
+
+  uint32_t allocSize = sizeof(VariableExprAST);
   REQUIRE(res != nullptr);
   REQUIRE(res->name == "test");
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
+
+  allocSize += sizeof(NumberExprAST);
+  Number num;
+  num.integerNumber = 30;
+  auto *numbptr = f.allocNuberAST(num);
+  REQUIRE(numbptr != nullptr);
+  REQUIRE(numbptr->val.integerNumber == 30);
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
+
+  allocSize += sizeof(BinaryExprAST);
+  auto *binptr = f.allocBinaryAST(std::string("+"), nullptr, nullptr);
+  REQUIRE(binptr != nullptr);
+  REQUIRE(binptr->op == "+");
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
+
+  allocSize += sizeof(CallExprAST);
+  std::vector<ExprAST *> args;
+  auto *callptr = f.allocCallexprAST(std::string("func"), args);
+  REQUIRE(callptr != nullptr);
+  REQUIRE(callptr->callee == "func");
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
+
+  allocSize += sizeof(PrototypeAST);
+  std::vector<Argument> protoarg;
+  auto *protoptr = f.allocPrototypeAST(Token::tok_int, std::string("proto"),
+                                       protoarg, false);
+  REQUIRE(protoptr != nullptr);
+  REQUIRE(protoptr->name == "proto");
+  REQUIRE(protoptr->datatype == Token::tok_int);
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
+
+  allocSize += sizeof(FunctionAST);
+  std::vector<ExprAST*> funcbody;
+  auto *funcptr= f.allocFunctionAST(protoptr,funcbody);
+  REQUIRE(funcptr != nullptr);
+  REQUIRE(f.allocator.slabs.size() == 1);
+  REQUIRE(f.allocator.getStackPtrOffset() == allocSize);
 }

@@ -20,7 +20,7 @@ using codegen::Argument;
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
 
-//UTILITY
+// UTILITY
 inline bool isDatatype(int tok) {
   return (tok == Token::tok_float || tok == Token::tok_int);
 }
@@ -107,9 +107,9 @@ ExprAST *Parser::parseExpression() {
 
       auto *RHS = parseExpression();
       VariableExprAST *LHScasted = dynamic_cast<VariableExprAST *>(LHS);
-      if (LHScasted == nullptr)
-      {
-        std::cout<<"error, LHS of '=' operator must be a variable"<<std::endl;
+      if (LHScasted == nullptr) {
+        std::cout << "error, LHS of '=' operator must be a variable"
+                  << std::endl;
         return nullptr;
       }
 
@@ -141,7 +141,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
     }
 
     // if the bin op binds less tightly with RHS than the OP
-    // afer RHS, let the pending op take RHS its LHS
+    // after RHS, let the pending op take RHS its LHS
     int nextPrec = getTokPrecedence(lex);
     if (tokPrec < nextPrec) {
       RHS = parseBinOpRHS(tokPrec + 1, RHS);
@@ -193,7 +193,6 @@ ExprAST *Parser::parseDeclaration() {
       return nullptr;
     }
     case Token::tok_open_curly:
-      // TODO(giordi) parse function properly
       return parseFunction();
     case Token::tok_assigment_operator: {
       // this can be, a direct value assignment
@@ -204,17 +203,16 @@ ExprAST *Parser::parseDeclaration() {
       // int x = getMagicNumber();
       lex->gettok(); // eat = operator
       auto *RHS = parseExpression();
-      ExprAST* node = new VariableExprAST(identifier, RHS, datatype);
-      node->flags.isDefinition=true;
+      ExprAST *node = new VariableExprAST(identifier, RHS, datatype);
+      node->flags.isDefinition = true;
 
-      return node ;
+      return node;
     }
-      // not supported yet
+      // not supported yet, declaring a function without init
+      // int x; should be easy to do having default values
       // case Token::tok_end_statement:
       //    return parseVariableDefinition();
     }
-
-    // we got here so we parsed something
   }
 
   // error
