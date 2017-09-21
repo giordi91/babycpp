@@ -1,6 +1,7 @@
 #include "catch.hpp"
 #include "slabAllocator.h"
 #include "codegen.h"
+#include "FactoryAST.h"
 #include <iostream>
 
 using babycpp::memory::Slab;
@@ -80,7 +81,7 @@ TEST_CASE("Testing allocation slab-re-alloc", "[memory]") {
 
 }
 
-TEST_CASE("Testing ", "[memory]") {
+TEST_CASE("Testing cleaning memory", "[memory]") {
 
   uint32_t allocSize = sizeof(babycpp::codegen::ExprAST);
   SlabAllocator slab(allocSize*9);
@@ -93,4 +94,14 @@ TEST_CASE("Testing ", "[memory]") {
   REQUIRE(slab.slabs.size()==4);
   slab.clear();
   REQUIRE(slab.slabs.size()==1);
+}
+
+TEST_CASE("Testing ", "[memory]") {
+  std::string t="test";
+  babycpp::memory::FactoryAST f;
+  babycpp::codegen::VariableExprAST * res =
+      f.allocateASTNode< babycpp::codegen::VariableExprAST>(t, nullptr,0);
+  //f.allocVariableAST( t, nullptr,0);
+  REQUIRE(res != nullptr);
+  REQUIRE(res->name == "test");
 }
