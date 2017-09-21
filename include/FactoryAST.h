@@ -16,10 +16,14 @@ namespace babycpp {
 
     FactoryAST() = default;
 
+      //in general I am not a super fan of hardcore or complex templates
+      //but I decided to experiment a little with it.
+      //This is the inner function, a generic function getting an arbitrary
+      //number of arguments and forwarding them to the constructor
     template <typename T, typename... Args> T *allocASTNode(Args... args) {
-      return new T(args...);
+
+        return new(allocator.alloc(sizeof(T))) T(args...);
     }
-    template <typename T> T test() { return T(); };
 
     template <typename... Args>
     codegen::VariableExprAST *allocVariableAST(Args &&... args) {
@@ -27,7 +31,7 @@ namespace babycpp {
           std::forward<Args...>(args));
     }
 
-    SlabAllocator alloc;
+    SlabAllocator allocator;
   };
 
   } // namespace memory

@@ -99,7 +99,6 @@ TEST_CASE("Testing ", "[memory]") {
   std::string t = "test";
   babycpp::memory::FactoryAST f;
   VariableExprAST *res = f.allocVariableAST(t, nullptr, 0);
-  // f.allocVariableAST( t, nullptr,0);
   REQUIRE(res != nullptr);
   REQUIRE(res->name == "test");
 }
