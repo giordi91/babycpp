@@ -45,7 +45,7 @@ Value *NumberExprAST::codegen(Codegenerator *gen) {
   return nullptr;
 }
 Codegenerator::Codegenerator()
-    : lexer(), parser(&lexer), context(), builder(context),
+    : factory(), lexer(), parser(&lexer,&factory), context(), builder(context),
       module("", context) {}
 
 llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {

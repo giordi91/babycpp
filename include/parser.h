@@ -13,6 +13,11 @@ struct PrototypeAST;
 struct FunctionAST;
 }
 
+namespace memory
+{
+	struct FactoryAST;
+}
+
 namespace parser {
 
 using lexer::Lexer;
@@ -23,7 +28,7 @@ struct ParserFlags {
 };
 
 struct Parser {
-  explicit Parser(Lexer *inputLexer) : lex(inputLexer) {
+  explicit Parser(Lexer *inputLexer, memory::FactoryAST* inputfactory) : lex(inputLexer), factory(inputfactory) {
     flags.processed_assigment = false;
   }
 
@@ -39,6 +44,9 @@ struct Parser {
   codegen::ExprAST *parseDeclaration();
   codegen::ExprAST *parseParen();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
+
+  //data
+  memory::FactoryAST* factory;
   Lexer *lex;
   ParserFlags flags;
 };

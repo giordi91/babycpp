@@ -53,7 +53,7 @@ NumberExprAST *Parser::parseNumber() {
   if (lex->currtok != Token::tok_number) {
     return nullptr;
   }
-  auto *node = new NumberExprAST(lex->value);
+  auto *node = factory->allocNuberAST(lex->value);
   lex->gettok(); // eating the number;
   return node;
 }
@@ -65,7 +65,7 @@ ExprAST *Parser::parseIdentifier() {
 
   int tok = lex->currtok;
   if (tok != Token::tok_open_round) {
-    return new VariableExprAST(idstr, nullptr, 0);
+    return factory->allocVariableAST(idstr, nullptr, 0);
   }
   lex->gettok(); // eating paren;
   std::vector<ExprAST *> args;
@@ -91,7 +91,7 @@ ExprAST *Parser::parseIdentifier() {
       lex->gettok();
     }
   }
-  return new CallExprAST(idstr, args);
+  return factory->allocCallexprAST(idstr, args);
 }
 
 ExprAST *Parser::parseExpression() {
@@ -150,7 +150,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
       }
     }
 
-    LHS = new BinaryExprAST(op, LHS, RHS);
+    LHS = factory->allocBinaryAST(op, LHS, RHS);
   }
 }
 
@@ -203,7 +203,7 @@ ExprAST *Parser::parseDeclaration() {
       // int x = getMagicNumber();
       lex->gettok(); // eat = operator
       auto *RHS = parseExpression();
-      ExprAST *node = new VariableExprAST(identifier, RHS, datatype);
+      ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
       node->flags.isDefinition = true;
 
       return node;
@@ -353,7 +353,7 @@ FunctionAST *Parser::parseFunction() {
   }
 
   lex->gettok(); // eat }
-  return new FunctionAST(proto, statements);
+  return factory->allocFunctionAST(proto, statements);
 }
 
 ExprAST *Parser::parseParen() {
@@ -399,7 +399,7 @@ PrototypeAST *Parser::parsePrototype() {
   }
   // need to check semicolon at the end;
   // here we can generate the prototype node;
-  return new PrototypeAST(datatype, funName, args, true);
+  return factory->allocPrototypeAST(datatype, funName, args, true);
 }
 //////////////////////////////////////////////////
 //// CODE GEN

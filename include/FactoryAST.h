@@ -1,6 +1,6 @@
 #pragma once
 
-#include "codegen.h"
+//#include "codegen.h"
 #include "slabAllocator.h"
 #include <vector>
 
@@ -9,6 +9,11 @@ namespace babycpp {
 namespace codegen {
 struct ExprAST;
 struct VariableExprAST;
+struct NumberExprAST;
+struct BinaryExprAST;
+struct CallExprAST;
+struct PrototypeAST;
+struct FunctionAST;
 }
 
 namespace memory {

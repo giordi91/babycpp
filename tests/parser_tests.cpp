@@ -1,4 +1,5 @@
 #include "catch.hpp"
+#include <FactoryAST.h>
 #include <codegen.h>
 #include <iostream>
 #include <parser.h>
@@ -17,9 +18,11 @@ using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
 using babycpp::codegen::VariableExprAST;
 
+static babycpp::memory::FactoryAST factory;
+
 TEST_CASE("Testing number parser", "[parser]") {
   Lexer lex;
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.initFromStr("1.0");
   // getting first token
   lex.gettok();
@@ -33,7 +36,7 @@ TEST_CASE("Testing number parser", "[parser]") {
 TEST_CASE("Testing function call", "[parser]") {
   Lexer lex;
   lex.initFromStr("testFunction ();");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
 
   lex.gettok();
   auto *p = parser.parseIdentifier();
@@ -58,7 +61,7 @@ TEST_CASE("Testing function call", "[parser]") {
 TEST_CASE("Testing extern call", "[parser]") {
   Lexer lex;
   lex.initFromStr("extern float sin(float x);");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseExtern();
@@ -78,7 +81,7 @@ TEST_CASE("Testing extern call", "[parser]") {
 TEST_CASE("Testing variable definition", "[parser]") {
   Lexer lex;
   lex.initFromStr("int x = 2;");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseDeclaration();
@@ -99,7 +102,7 @@ TEST_CASE("Testing variable definition", "[parser]") {
 TEST_CASE("Testing expression", "[parser]") {
   Lexer lex;
   lex.initFromStr("x * y");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -129,7 +132,7 @@ TEST_CASE("Testing expression", "[parser]") {
 TEST_CASE("Testing expression for function call", "[parser]") {
   Lexer lex;
   lex.initFromStr("testFunction()");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -178,7 +181,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 TEST_CASE("Testing identifier and  function call", "[parser]") {
   Lexer lex;
   lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseDeclaration();
@@ -206,7 +209,7 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
 TEST_CASE("Testing more complex expression", "[parser]") {
   Lexer lex;
   lex.initFromStr("x + 2 * y+z");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -240,7 +243,7 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 TEST_CASE("Testing more complex expression with paren", "[parser]") {
   Lexer lex;
   lex.initFromStr("x + 2.0 * (y+z)");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -277,7 +280,7 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
 TEST_CASE("Testing expression from top level", "[parser]") {
   Lexer lex;
   lex.initFromStr("x = y + z;");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseStatement();
@@ -313,7 +316,7 @@ TEST_CASE("Testing simple function", "[parser]") {
   Lexer lex;
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0;}");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseFunction();
@@ -324,7 +327,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   Lexer lex;
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0; return avg;}");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
 
   auto *p = parser.parseFunction();
@@ -345,7 +348,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
 TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   Lexer lex;
   lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - 2.0; return temp;}");
-  Parser parser(&lex);
+  Parser parser(&lex, &factory);
   lex.gettok();
   auto *p = parser.parseFunction();
   REQUIRE(p != nullptr);
@@ -358,7 +361,4 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
 
   ExprAST *val = statement_casted->value;
   REQUIRE(val != nullptr);
-
-  auto *statement2 = p->body[1];
-  int i=0;
 }

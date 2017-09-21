@@ -2,6 +2,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "FactoryAST.h"
 #include "lexer.h"
 #include "parser.h"
 
@@ -137,6 +138,7 @@ struct Codegenerator {
                          llvm::Value **Rvalue);
   static bool compareASTArgWithLLVMArg(ExprAST *astArg,
                                        llvm::Argument *llvmArg);
+  memory::FactoryAST factory;
   lexer::Lexer lexer;
   parser::Parser parser;
 
