@@ -12,6 +12,8 @@ namespace babycpp {
 namespace jit {
 BabycppJIT::BabycppJIT() {
   llvm::InitializeNativeTarget();
+  llvm::InitializeNativeTargetAsmPrinter();
+  llvm::InitializeNativeTargetAsmParser();
   tm.reset( llvm::EngineBuilder().selectTarget());
   datalayout = new llvm::DataLayout(tm->createDataLayout());
   objectLayer =  new llvm::orc::RTDyldObjectLinkingLayer([]() {

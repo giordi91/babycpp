@@ -20,9 +20,6 @@ using babycpp::codegen::Codegenerator;
 #include <llvm/Support/TargetSelect.h>
 TEST_CASE("Testing jit add", "[jit]") {
 
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-  llvm::InitializeNativeTargetAsmParser();
   babycpp::jit::BabycppJIT jit;
   Codegenerator gen;
   gen.initFromString( "float test(float x){ return x+1.0;}");
