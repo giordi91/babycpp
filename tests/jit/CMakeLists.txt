@@ -4,9 +4,6 @@ project(${PROJECT_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
 
-    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
     include_directories(${CMAKE_SOURCE_DIR}/include/core
                         ${CMAKE_SOURCE_DIR}/include/jit
@@ -30,7 +27,6 @@ project(${PROJECT_NAME})
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
     llvm_map_components_to_libnames(llvm_libs support core codegen irreader orcjit native)
-    MESSAGE(STATUS "____________________________ ${llvm_libs}")
 
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} babycppjit ${llvm_libs})
 

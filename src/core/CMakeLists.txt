@@ -4,15 +4,6 @@ project(${MAIN_LIB_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
 
-    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-    #options
-    option(BUILD_TESTS "Wheter or not to build the tests" ON)
-
-    #just an overal log of the passed options
-    MESSAGE( STATUS "LLVM PATH :                   " ${LLVM_DIR})
-    MESSAGE( STATUS "Building with the following options")
-    MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
 
     #looking for  files
     file(GLOB_RECURSE SOURCE_FILES "*.cpp" "*.h")

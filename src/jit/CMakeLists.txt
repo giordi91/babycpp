@@ -5,10 +5,6 @@ project(${PROJECT_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
 
-    message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-    message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-
-
     #looking for  files
     file(GLOB_RECURSE SOURCE_FILES "*.cpp" "*.h")
 
@@ -16,7 +12,7 @@ project(${PROJECT_NAME})
     foreach(dir ${SOURCE_FILES})
           message(STATUS "dir='${dir}'")
     endforeach()
-    #looking for the header files
+    #looking for the header files, mainly needed for MVSC and VS solution
     file(GLOB_RECURSE INCLUDES_FILES "${CMAKE_SOURCE_DIR}/include/*.h")
 
     message (STATUS "found includes files")
@@ -32,7 +28,7 @@ project(${PROJECT_NAME})
                         ${LLVM_INCLUDE_DIRS} 
                         ${CMAKE_SOURCE_DIR}/include/jit)
     #defining standard compiling flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -fno-exceptions -fno-rtti")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -fno-rtti")
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324 /wd4146 /wd4458 /wd4267 /wd4100 /wd4244 /wd4141 /wd4291 /wd4624 ")
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MD")

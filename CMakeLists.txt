@@ -25,7 +25,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 MESSAGE(STATUS "compiler id ${CMAKE_CXX_COMPILER_ID} ${MSVC}")
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   # using Clang
-  set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -g3 -O0 -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math ")
+  set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS} -g3 -O0 -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math -fno-exception")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   # using GCC
   set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS}   -Wall -pedantic -Wextra -m64 -mavx2 -mfma -ffast-math")
@@ -36,10 +36,30 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
   set(COMMON_CXX_FLAGS "${COMMON_CXX_FLAGS}  /std:c++14 /W4 /arch:AVX2 /fp:fast")
 endif()
 
-#adding core 
+find_package(LLVM REQUIRED CONFIG)
+#options
+option(BUILD_TESTS "Wheter or not to build the tests" ON)
+option(BUILD_JIT   "Wheter or not to build the jit engine" ON)
+
+message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
+message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
+
+#just an overal log of the passed options
+MESSAGE( STATUS "LLVM PATH :                   " ${LLVM_DIR})
+MESSAGE( STATUS "Building with the following options")
+MESSAGE( STATUS "BUILD JIT:                    " ${BUILD_JIT})
+MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
+#adding core
 add_subdirectory(src/core)
+if(${BUILD_JIT} STREQUAL "ON")
 add_subdirectory(src/jit)
+endif()
 
 #adding test
-add_subdirectory(tests/core)
-add_subdirectory(tests/jit)
+if(${BUILD_TESTS} STREQUAL "ON")
+    add_subdirectory(tests/core)
+
+    if(${BUILD_JIT} STREQUAL "ON")
+        add_subdirectory(tests/jit)
+    endif()
+endif()
