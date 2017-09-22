@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
-
-project(tests)
+SET(PROJECT_NAME "coreTest")
+project(${PROJECT_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
 
@@ -8,7 +8,9 @@ project(tests)
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
-    include_directories(${CMAKE_SOURCE_DIR}/include ${LLVM_INCLUDE_DIRS})
+    include_directories(${CMAKE_SOURCE_DIR}/include/core
+                        ${LLVM_INCLUDE_DIRS} 
+                        ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
 
 

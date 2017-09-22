@@ -2,7 +2,7 @@
 #include <memory>
 #include <unordered_map>
 
-#include "FactoryAST.h"
+#include "factoryAST.h"
 #include "lexer.h"
 #include "parser.h"
 

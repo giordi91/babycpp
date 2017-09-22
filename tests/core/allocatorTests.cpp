@@ -1,6 +1,6 @@
-#include "FactoryAST.h"
 #include "catch.hpp"
 #include "codegen.h"
+#include "factoryAST.h"
 #include "slabAllocator.h"
 #include <iostream>
 

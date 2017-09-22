@@ -37,7 +37,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 #adding core 
-add_subdirectory(src)
+add_subdirectory(src/core)
+add_subdirectory(src/jit)
 
 #adding test
-add_subdirectory(tests)
+add_subdirectory(tests/core)
