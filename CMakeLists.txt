@@ -40,6 +40,7 @@ find_package(LLVM REQUIRED CONFIG)
 #options
 option(BUILD_TESTS "Wheter or not to build the tests" ON)
 option(BUILD_JIT   "Wheter or not to build the jit engine" ON)
+option(BUILD_REPL  "Wheter or not to build the interpreter" ON)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
@@ -48,11 +49,15 @@ message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 MESSAGE( STATUS "LLVM PATH :                   " ${LLVM_DIR})
 MESSAGE( STATUS "Building with the following options")
 MESSAGE( STATUS "BUILD JIT:                    " ${BUILD_JIT})
+MESSAGE( STATUS "BUILD REPL:                   " ${BUILD_REPL})
 MESSAGE( STATUS "BUILD TESTS:                  " ${BUILD_TESTS})
 #adding core
 add_subdirectory(src/core)
 if(${BUILD_JIT} STREQUAL "ON")
 add_subdirectory(src/jit)
+endif()
+if(${BUILD_REPL} STREQUAL "ON")
+    add_subdirectory(src/repl)
 endif()
 
 #adding test
