@@ -33,9 +33,9 @@ project(${PROJECT_NAME})
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs})
 
 
-    file(GLOB files "testdata/*.ll")
+    file(GLOB files "${CMAKE_SOURCE_DIR}/tests/testdata/*.ll")
     foreach(file ${files})
-        file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME} )
+        file(COPY ${file} DESTINATION ${CMAKE_CURRENT_BINARY_DIR} )
     endforeach()
 
 

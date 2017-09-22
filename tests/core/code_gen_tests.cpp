@@ -238,7 +238,7 @@ TEST_CASE("Testing function codegen simple add", "[codegen]") {
 
   // TODO I am trying to return a float* i should store in a
   // value and return???
-  std::string expected = getFile("tests/simpleAdd.ll");
+  std::string expected = getFile("tests/core/simpleAdd.ll");
   REQUIRE(outs == expected);
 }
 TEST_CASE("Testing function codegen conversion", "[codegen]") {
@@ -252,7 +252,7 @@ TEST_CASE("Testing function codegen conversion", "[codegen]") {
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
   // gen.dumpLlvmData(v, "complexAdd.ll");
-  std::string expected = getFile("tests/complexAdd.ll");
+  std::string expected = getFile("tests/core/complexAdd.ll");
   REQUIRE(outs == expected);
 }
 
@@ -267,7 +267,7 @@ TEST_CASE("Testing function codegen alloca", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  gen.dumpLlvmData(v, "tests/alloca1.ll");
-  std::string expected = getFile("tests/alloca1.ll");
+  //gen.dumpLlvmData(v, "tests/core/alloca1.ll");
+  std::string expected = getFile("tests/core/alloca1.ll");
   REQUIRE(outs == expected);
 }

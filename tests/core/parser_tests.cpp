@@ -1,7 +1,9 @@
-#include "catch.hpp"
-#include <FactoryAST.h>
-#include <codegen.h>
 #include <iostream>
+
+#include "catch.hpp"
+
+#include <codegen.h>
+#include <factoryAST.h>
 #include <parser.h>
 
 using babycpp::codegen::Argument;
@@ -347,7 +349,8 @@ TEST_CASE("Testing simple function with return", "[parser]") {
 
 TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   Lexer lex;
-  lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - 2.0; return temp;}");
+  lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - "
+                  "2.0; return temp;}");
   Parser parser(&lex, &factory);
   lex.gettok();
   auto *p = parser.parseFunction();
