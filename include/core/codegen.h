@@ -46,7 +46,7 @@ struct ExprAST {
     flags.isDefinition = 0;
   }
   virtual ~ExprAST() = default;
-  virtual llvm::Value *codegen(Codegenerator *gen) { return nullptr; };
+  virtual llvm::Value *codegen(Codegenerator *gen)=0;
 
   int datatype = 0;
   ASTFlags flags;

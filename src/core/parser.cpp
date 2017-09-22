@@ -6,13 +6,10 @@
 namespace babycpp {
 namespace parser {
 
-// bool parseArguments(std::vector<Argument> &args);
 using lexer::Token;
 using codegen::ExprAST;
 using codegen::NumberExprAST;
 using codegen::VariableExprAST;
-using codegen::CallExprAST;
-using codegen::BinaryExprAST;
 using codegen::PrototypeAST;
 using codegen::FunctionAST;
 using codegen::Argument;
@@ -106,7 +103,9 @@ ExprAST *Parser::parseExpression() {
       lex->gettok(); // eating assignment operator;
 
       auto *RHS = parseExpression();
-      VariableExprAST *LHScasted = static_cast<VariableExprAST *>(LHS);
+      auto *LHScasted = static_cast<VariableExprAST *>(LHS);
+      //TODO(giordi): investigate if there is any kind of safety check i can
+      //do here
       if (LHScasted == nullptr) {
         std::cout << "error, LHS of '=' operator must be a variable"
                   << std::endl;
@@ -266,7 +265,7 @@ PrototypeAST *Parser::parseExtern() {
   return parsePrototype();
 }
 
-bool parseArguments(Lexer *lex, std::vector<Argument> &args) {
+bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
   int datatype;
   std::string argName;
   while (true) {
@@ -304,7 +303,7 @@ bool parseArguments(Lexer *lex, std::vector<Argument> &args) {
       }
     }
     // if we got here we have a sanitized argument
-    args.emplace_back(Argument(datatype, argName));
+    args->emplace_back(Argument(datatype, argName));
   }
   return true;
 }
@@ -393,7 +392,7 @@ PrototypeAST *Parser::parsePrototype() {
   // parsing arguments
   lex->gettok(); // eat parenthesis
   std::vector<Argument> args;
-  if (!parseArguments(lex, args)) {
+  if (!parseArguments(lex, &args)) {
     // no need to log error, error already logged
     return nullptr;
   }
