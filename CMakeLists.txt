@@ -42,3 +42,4 @@ add_subdirectory(src/jit)
 
 #adding test
 add_subdirectory(tests/core)
+add_subdirectory(tests/jit)

@@ -85,7 +85,7 @@ TEST_CASE("Testing binop codegen plus", "[codegen]") {
   auto *returnType = llvm::Type::getFloatTy(gen.context);
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
   auto *function = llvm::Function::Create(
-      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+      funcType, llvm::Function::ExternalLinkage, "debug", gen.module.get());
 
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(gen.context, "entry", function);
@@ -114,7 +114,7 @@ TEST_CASE("Testing binop codegen -", "[codegen]") {
   auto *returnType = llvm::Type::getFloatTy(gen.context);
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
   auto *function = llvm::Function::Create(
-      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+      funcType, llvm::Function::ExternalLinkage, "debug", gen.module.get());
 
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(gen.context, "entry", function);
@@ -143,7 +143,7 @@ TEST_CASE("Testing binop codegen *", "[codegen]") {
   auto *returnType = llvm::Type::getFloatTy(gen.context);
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
   auto *function = llvm::Function::Create(
-      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+      funcType, llvm::Function::ExternalLinkage, "debug", gen.module.get());
 
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(gen.context, "entry", function);
@@ -172,7 +172,7 @@ TEST_CASE("Testing binop codegen /", "[codegen]") {
   auto *returnType = llvm::Type::getFloatTy(gen.context);
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
   auto *function = llvm::Function::Create(
-      funcType, llvm::Function::ExternalLinkage, "debug", &gen.module);
+      funcType, llvm::Function::ExternalLinkage, "debug", gen.module.get());
 
   llvm::BasicBlock *block =
       llvm::BasicBlock::Create(gen.context, "entry", function);

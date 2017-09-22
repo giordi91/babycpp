@@ -144,7 +144,7 @@ struct Codegenerator {
 
   llvm::LLVMContext context;
   llvm::IRBuilder<> builder;
-  llvm::Module module;
+  std::shared_ptr<llvm::Module> module;
 
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
   static const std::unordered_map<int, int> AST_LLVM_MAP;

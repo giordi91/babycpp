@@ -32,7 +32,7 @@ project(${PROJECT_NAME})
                         ${LLVM_INCLUDE_DIRS} 
                         ${CMAKE_SOURCE_DIR}/include/jit)
     #defining standard compiling flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -fno-exceptions")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS} -fno-exceptions -fno-rtti")
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324 /wd4146 /wd4458 /wd4267 /wd4100 /wd4244 /wd4141 /wd4291 /wd4624 ")
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MD")
@@ -44,7 +44,7 @@ project(${PROJECT_NAME})
 
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
-    llvm_map_components_to_libnames(llvm_libs support core irreader)
+    llvm_map_components_to_libnames(llvm_libs support core irreader orcjit native)
 
     # Link against LLVM libraries
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs})

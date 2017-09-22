@@ -46,7 +46,7 @@ Value *NumberExprAST::codegen(Codegenerator *gen) {
 }
 Codegenerator::Codegenerator()
     : factory(), lexer(), parser(&lexer,&factory), context(), builder(context),
-      module("", context) {}
+      module(new llvm::Module("", context)) {}
 
 llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
@@ -184,7 +184,7 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
 
   auto *function = llvm::Function::Create(
-      funcType, llvm::Function::ExternalLinkage, name, &gen->module);
+      funcType, llvm::Function::ExternalLinkage, name, gen->module.get());
   // Set names for all arguments.
   uint32_t Idx = 0;
   for (auto &arg : function->args())
@@ -196,7 +196,7 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
 llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   //// First, check for an existing function from a previous 'extern'
   /// declaration.
-  llvm::Function *function = gen->module.getFunction(proto->name);
+  llvm::Function *function = gen->module->getFunction(proto->name);
 
   if (function == nullptr) {
     Value *p = proto->codegen(gen);
@@ -252,7 +252,7 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
     // std::string outs;
     // llvm::raw_string_ostream os(outs);
     // gen->printLlvmData(function);
-    gen->module.print(llvm::errs(), nullptr);
+    gen->module->print(llvm::errs(), nullptr);
     return nullptr;
   }
   return function;
@@ -272,7 +272,7 @@ bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
 
 llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // lests try to get the function
-  llvm::Function *calleeF = gen->module.getFunction(callee);
+  llvm::Function *calleeF = gen->module->getFunction(callee);
   if (calleeF == nullptr) {
     std::cout << "error function not defined" << std::endl;
     return nullptr;

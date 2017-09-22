@@ -106,7 +106,7 @@ ExprAST *Parser::parseExpression() {
       lex->gettok(); // eating assignment operator;
 
       auto *RHS = parseExpression();
-      VariableExprAST *LHScasted = dynamic_cast<VariableExprAST *>(LHS);
+      VariableExprAST *LHScasted = static_cast<VariableExprAST *>(LHS);
       if (LHScasted == nullptr) {
         std::cout << "error, LHS of '=' operator must be a variable"
                   << std::endl;

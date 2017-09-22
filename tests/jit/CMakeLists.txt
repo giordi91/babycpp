@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-SET(PROJECT_NAME "coreTest")
+SET(PROJECT_NAME "jitTest")
 project(${PROJECT_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
@@ -9,13 +9,14 @@ project(${PROJECT_NAME})
 
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
     include_directories(${CMAKE_SOURCE_DIR}/include/core
+                        ${CMAKE_SOURCE_DIR}/include/jit
                         ${LLVM_INCLUDE_DIRS} 
                         ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
 
 
 	#defining standard compiling flags
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}  -fno-rtti")
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4324 /wd4146 /wd4458 /wd4267 /wd4100 /wd4244 /wd4141 /wd4291 /wd4624 ")
 		set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MD")
@@ -28,9 +29,10 @@ project(${PROJECT_NAME})
 
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
-    llvm_map_components_to_libnames(llvm_libs support core irreader)
+    llvm_map_components_to_libnames(llvm_libs support core codegen irreader orcjit native)
+    MESSAGE(STATUS "____________________________ ${llvm_libs}")
 
-    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs})
+    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} babycppjit ${llvm_libs})
 
 
     file(GLOB files "testdata/*.ll")
