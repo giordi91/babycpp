@@ -46,7 +46,7 @@ struct ExprAST {
     flags.isDefinition = 0;
   }
   virtual ~ExprAST() = default;
-  virtual llvm::Value *codegen(Codegenerator *gen)=0;
+  virtual llvm::Value *codegen(Codegenerator *gen) = 0;
 
   int datatype = 0;
   ASTFlags flags;
@@ -149,6 +149,8 @@ struct Codegenerator {
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
   static const std::unordered_map<int, int> AST_LLVM_MAP;
   llvm::Function *currentScope = nullptr;
+
+  void generateModuleContent();
 };
 
 } // namespace codegen

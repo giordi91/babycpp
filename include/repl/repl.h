@@ -7,8 +7,12 @@ struct Lexer;
 namespace codegen {
 struct Codegenerator;
 }
+namespace jit {
+class BabycppJIT;
+}
 namespace repl {
 
+static const std::string ANONYMOUS_FUNCTION;
 /**
  * @brief look ahead to understand what we are dealing
  * In order for the repl to behaver correctly, we need to know if we
@@ -18,7 +22,12 @@ namespace repl {
  * @return a repl token represening what the string is
  */
 int lookAheadStatement(lexer::Lexer *lex);
-void loop(codegen::Codegenerator *gen);
+/**
+ * @brief main repl loop
+ * @param gen
+ */
+void loop(codegen::Codegenerator *gen, jit::BabycppJIT* jit);
+void handleExpression(codegen::Codegenerator *gen, jit::BabycppJIT* jit);
 
 } // end repl
 } // end babycpp

@@ -207,10 +207,11 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
   if (function == nullptr) {
     Value *p = proto->codegen(gen);
-    //here we are forced to downcast to function from a value* we can't use
-    //dynamic cast either since we have to compile with -no-rtti due to llvm
-    //unless of course you re-compile llvm enabling rtti, there is no danger this to
-    //fail, because if that is not a function it should fail at parsing time.
+    // here we are forced to downcast to function from a value* we can't use
+    // dynamic cast either since we have to compile with -no-rtti due to llvm
+    // unless of course you re-compile llvm enabling rtti, there is no danger
+    // this to
+    // fail, because if that is not a function it should fail at parsing time.
     function = static_cast<llvm::Function *>(p);
   }
   if (function == nullptr) {
@@ -313,6 +314,15 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   }
 
   return gen->builder.CreateCall(calleeF, argValues, "calltmp");
+}
+void Codegenerator::generateModuleContent() {
+
+  while (lexer.currtok != Token::tok_eof) {
+    ExprAST *res = parser.parseStatement();
+    if (res != nullptr) {
+      res->codegen(this);
+    }
+  }
 }
 
 } // namespace codegen

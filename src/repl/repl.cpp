@@ -1,11 +1,16 @@
-#include <iostream>
 #include <codegen.h>
+#include <iostream>
+
+#include "jit.h"
 
 namespace babycpp {
-    namespace repl {
+namespace repl {
 
+const std::string ANONYMOUS_FUNCTION = "__anonymous__";
 
 using babycpp::codegen::Codegenerator;
+using babycpp::codegen::ExprAST;
+using babycpp::jit::BabycppJIT;
 
 int lookAheadStatement(babycpp::Lexer *lex) {
   {
@@ -55,20 +60,52 @@ int lookAheadStatement(babycpp::Lexer *lex) {
     return Token::tok_invalid_repl;
   }
 }
+void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit) {
 
-void loop( Codegenerator* gen)
-{
+  ExprAST *res = gen->parser.parseExpression();
+  // llvm::Value *val = res->codegen(gen);
+  if (res->datatype ==0)
+  {
+    std::cout<<"error cannot deduce datatype"<<std::endl;
+    return;
+  }
+  codegen::PrototypeAST *proto = gen->factory.allocPrototypeAST(res->datatype,
+      ANONYMOUS_FUNCTION, std::vector<codegen::Argument>(),0);
+
+  // faking expression as to be return;
+  res->flags.isReturn = true;
+  std::vector<ExprAST *> body{res};
+  codegen::FunctionAST *func = gen->factory.allocFunctionAST(proto, body);
+  func->codegen(gen);
+
+  babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
+}
+
+void loop(Codegenerator *gen, BabycppJIT *jit) {
   std::string str;
-  while(true) {
+  while (true) {
     std::cout << ">>> ";
     std::cout.flush();
     getline(std::cin, str);
 
     gen->initFromString(str);
     int tok = lookAheadStatement(&gen->lexer);
+    switch (tok) {
+    default:
+      continue;
+    case Token::tok_invalid_repl: {
+      std::cout << ">>> I did not understand that" << std::endl;
+      continue;
+    }
+    case Token::tok_expression_repl: {
+      handleExpression(gen, jit);
+    }
+    }
+    if (str == "exit") {
+      break;
+    }
   }
 }
 
-
-    } // end repl
+} // end repl
 } // end babycpp

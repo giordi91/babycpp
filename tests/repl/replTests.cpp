@@ -5,9 +5,12 @@
 #include <codegen.h>
 #include "catch.hpp"
 #include "repl.h"
+#include "jit.h"
 
 using babycpp::repl::lookAheadStatement;
+using babycpp::repl::handleExpression;
 using babycpp::codegen::Codegenerator;
+using babycpp::jit::BabycppJIT;
 using babycpp::lexer::Token;
 
 TEST_CASE("Testing look ahead for repl", "[repl]") {
@@ -36,4 +39,13 @@ TEST_CASE("Testing look ahead for repl", "[repl]") {
   gen.initFromString("extern sin(x);");
   res = lookAheadStatement(&gen.lexer);
   REQUIRE(res == Token::tok_extern);
+}
+
+TEST_CASE("Testing expressions", "[repl]") {
+  Codegenerator gen;
+  gen.initFromString("3 + 2");
+  BabycppJIT jit;
+
+  handleExpression(&gen, &jit);
+
 }
