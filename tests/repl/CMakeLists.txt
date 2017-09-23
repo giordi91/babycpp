@@ -7,7 +7,8 @@ project(${PROJECT_NAME})
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
     include_directories(${CMAKE_SOURCE_DIR}/include/core
                         ${CMAKE_SOURCE_DIR}/include/jit
-                        ${LLVM_INCLUDE_DIRS} 
+                        ${CMAKE_SOURCE_DIR}/include/repl
+                        ${LLVM_INCLUDE_DIRS}
                         ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
 
@@ -27,7 +28,7 @@ project(${PROJECT_NAME})
     # that we wish to use
     llvm_map_components_to_libnames(llvm_libs support core codegen irreader orcjit native)
 
-    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} babycppjit ${llvm_libs})
+    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} babycppjit babycppreplbase ${llvm_libs})
 
 
     file(GLOB files "testdata/*.ll")
@@ -40,37 +41,3 @@ project(${PROJECT_NAME})
 	   set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
     endif()
 
-    ##check if to run the test or not
-    #if(${RUN_TESTS} STREQUAL "ON")
-    #    if (NOT WIN32)
-
-
-    #        #now the problem is that if i am in build, because I did cmake ../, the test executable
-    #        #wont be in the build directory but in a sub folder tests, going into the sub folder
-    #        #run getting out is a pain, so I am adding a custom command to trigger the test after
-    #        #build and setting the working directo as the current output dir, and expect
-    #        #the test file to be picked as tests/myTestFile.txt
-
-    #        add_custom_command(
-    #            DEPENDS tests
-    #            COMMAND ./tests/tests
-    #            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    #            OUTPUT run_my_tests)
-
-    #        # Custom target will always cause its dependencies to be evaluated and is
-    #        # run by default
-    #        add_custom_target(dummy_target ALL
-    #            DEPENDS
-    #              run_my_tests
-    #              create_dataset_soft_link
-    #            )
-    #        MESSAGE(STATUS "Creating soft link for dataset: \n  ${CMAKE_SOURCE_DIR}/tests/test_data/datasets ->  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}/datasets")
-    #        #command to generate a soft link to the dataset folder
-    #            add_custom_command(
-    #                DEPENDS tests
-    #                COMMAND ln -f -s ${CMAKE_SOURCE_DIR}  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}/datasets
-    #                OUTPUT create_dataset_soft_link
-    #                )
-    #    endif()
-    #
-    #endif()

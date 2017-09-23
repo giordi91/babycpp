@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.6)
-SET(PROJECT_NAME "replBase")
+SET(PROJECT_NAME "babycppreplbase")
 SET(PROJECT_NAME_EXEC "repl")
 project(${PROJECT_NAME})
 
@@ -38,7 +38,8 @@ project(${PROJECT_NAME})
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs} babycpp babycppjit )
 	#adding the executable
     add_executable(${PROJECT_NAME_EXEC} ${SOURCE_FILES} ${REPL_EXEC_FILE})
-    target_link_libraries(${PROJECT_NAME_EXEC} ${MAIN_LIB_NAME} ${llvm_libs} babycpp babycppjit)
+    add_dependencies(${PROJECT_NAME_EXEC} ${PROJECT_NAME})
+    target_link_libraries(${PROJECT_NAME_EXEC} ${MAIN_LIB_NAME} ${llvm_libs} babycppreplbase babycppjit)
 
 
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs})
