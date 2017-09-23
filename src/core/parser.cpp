@@ -24,11 +24,6 @@ inline bool isDatatype(int tok) {
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
 // interesting to think of casting as "anonymous declaration maybe?"
-inline bool isDeclarationToken(int tok) {
-  bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
-  bool isExtern = tok == Token::tok_extern;
-  return isDatatype || isExtern;
-}
 inline int getTokPrecedence(Lexer *lex) {
   if (lex->currtok != Token::tok_operator) {
     // TODO(giordi) explain the -1 here
@@ -104,8 +99,8 @@ ExprAST *Parser::parseExpression() {
 
       auto *RHS = parseExpression();
       auto *LHScasted = static_cast<VariableExprAST *>(LHS);
-      //TODO(giordi): investigate if there is any kind of safety check i can
-      //do here
+      // TODO(giordi): investigate if there is any kind of safety check i can
+      // do here
       if (LHScasted == nullptr) {
         std::cout << "error, LHS of '=' operator must be a variable"
                   << std::endl;
@@ -253,6 +248,55 @@ ExprAST *Parser::parseStatement() {
   // change this to a clear flags
   flags.processed_assigment = false;
   return exp;
+}
+
+int Parser::lookAheadStatement() {
+
+  ExprAST *exp = nullptr;
+  // invalid tokens
+  if (lex->currtok == Token::tok_eof) {
+    return Token::tok_invalid_repl;
+  }
+  if (lex->currtok == Token::tok_extern) {
+    return Token::tok_extern;
+  }
+  if (lex->currtok == Token::tok_return) {
+    return Token::tok_invalid_repl;
+  }
+
+  // parsing a declaration
+  if (isDeclarationToken(lex->currtok)) {
+    bool res = lex->lookAhead(2);
+    if (!res) {
+      return Token::tok_invalid_repl;
+    }
+    if (lex->lookAheadToken[0].token == Token::tok_identifier &&
+        lex->lookAheadToken[1].token == Token::tok_assigment_operator) {
+      return Token::tok_assigment_repl;
+    }
+    if (lex->lookAheadToken[0].token == Token::tok_identifier &&
+        lex->lookAheadToken[1].token == Token::tok_open_round) {
+      return Token::tok_function_repl;
+    }
+  }
+
+  // if just an identifier we deal with it as an expression
+  if (lex->currtok == Token::tok_identifier) {
+
+    bool res = lex->lookAhead(2);
+    if (!res) {
+      return Token::tok_invalid_repl;
+    }
+    if (lex->lookAheadToken[0].token == Token::tok_assigment_operator)
+    {
+      return Token::tok_anonymous_assigment_repl;
+    }
+    return Token::tok_expression_repl;
+  }
+  if (lex->currtok == Token::tok_open_round) {
+    return Token::tok_expression_repl;
+  }
+  return Token::tok_invalid_repl;
 }
 
 PrototypeAST *Parser::parseExtern() {

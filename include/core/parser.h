@@ -20,6 +20,7 @@ struct FactoryAST;
 namespace parser {
 
 using lexer::Lexer;
+using lexer::Token;
 using lexer::Number;
 
 struct ParserFlags {
@@ -32,6 +33,7 @@ struct Parser {
     flags.processed_assigment = false;
   }
 
+  int lookAheadStatement();
   codegen::NumberExprAST *parseNumber();
   codegen::ExprAST *parseIdentifier();
   codegen::ExprAST *parseExpression();
@@ -45,6 +47,11 @@ struct Parser {
   codegen::ExprAST *parseParen();
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
 
+  static bool isDeclarationToken(int tok) {
+    bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
+    bool isExtern = tok == Token::tok_extern;
+    return isDatatype || isExtern;
+  }
   // data
   Lexer *lex;
   memory::FactoryAST *factory;

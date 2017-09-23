@@ -9,7 +9,7 @@ namespace babycpp {
 namespace lexer {
 
 static const std::regex MAIN_REGEX(
-    R"([ \t]*([[:alpha:]]\w*\b))"  // here we try to catch a common
+    R"([ \t]*([[:alpha:]]\w*\b))"      // here we try to catch a common
                                        // identifier either
     R"(|[ \t]*([\d.]+))"               // here we match digits
     R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
@@ -41,6 +41,12 @@ enum Token {
   tok_end_statement = -14,
   tok_comma = -15,
   tok_return = -16,
+  // repl
+  tok_invalid_repl = -1000,
+  tok_expression_repl = -1001,
+  tok_function_repl = -1002,
+  tok_assigment_repl = -1003,
+  tok_anonymous_assigment_repl = -1004,
 
   // error codes
   tok_empty_lexer = -2000,

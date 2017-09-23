@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
-SET(PROJECT_NAME "repl")
+SET(PROJECT_NAME "replBase")
+SET(PROJECT_NAME_EXEC "repl")
 project(${PROJECT_NAME})
 
     find_package(LLVM REQUIRED CONFIG)
@@ -8,7 +9,14 @@ project(${PROJECT_NAME})
     message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
 
     file(GLOB SOURCE_FILES "*.cpp" "*.h")
+
+    SET(REPL_EXEC_CPP replExec.cpp)
+    list(REMOVE_ITEM SOURCE_FILES ${REPL_EXEC_CPP})
+    foreach(file ${SOURCE_FILES})
+        MESSAGE(STATUS "REPL Files ${file}")
+    endforeach()
     include_directories(${CMAKE_SOURCE_DIR}/include/core
+                        ${CMAKE_SOURCE_DIR}/include/jit
                         ${LLVM_INCLUDE_DIRS} 
                         ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
@@ -22,13 +30,16 @@ project(${PROJECT_NAME})
 		set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MD")
 	endif()
 
-
-	#adding the executable
-    add_executable(${PROJECT_NAME} ${SOURCE_FILES} )
-
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
     llvm_map_components_to_libnames(llvm_libs support core irreader)
+
+    add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES} )
+    target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs} babycpp babycppjit )
+	#adding the executable
+    add_executable(${PROJECT_NAME_EXEC} ${SOURCE_FILES} ${REPL_EXEC_FILE})
+    target_link_libraries(${PROJECT_NAME_EXEC} ${MAIN_LIB_NAME} ${llvm_libs} babycpp babycppjit)
+
 
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs})
 
@@ -41,5 +52,6 @@ project(${PROJECT_NAME})
 
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	   set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
+       set_target_properties(${PROJECT_NAME_EXEC} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
     endif()
 
