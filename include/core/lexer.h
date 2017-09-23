@@ -96,6 +96,7 @@ struct Lexer {
     data = str;
     start = data.c_str();
     lineNumber = 1;
+    lookAheadToken.clear();
   }
   void gettok();
   bool lookAhead(uint32_t count);

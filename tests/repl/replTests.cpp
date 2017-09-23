@@ -17,6 +17,23 @@ TEST_CASE("Testing look ahead for repl", "[repl]") {
   int res = lookAheadStatement(&gen.lexer);
   REQUIRE(res == Token::tok_function_repl);
 
+  gen.initFromString("float test;");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_invalid_repl);
 
+  gen.initFromString("float test = 2.0;");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_assigment_repl);
 
+  gen.initFromString("test = x+ 2.0;");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_anonymous_assigment_repl);
+
+  gen.initFromString("x+ 2.0;");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_expression_repl);
+
+  gen.initFromString("extern sin(x);");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_extern);
 }

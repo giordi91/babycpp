@@ -12,7 +12,6 @@ project(${PROJECT_NAME})
                         ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
 
-
 	#defining standard compiling flags
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_CXX_FLAGS}  -fno-rtti")
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -36,8 +35,6 @@ project(${PROJECT_NAME})
         file(COPY ${file} DESTINATION ${CMAKE_BINARY_DIR}/${PROJECT_NAME} )
     endforeach()
 
-
 	if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 	   set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_BINARY_DIR}")
     endif()
-

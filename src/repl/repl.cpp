@@ -34,6 +34,7 @@ int lookAheadStatement(babycpp::Lexer *lex) {
           lex->lookAheadToken[1].token == Token::tok_open_round) {
         return Token::tok_function_repl;
       }
+      return Token::tok_invalid_repl;
     }
 
     // if just an identifier we deal with it as an expression

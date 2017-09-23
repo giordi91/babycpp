@@ -262,11 +262,21 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
 	REQUIRE(lex.currtok == Token::tok_identifier);
 	REQUIRE(lex.identifierStr== "ee");
 }
-TEST_CASE("Testing testing too much look ahead", "[lexer]") {
+TEST_CASE("Testing too much look ahead", "[lexer]") {
 	std::string str{ "xyz " };
 	Lexer lex;
 	lex.initFromStr(str);
 
     bool res = lex.lookAhead(10);
     REQUIRE(res == false);
+}
+TEST_CASE("Testing clear look ahead", "[lexer]") {
+  std::string str{ "this should be cleared after look ahead and init" };
+  Lexer lex;
+  lex.initFromStr(str);
+
+  bool res = lex.lookAhead(4);
+  REQUIRE(res == true);
+  lex.initFromStr("cleanup");
+  REQUIRE(lex.lookAheadToken.size()==0);
 }

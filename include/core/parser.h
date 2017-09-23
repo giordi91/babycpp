@@ -33,7 +33,6 @@ struct Parser {
     flags.processed_assigment = false;
   }
 
-  int lookAheadStatement();
   codegen::NumberExprAST *parseNumber();
   codegen::ExprAST *parseIdentifier();
   codegen::ExprAST *parseExpression();
