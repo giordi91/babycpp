@@ -13,6 +13,7 @@ class BabycppJIT;
 namespace repl {
 
 static const std::string ANONYMOUS_FUNCTION;
+static const std::string DUMMY_FUNCTION;
 /**
  * @brief look ahead to understand what we are dealing
  * In order for the repl to behaver correctly, we need to know if we

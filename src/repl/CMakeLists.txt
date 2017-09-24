@@ -17,7 +17,8 @@ project(${PROJECT_NAME})
     endforeach()
     include_directories(${CMAKE_SOURCE_DIR}/include/core
                         ${CMAKE_SOURCE_DIR}/include/jit
-                        ${LLVM_INCLUDE_DIRS} 
+                        ${CMAKE_SOURCE_DIR}/include/repl
+                        ${LLVM_INCLUDE_DIRS}
                         ${CMAKE_CURRENT_SOURCE_DIR}/..)
     add_definitions(${LLVM_DEFINITIONS})
 

@@ -39,7 +39,16 @@ TEST_CASE("Testing look ahead for repl", "[repl]") {
   gen.initFromString("extern sin(x);");
   res = lookAheadStatement(&gen.lexer);
   REQUIRE(res == Token::tok_extern);
+
+  gen.initFromString("5 + 2;");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_expression_repl);
+
+  gen.initFromString("(5 + 2);");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_expression_repl);
 }
+
 
 TEST_CASE("Testing expressions", "[repl]") {
   Codegenerator gen;

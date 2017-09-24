@@ -154,24 +154,50 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
 
   datatype = gen->omogenizeOperation(lhs, rhs, &L, &R);
 
-  // checking the operator to generate the correct operation
-  if (op == "+") {
-    return gen->builder.CreateFAdd(L, R, "addtmp");
+  if(datatype == Token::tok_float) {
+    // checking the operator to generate the correct operation
+    if (op == "+") {
+      return gen->builder.CreateFAdd(L, R, "addtmp");
+    }
+    if (op == "-") {
+      return gen->builder.CreateFSub(L, R, "subtmp");
+    }
+    if (op == "*") {
+      return gen->builder.CreateFMul(L, R, "multmp");
+    }
+    if (op == "/") {
+      return gen->builder.CreateFDiv(L, R, "divtmp");
+    }
+    if (op == "<") {
+      // TODO(giordi) fix this, to return int?
+      L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
+      return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
+                                       "booltmp");
+    }
   }
-  if (op == "-") {
-    return gen->builder.CreateFSub(L, R, "subtmp");
-  }
-  if (op == "*") {
-    return gen->builder.CreateFMul(L, R, "multmp");
-  }
-  if (op == "/") {
-    return gen->builder.CreateFDiv(L, R, "divtmp");
-  }
-  if (op == "<") {
-    // TODO(giordi) fix this, to return int?
-    L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
-    return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
-                                     "booltmp");
+  else
+  {
+    // checking the operator to generate the correct operation
+    if (op == "+") {
+      return gen->builder.CreateAdd(L, R, "addtmp");
+    }
+    if (op == "-") {
+      return gen->builder.CreateSub(L, R, "subtmp");
+    }
+    if (op == "*") {
+      return gen->builder.CreateMul(L, R, "multmp");
+    }
+    if (op == "/") {
+      return gen->builder.CreateFDiv(L, R, "divtmp");
+    }
+    if (op == "<") {
+      // TODO(giordi) fix this, to return int?
+      L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
+      return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
+                                       "booltmp");
+    }
+
+
   }
   std::cout << "error unrecognized operator" << std::endl;
   return nullptr;
@@ -307,7 +333,7 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
     // if we got here the type is correct, so we can push the argument
     Value *argValuePtr = args[t]->codegen(gen);
     if (argValuePtr == nullptr) {
-      std::cout << "error in genrating code for function argument" << std::endl;
+      std::cout << "error in generating code for function argument" << std::endl;
       return nullptr;
     }
     argValues.push_back(argValuePtr);

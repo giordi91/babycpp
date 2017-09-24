@@ -71,6 +71,19 @@ TEST_CASE("Testing code gen number int", "[codegen]") {
 //  std::string outs = gen.printLlvmData(v);
 //  REQUIRE(outs == "  %x = alloca float");
 //}
+TEST_CASE("Testing add constants", "[codegen]") {
+  Codegenerator gen;
+  gen.initFromString("(3+2)");
+
+  auto p = gen.parser.parseParen();
+  REQUIRE(p != nullptr);
+  llvm::Value *v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  // converting Value to string and check result
+  std::string outs = gen.printLlvmData(v);
+  std::cout<<outs<<std::endl;
+}
 
 TEST_CASE("Testing binop codegen plus", "[codegen]") {
   Codegenerator gen;

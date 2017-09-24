@@ -25,6 +25,7 @@ using lexer::Number;
 struct ASTFlags {
   bool isReturn : 1;
   bool isDefinition : 1;
+  bool isFunctionDynTypeRepl: 1;
 };
 
 struct Argument {
@@ -40,10 +41,12 @@ struct ExprAST {
   ExprAST() {
     flags.isReturn = 0;
     flags.isDefinition = 0;
+    flags.isFunctionDynTypeRepl= 0;
   };
   ExprAST(int type) : datatype(type) {
     flags.isReturn = 0;
     flags.isDefinition = 0;
+    flags.isFunctionDynTypeRepl= 0;
   }
   virtual ~ExprAST() = default;
   virtual llvm::Value *codegen(Codegenerator *gen) = 0;
