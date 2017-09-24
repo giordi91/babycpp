@@ -234,7 +234,7 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
 llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   // First, check for an existing function from a previous 'extern'
   // declaration.
-  llvm::Function *function = gen->module->getFunction(proto->name);
+  llvm::Function *function = gen->getFunction(proto->name);
 
   if (function == nullptr) {
     Value *p = proto->codegen(gen);
@@ -244,6 +244,8 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
     // this to
     // fail, because if that is not a function it should fail at parsing time.
     function = static_cast<llvm::Function *>(p);
+    gen->functionProtos[proto->name] = proto;
+    function =gen->getFunction(proto->name);
   }
   if (function == nullptr) {
     std::cout << "error generating prototype code gen" << std::endl;
@@ -311,10 +313,28 @@ bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
   }
   return false;
 }
+llvm::Function *Codegenerator::getFunction(const std::string& Name) {
+  // First, see if the function has already been added to the current module.
+  if (auto *F = module->getFunction(Name))
+    return F;
+
+  // If not, check whether we can codegen the declaration from some existing
+  // prototype.
+  auto FI = functionProtos.find(Name);
+  if (FI != functionProtos.end()) {
+    auto *f = FI->second->codegen(this);
+    if (f == nullptr )
+    {return nullptr;}
+    return static_cast<llvm::Function*>(f);
+  }
+
+  // If no existing prototype exists, return null.
+  return nullptr;
+}
 
 llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // lets try to get the function
-  llvm::Function *calleeF = gen->module->getFunction(callee);
+  llvm::Function *calleeF = gen->getFunction(callee);
   if (calleeF == nullptr) {
     std::cout << "error function not defined" << std::endl;
     return nullptr;

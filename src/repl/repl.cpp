@@ -70,7 +70,7 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
                       std::shared_ptr<llvm::Module> anonymousModule,
                       std::shared_ptr<llvm::Module> staticModule) {
 
-  gen->setCurrentModule(anonymousModule);
+  //gen->setCurrentModule(anonymousModule);
   // the main issue here is that i need to know the resulting type.
   // the code deals with that letting the type bubble up the AST from
   // the leaves, this mean until code gen time I won't know the type.
@@ -88,6 +88,9 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
 
   ExprAST *res = gen->parser.parseExpression();
   llvm::Value *val = res->codegen(gen);
+  std::cout<<"is vall nullptr "<<(val == nullptr)<<std::endl;
+  std::cout<<(gen->printLlvmData(val))<<std::endl;
+  std::cout<<"after val"<<std::endl;
   int ret_type = Token::tok_int;
   if (val->getType()->isFloatTy()) {
     ret_type = Token::tok_float;
@@ -98,20 +101,35 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
   auto *finalFunc = static_cast<llvm::Function *>(final->codegen(gen));
   using llvm::BasicBlock;
   // Create a new basic block to start insertion into.
-  BasicBlock *finalblock = BasicBlock::Create(gen->context, "entry", finalFunc);
-  gen->builder.SetInsertPoint(finalblock);
+  //BasicBlock *finalblock = BasicBlock::Create(gen->context, "entry", finalFunc);
+  //gen->builder.SetInsertPoint(finalblock);
   // moving the dummy block
-  block->moveAfter(finalblock);
+  std::cout<<"BEFOREEEEE+++++++++++++++++++++++++++++++++++++"<<std::endl;
+  std::cout<<gen->printLlvmData(dummyFunc)<<std::endl;
+  std::cout<<gen->printLlvmData(finalFunc)<<std::endl;
+  block->removeFromParent();
+  block->insertInto(finalFunc);
+  std::cout<<"AFTEEER+++++++++++++++++++++++++++++++++++++"<<std::endl;
+  std::cout<<gen->printLlvmData(dummyFunc)<<std::endl;
+  std::cout<<gen->printLlvmData(finalFunc)<<std::endl;
   // now we have the body under the right function
   // deleting the temp one
-  block->eraseFromParent();
-  dummyFunc->eraseFromParent();
   // we need to add the return
-  gen->builder.CreateRet(val);
-  std::cout << gen->printLlvmData(finalFunc) << std::endl;
-  verifyFunction(*finalFunc);
+  auto ret =gen->builder.CreateRet(val);
+  gen->module->print(llvm::errs(),nullptr);
+  //std::cout << gen->printLlvmData(finalFunc) << std::endl;
+  std::string outs;
+  llvm::raw_string_ostream os(outs);
+
+  //gen->module->dump();
+  std::cout<<"before verify"<<std::endl;
+
+  bool verified = verifyFunction(*finalFunc);
+
+  std::cout<<"verified "<<outs<<std::endl;
 
   babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
+  std::cout << gen->printLlvmData(finalFunc) << std::endl;
 
   if (ret_type == Token::tok_int) {
     auto *func = (int (*)())(intptr_t)llvm::cantFail(
@@ -123,15 +141,18 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
     std::cout << ">>> " << func() << std::endl;
   }
   // no point in keeping anonymous functions alive
-  finalFunc->eraseFromParent();
-  jit->removeModule(handle);
+  //finalFunc->eraseFromParent();
+  //jit->removeModule(handle);
+
+  //block->eraseFromParent();
+  //dummyFunc->eraseFromParent();
 }
 
 void handleFunction(codegen::Codegenerator *gen, jit::BabycppJIT *jit,
                     std::shared_ptr<llvm::Module> anonymousModule,
                     std::shared_ptr<llvm::Module> staticModule)
 {
-  gen->setCurrentModule(staticModule);
+  //gen->setCurrentModule(staticModule);
   FunctionAST *res = gen->parser.parseFunction();
   if (res == nullptr)
   {
@@ -145,7 +166,9 @@ void handleFunction(codegen::Codegenerator *gen, jit::BabycppJIT *jit,
     std::cout<<"ret type is float"<<std::endl;
   }
 
-  babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
+  std::cout<<gen->printLlvmData(val)<<std::endl;
+  std::cout<<"mod ptr"<<(gen->module.get())<<std::endl;
+  //babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
 
 }
 

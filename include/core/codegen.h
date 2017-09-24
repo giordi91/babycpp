@@ -156,6 +156,8 @@ struct Codegenerator {
   llvm::Function *currentScope = nullptr;
 
   void generateModuleContent();
+    llvm::Function* getFunction(const std::string& name);
+    std::unordered_map<std::string, PrototypeAST*> functionProtos;
 };
 
 } // namespace codegen

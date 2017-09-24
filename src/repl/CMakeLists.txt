@@ -33,7 +33,7 @@ project(${PROJECT_NAME})
 
     # Find the libraries that correspond to the LLVM components
     # that we wish to use
-    llvm_map_components_to_libnames(llvm_libs support core irreader)
+    llvm_map_components_to_libnames(llvm_libs support core irreader orcjit native)
 
     add_library(${PROJECT_NAME} STATIC ${SOURCE_FILES} )
     target_link_libraries(${PROJECT_NAME} ${MAIN_LIB_NAME} ${llvm_libs} babycpp babycppjit )
