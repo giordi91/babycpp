@@ -1,6 +1,9 @@
 # babycpp
 Custom implemented language which is basically a small, **SMALL** subset of c++, just another learning project.
 
+![alt text](https://github.com/giordi91/babycpp/blob/master/images/repl.gif "")
+
+
 ## Grammar
 The main struggle was to be able to generate a formal definition of the rules driving the parsing process, here
 below the rules:
