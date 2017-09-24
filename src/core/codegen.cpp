@@ -42,17 +42,6 @@ void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
   module = mod;
 }
 
-llvm::Function *
-Codegenerator::lookForFunctionInSupplementaryModules(const std::string &str) {
-  for (auto &mod : supplementaryModules) {
-    llvm::Function *res = mod->getFunction(str);
-    if (res != nullptr) {
-      return res;
-    }
-  }
-  return nullptr;
-}
-
 Value *NumberExprAST::codegen(Codegenerator *gen) {
 
   if (val.type == Token::tok_float) {
@@ -324,15 +313,11 @@ bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
 }
 
 llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
-  // lests try to get the function
+  // lets try to get the function
   llvm::Function *calleeF = gen->module->getFunction(callee);
   if (calleeF == nullptr) {
-
-    calleeF = gen->lookForFunctionInSupplementaryModules(callee);
-    if (calleeF == nullptr) {
-      std::cout << "error function not defined" << std::endl;
-      return nullptr;
-    }
+    std::cout << "error function not defined" << std::endl;
+    return nullptr;
   }
 
   // checking function signature
