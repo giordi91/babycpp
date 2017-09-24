@@ -127,6 +127,10 @@ void Lexer::gettok() {
 }
 bool Lexer::lookAhead(uint32_t count)
 {
+    std::string old = identifierStr;
+    int old_tok = currtok;
+    Number oldNumb = value;
+
     //here we need a temp buffer, we cannot push directly inside
     //the lookAheadToken queue, otherwise it will be popped right
     //away from the next gettok(). We write to a temp buffer and then
@@ -139,7 +143,6 @@ bool Lexer::lookAhead(uint32_t count)
         gettok();
         if(currtok == tok_eof || currtok == tok_no_match)
         {
-            //lookAheadToken.clear();
             return false;
         }
         tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
@@ -148,6 +151,9 @@ bool Lexer::lookAhead(uint32_t count)
     for (uint32_t t = 0; t < count; ++t) {
       lookAheadToken.push_back(tempBuffer[t]);
     }
+    identifierStr = old;
+    currtok= old_tok;
+    value = oldNumb;
     return true;
 }
 

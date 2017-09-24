@@ -114,6 +114,8 @@ struct FunctionAST : public ExprAST {
 struct Codegenerator {
 
   explicit Codegenerator();
+  void createNewModule();
+  void setCurrentModule(std::shared_ptr<llvm::Module> mod);
   inline void initFromString(const std::string &str) {
     lexer.initFromStr(str);
     // getting first token so the parser is ready to go
@@ -154,6 +156,7 @@ struct Codegenerator {
   llvm::Function *currentScope = nullptr;
 
   void generateModuleContent();
+  //std::vector<llvm::modules();
 };
 
 } // namespace codegen

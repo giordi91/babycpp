@@ -365,3 +365,16 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   ExprAST *val = statement_casted->value;
   REQUIRE(val != nullptr);
 }
+
+TEST_CASE("Testing lookahead not losing tokens", "[parser]")
+{
+
+  Lexer lex;
+  lex.initFromStr("float avg(float x){ return x *2.0;}");
+  Parser parser(&lex, &factory);
+  lex.gettok();
+  lex.lookAhead(2);
+
+  REQUIRE(lex.identifierStr == "float");
+
+}

@@ -284,3 +284,5 @@ TEST_CASE("Testing function codegen alloca", "[codegen]") {
   std::string expected = getFile("tests/core/alloca1.ll");
   REQUIRE(outs == expected);
 }
+
+

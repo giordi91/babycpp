@@ -47,6 +47,10 @@ TEST_CASE("Testing look ahead for repl", "[repl]") {
   gen.initFromString("(5 + 2);");
   res = lookAheadStatement(&gen.lexer);
   REQUIRE(res == Token::tok_expression_repl);
+
+  gen.initFromString("float avg(float x){ return x *2.0;}");
+  res = lookAheadStatement(&gen.lexer);
+  REQUIRE(res == Token::tok_function_repl);
 }
 
 
@@ -54,7 +58,11 @@ TEST_CASE("Testing expressions", "[repl]") {
   Codegenerator gen;
   gen.initFromString("3 + 2");
   BabycppJIT jit;
+  auto anonymousModule =
+      std::make_shared<llvm::Module>("anonymous", gen.context);
+  auto staticModule =
+      std::make_shared<llvm::Module>("static", gen.context);
 
-  handleExpression(&gen, &jit);
+  handleExpression(&gen, &jit, anonymousModule, staticModule);
 
 }

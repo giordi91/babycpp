@@ -12,6 +12,7 @@ const std::string DUMMY_FUNCTION = "__dummy__";
 
 using babycpp::codegen::Codegenerator;
 using babycpp::codegen::ExprAST;
+using babycpp::codegen::FunctionAST;
 using babycpp::jit::BabycppJIT;
 
 int lookAheadStatement(babycpp::Lexer *lex) {
@@ -56,8 +57,7 @@ int lookAheadStatement(babycpp::Lexer *lex) {
       }
       return Token::tok_expression_repl;
     }
-    if (lex->currtok == Token::tok_number)
-    {
+    if (lex->currtok == Token::tok_number) {
       return Token::tok_expression_repl;
     }
     if (lex->currtok == Token::tok_open_round) {
@@ -66,8 +66,11 @@ int lookAheadStatement(babycpp::Lexer *lex) {
     return Token::tok_invalid_repl;
   }
 }
-void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit) {
+void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
+                      std::shared_ptr<llvm::Module> anonymousModule,
+                      std::shared_ptr<llvm::Module> staticModule) {
 
+  gen->setCurrentModule(anonymousModule);
   // the main issue here is that i need to know the resulting type.
   // the code deals with that letting the type bubble up the AST from
   // the leaves, this mean until code gen time I won't know the type.
@@ -103,27 +106,52 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit) {
   // deleting the temp one
   block->eraseFromParent();
   dummyFunc->eraseFromParent();
-  //we need to add the return
+  // we need to add the return
   gen->builder.CreateRet(val);
-  std::cout<<gen->printLlvmData(finalFunc)<<std::endl;
-  llvm:verifyFunction(*finalFunc);
+  std::cout << gen->printLlvmData(finalFunc) << std::endl;
+  verifyFunction(*finalFunc);
 
-  babycpp::jit::BabycppJIT::ModuleHandle handle =
-  jit->addModule(gen->module);
+  babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
 
-  if(ret_type == Token::tok_int)
-  {
-    auto* func = (int(*)())(intptr_t)llvm::cantFail(jit->findSymbol(ANONYMOUS_FUNCTION).getAddress());
-    std::cout<<">>> "<<func()<<std::endl;
+  if (ret_type == Token::tok_int) {
+    auto *func = (int (*)())(intptr_t)llvm::cantFail(
+        jit->findSymbol(ANONYMOUS_FUNCTION).getAddress());
+    std::cout << ">>> " << func() << std::endl;
+  } else {
+    auto *func = (float (*)())(intptr_t)llvm::cantFail(
+        jit->findSymbol(ANONYMOUS_FUNCTION).getAddress());
+    std::cout << ">>> " << func() << std::endl;
   }
-  //no point in keeping anonymous functions alive
+  // no point in keeping anonymous functions alive
   finalFunc->eraseFromParent();
   jit->removeModule(handle);
+}
 
+void handleFunction(codegen::Codegenerator *gen, jit::BabycppJIT *jit,
+                    std::shared_ptr<llvm::Module> anonymousModule,
+                    std::shared_ptr<llvm::Module> staticModule)
+{
+  gen->setCurrentModule(staticModule);
+  FunctionAST *res = gen->parser.parseFunction();
+  if (res == nullptr)
+  {
+    return ;
+  }
+  llvm::Value *val = res->codegen(gen);
+
+  int ret_type = Token::tok_int;
+  if (res->proto->datatype == Token::tok_float) {
+    ret_type = Token::tok_float;
+    std::cout<<"ret type is float"<<std::endl;
+  }
+
+  babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
 
 }
 
-void loop(Codegenerator *gen, BabycppJIT *jit) {
+void loop(Codegenerator *gen, BabycppJIT *jit,
+          std::shared_ptr<llvm::Module> anonymousModule,
+          std::shared_ptr<llvm::Module> staticModule) {
   std::string str;
   while (true) {
     std::cout << ">>> ";
@@ -140,8 +168,11 @@ void loop(Codegenerator *gen, BabycppJIT *jit) {
       continue;
     }
     case Token::tok_expression_repl: {
-      std::cout<<"expr"<<std::endl;
-      handleExpression(gen, jit);
+      std::cout << "expr" << std::endl;
+      handleExpression(gen, jit, anonymousModule, staticModule);
+    }
+    case Token::tok_function_repl: {
+      handleFunction(gen, jit, anonymousModule, staticModule);
     }
     }
     if (str == "exit") {

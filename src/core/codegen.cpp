@@ -20,6 +20,7 @@ inline llvm::Type *getType(int type, Codegenerator *gen) {
   }
   return llvm::Type::getInt32Ty(gen->context);
 }
+
 llvm::AllocaInst *
 Codegenerator::createEntryBlockAlloca(llvm::Function *function,
                                       const std::string &varName, int type) {
@@ -27,6 +28,21 @@ Codegenerator::createEntryBlockAlloca(llvm::Function *function,
                                 function->getEntryBlock().begin());
   llvm::Type *varType = getType(type, this);
   return tempBuilder.CreateAlloca(varType, nullptr, varName);
+}
+
+Codegenerator::Codegenerator()
+    : parser(&lexer, &factory), builder(context),
+      module(new llvm::Module("", context)) {}
+
+void Codegenerator::createNewModule() {
+  module.reset(new llvm::Module("", context));
+}
+
+void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod)
+{
+  module = mod;
+
+
 }
 
 Value *NumberExprAST::codegen(Codegenerator *gen) {
@@ -43,10 +59,6 @@ Value *NumberExprAST::codegen(Codegenerator *gen) {
   std::cout << "Error unrecognized type number on code gen" << std::endl;
   return nullptr;
 }
-Codegenerator::Codegenerator()
-    : parser(&lexer, &factory), builder(context),
-      module(new llvm::Module("", context)) {}
-
 llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
   // first we try to see if the variable is already defined at scope
@@ -154,7 +166,7 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
 
   datatype = gen->omogenizeOperation(lhs, rhs, &L, &R);
 
-  if(datatype == Token::tok_float) {
+  if (datatype == Token::tok_float) {
     // checking the operator to generate the correct operation
     if (op == "+") {
       return gen->builder.CreateFAdd(L, R, "addtmp");
@@ -174,9 +186,7 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
       return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
                                        "booltmp");
     }
-  }
-  else
-  {
+  } else {
     // checking the operator to generate the correct operation
     if (op == "+") {
       return gen->builder.CreateAdd(L, R, "addtmp");
@@ -188,7 +198,7 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
       return gen->builder.CreateMul(L, R, "multmp");
     }
     if (op == "/") {
-      return gen->builder.CreateFDiv(L, R, "divtmp");
+      return gen->builder.CreateSDiv(L, R, "divtmp");
     }
     if (op == "<") {
       // TODO(giordi) fix this, to return int?
@@ -196,8 +206,6 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
       return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
                                        "booltmp");
     }
-
-
   }
   std::cout << "error unrecognized operator" << std::endl;
   return nullptr;
@@ -311,6 +319,8 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // lests try to get the function
   llvm::Function *calleeF = gen->module->getFunction(callee);
   if (calleeF == nullptr) {
+
+    //calleeF = lookForFunctionInSupplementaryModules(callee);
     std::cout << "error function not defined" << std::endl;
     return nullptr;
   }
@@ -333,7 +343,8 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
     // if we got here the type is correct, so we can push the argument
     Value *argValuePtr = args[t]->codegen(gen);
     if (argValuePtr == nullptr) {
-      std::cout << "error in generating code for function argument" << std::endl;
+      std::cout << "error in generating code for function argument"
+                << std::endl;
       return nullptr;
     }
     argValues.push_back(argValuePtr);
