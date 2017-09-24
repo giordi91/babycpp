@@ -35,7 +35,7 @@ TEST_CASE("Testing number parser", "[parser]") {
   REQUIRE(node->val.floatNumber == Approx(1.0));
 }
 
-TEST_CASE("Testing function call", "[parser]") {
+TEST_CASE("Testing function call parsing", "[parser]") {
   Lexer lex;
   lex.initFromStr("testFunction ();");
   Parser parser(&lex, &factory);

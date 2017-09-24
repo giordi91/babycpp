@@ -18,6 +18,8 @@ int main() {
       std::make_shared<llvm::Module>("anonymous", gen.context);
   auto staticModule =
       std::make_shared<llvm::Module>("static", gen.context);
+
+  gen.supplementaryModules.push_back(staticModule.get());
   babycpp::repl::loop(&gen, &jit, anonymousModule, staticModule);
 
   return 0;

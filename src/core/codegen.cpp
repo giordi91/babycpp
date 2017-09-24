@@ -38,11 +38,19 @@ void Codegenerator::createNewModule() {
   module.reset(new llvm::Module("", context));
 }
 
-void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod)
-{
+void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
   module = mod;
+}
 
-
+llvm::Function *
+Codegenerator::lookForFunctionInSupplementaryModules(const std::string &str) {
+  for (auto &mod : supplementaryModules) {
+    llvm::Function *res = mod->getFunction(str);
+    if (res != nullptr) {
+      return res;
+    }
+  }
+  return nullptr;
 }
 
 Value *NumberExprAST::codegen(Codegenerator *gen) {
@@ -320,9 +328,11 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   llvm::Function *calleeF = gen->module->getFunction(callee);
   if (calleeF == nullptr) {
 
-    //calleeF = lookForFunctionInSupplementaryModules(callee);
-    std::cout << "error function not defined" << std::endl;
-    return nullptr;
+    calleeF = gen->lookForFunctionInSupplementaryModules(callee);
+    if (calleeF == nullptr) {
+      std::cout << "error function not defined" << std::endl;
+      return nullptr;
+    }
   }
 
   // checking function signature
@@ -348,6 +358,12 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
       return nullptr;
     }
     argValues.push_back(argValuePtr);
+  }
+
+  // setting datatype
+  datatype = Token::tok_int;
+  if (calleeF->getType()->isFloatTy()) {
+    datatype = Token::tok_float;
   }
 
   return gen->builder.CreateCall(calleeF, argValues, "calltmp");

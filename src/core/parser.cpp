@@ -83,6 +83,7 @@ ExprAST *Parser::parseIdentifier() {
       lex->gettok();
     }
   }
+  lex->gettok(); //eat )
   return factory->allocCallexprAST(idstr, args);
 }
 
@@ -219,20 +220,19 @@ ExprAST *Parser::parseStatement() {
   if (lex->currtok == Token::tok_eof) {
     return nullptr;
   }
-  if (lex->currtok == Token::tok_extern) {
+  else if (lex->currtok == Token::tok_extern) {
     exp = parseExtern();
   }
-  if (lex->currtok == Token::tok_return) {
+  else if (lex->currtok == Token::tok_return) {
     lex->gettok(); // eat return
     exp = parseExpression();
     exp->flags.isReturn = true;
   }
-
-  if (isDeclarationToken(lex->currtok)) {
+  else if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
   }
 
-  if (lex->currtok == Token::tok_identifier) {
+  else if (lex->currtok == Token::tok_identifier) {
     exp = parseExpression();
   }
   // TODO(giordi) support statement starting with parenthesis
