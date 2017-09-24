@@ -82,7 +82,7 @@ TEST_CASE("Testing add constants", "[codegen]") {
 
   // converting Value to string and check result
   std::string outs = gen.printLlvmData(v);
-  std::cout<<outs<<std::endl;
+  std::cout << outs << std::endl;
 }
 
 TEST_CASE("Testing binop codegen plus", "[codegen]") {
@@ -280,11 +280,10 @@ TEST_CASE("Testing function codegen alloca", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/alloca1.ll");
+  // gen.dumpLlvmData(v, "tests/core/alloca1.ll");
   std::string expected = getFile("tests/core/alloca1.ll");
   REQUIRE(outs == expected);
 }
-
 
 TEST_CASE("Testing function call in function", "[codegen]") {
 
@@ -299,13 +298,34 @@ TEST_CASE("Testing function call in function", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  std::cout<<outs<<std::endl;
+  //std::cout << outs << std::endl;
 
   auto v2 = p2->codegen(&gen);
   REQUIRE(v2 != nullptr);
   outs = gen.printLlvmData(v2);
-  std::cout<<outs<<std::endl;
-  //gen.dumpLlvmData(v, "tests/core/alloca1.ll");
-  //std::string expected = getFile("tests/core/alloca1.ll");
-  //REQUIRE(outs == expected);
+  //std::cout << outs << std::endl;
+  // gen.dumpLlvmData(v, "tests/core/alloca1.ll");
+  // std::string expected = getFile("tests/core/alloca1.ll");
+  // REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing function call in function2", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float avg(float x){return x*2.0;}"
+                     "float tt(float x , float y){return y + avg(x);}");
+  auto p = gen.parser.parseFunction();
+  auto p2 = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+  REQUIRE(p2 != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  std::cout << outs << std::endl;
+
+  auto v2 = p2->codegen(&gen);
+  REQUIRE(v2 != nullptr);
+  outs = gen.printLlvmData(v2);
+  std::cout << outs << std::endl;
 }

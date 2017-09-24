@@ -95,6 +95,7 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     } else {
       datatype = Token::tok_int;
     }
+  }
 
     // now at this point ,we might have a simple variable for
     // which we gen a load, or we might have an assignment
@@ -106,13 +107,10 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     }
     // otherwise we just generate the load
     return gen->builder.CreateLoad(v, name.c_str());
-  }
   // if we got here, it means the variable has a known datatype
   // but has not been defined yet, this only happens for variable
   // definitions, so we need to define it, we are gonna do that with
   // alloca
-  std::cout << "not definition " << name << std::endl;
-  return nullptr;
 }
 
 int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
@@ -245,7 +243,7 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
     // fail, because if that is not a function it should fail at parsing time.
     function = static_cast<llvm::Function *>(p);
     gen->functionProtos[proto->name] = proto;
-    function =gen->getFunction(proto->name);
+    function = gen->getFunction(proto->name);
   }
   if (function == nullptr) {
     std::cout << "error generating prototype code gen" << std::endl;
@@ -313,7 +311,7 @@ bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
   }
   return false;
 }
-llvm::Function *Codegenerator::getFunction(const std::string& Name) {
+llvm::Function *Codegenerator::getFunction(const std::string &Name) {
   // First, see if the function has already been added to the current module.
   if (auto *F = module->getFunction(Name))
     return F;
@@ -323,9 +321,10 @@ llvm::Function *Codegenerator::getFunction(const std::string& Name) {
   auto FI = functionProtos.find(Name);
   if (FI != functionProtos.end()) {
     auto *f = FI->second->codegen(this);
-    if (f == nullptr )
-    {return nullptr;}
-    return static_cast<llvm::Function*>(f);
+    if (f == nullptr) {
+      return nullptr;
+    }
+    return static_cast<llvm::Function *>(f);
   }
 
   // If no existing prototype exists, return null.
@@ -351,6 +350,21 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   for (uint32_t t = 0; t < argSize; ++t) {
     // check type
     llvm::Argument *currFunctionArg = calleeF->args().begin() + t;
+    if (args[t]->datatype == 0) {
+      // if the variable has no datatype it means we don't know what it is
+      // the only option here is that is actually a variable is scope
+      if (args[t]->nodetype == VariableNode) {
+        auto temp = static_cast<VariableExprAST *>(args[t]);
+        bool found = gen->namedValues.find(temp->name) != gen->namedValues.end();
+        if (found) {
+          datatype = Token::tok_int;
+          auto type = gen->namedValues[temp->name]->getAllocatedType();
+          if (type->isFloatTy()) {
+            args[t]->datatype = Token::tok_float;
+          }
+        }
+      }
+    }
     if (!Codegenerator::compareASTArgWithLLVMArg(args[t], currFunctionArg)) {
       std::cout << "mismatch type for function call argument" << std::endl;
       return nullptr;

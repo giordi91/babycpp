@@ -35,6 +35,16 @@ struct Argument {
   std::string name;
 };
 
+enum NodeType
+{
+    NumberNode = 1,
+    VariableNode = 2,
+    BinaryNode = 3,
+    CallNode = 4,
+    PrototypeNode = 5,
+    FunctionNode = 6
+};
+
 struct Codegenerator;
 // base struct for all ast expr
 struct ExprAST {
@@ -52,6 +62,7 @@ struct ExprAST {
   virtual llvm::Value *codegen(Codegenerator *gen) = 0;
 
   int datatype = 0;
+  NodeType nodetype;
   ASTFlags flags;
 };
 
@@ -59,6 +70,7 @@ struct NumberExprAST : public ExprAST {
   explicit NumberExprAST(Number val) : ExprAST(), val(val) {
     // TODO(giordi) add assert for it to be a datatype token
     datatype = val.type;
+    nodetype = NumberNode;
   }
   llvm::Value *codegen(Codegenerator *gen) override;
 
@@ -69,7 +81,9 @@ struct VariableExprAST : public ExprAST {
   std::string name;
   ExprAST *value;
   explicit VariableExprAST(const std::string &name, ExprAST *invalue, int type)
-      : ExprAST(type), name{name}, value(invalue) {}
+      : ExprAST(type), name{name}, value(invalue) {
+   nodetype = VariableNode;
+  }
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
@@ -77,7 +91,7 @@ struct BinaryExprAST : public ExprAST {
   std::string op;
   ExprAST *lhs, *rhs;
   explicit BinaryExprAST(std::string &op, ExprAST *lhs, ExprAST *rhs)
-      : ExprAST(), op(op), lhs(lhs), rhs(rhs) {}
+      : ExprAST(), op(op), lhs(lhs), rhs(rhs) { nodetype = BinaryNode;}
 
   llvm::Value *codegen(Codegenerator *gen) override;
 };
@@ -87,7 +101,7 @@ struct CallExprAST : public ExprAST {
   std::vector<ExprAST *> args;
 
   explicit CallExprAST(const std::string &callee, std::vector<ExprAST *> &args)
-      : ExprAST(), callee(callee), args(args) {}
+      : ExprAST(), callee(callee), args(args) {nodetype  = CallNode;}
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
@@ -98,7 +112,7 @@ struct PrototypeAST : public ExprAST {
 
   explicit PrototypeAST(int retType, const std::string &name,
                         const std::vector<Argument> &args, bool externProto)
-      : ExprAST(retType), name(name), args(args), isExtern(externProto) {}
+      : ExprAST(retType), name(name), args(args), isExtern(externProto) {nodetype = PrototypeNode;}
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
@@ -107,7 +121,7 @@ struct FunctionAST : public ExprAST {
   std::vector<ExprAST *> body;
 
   explicit FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
-      : ExprAST(), proto(inproto), body(inbody) {}
+      : ExprAST(), proto(inproto), body(inbody) {nodetype = FunctionNode;}
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 

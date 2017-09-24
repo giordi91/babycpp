@@ -14,14 +14,14 @@ int main() {
   Codegenerator gen;
   babycpp::jit::BabycppJIT jit;
 
-  //auto anonymousModule =
-  //    std::make_shared<llvm::Module>("anonymous", gen.context);
-  //auto staticModule =
-  //    std::make_shared<llvm::Module>("static", gen.context);
+  auto anonymousModule =
+      std::make_shared<llvm::Module>("anonymous", gen.context);
+  auto staticModule =
+      std::make_shared<llvm::Module>("static", gen.context);
 
 
-  //babycpp::repl::loop(&gen, &jit, anonymousModule, staticModule);
-  babycpp::repl::loop(&gen, &jit, nullptr, nullptr);
+  babycpp::repl::loop(&gen, &jit, anonymousModule, staticModule);
+  //babycpp::repl::loop(&gen, &jit, nullptr, nullptr);
 
   return 0;
 }
