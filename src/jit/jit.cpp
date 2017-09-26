@@ -11,9 +11,13 @@
 namespace babycpp {
 namespace jit {
 BabycppJIT::BabycppJIT() {
+
+  //here we do the global initialization for llvm
   llvm::InitializeNativeTarget();
   llvm::InitializeNativeTargetAsmPrinter();
   llvm::InitializeNativeTargetAsmParser();
+
+  //setupping the jit with the memory and required layers
   tm.reset(llvm::EngineBuilder().selectTarget());
   datalayout = new llvm::DataLayout(tm->createDataLayout());
   objectLayer = new llvm::orc::RTDyldObjectLinkingLayer(
@@ -23,7 +27,8 @@ BabycppJIT::BabycppJIT() {
                                     llvm::orc::SimpleCompiler>(
           *objectLayer, llvm::orc::SimpleCompiler(*tm));
   // when passing null ptr to load lib, it will load the exported symbols of the
-  // host process itself making them available for execution
+  // host process itself making them available for execution, really useful for 
+  //exported symbols in the process
   llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
 }
 
