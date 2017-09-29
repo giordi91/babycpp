@@ -34,10 +34,6 @@ Codegenerator::Codegenerator()
     : parser(&lexer, &factory), builder(context),
       module(new llvm::Module("", context)) {}
 
-void Codegenerator::createNewModule() {
-  module.reset(new llvm::Module("", context));
-}
-
 void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
   module = mod;
 }

@@ -109,10 +109,10 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
   block->insertInto(finalFunc);
   // now we have the body under the right function
   // we need to add the return
-  auto ret = gen->builder.CreateRet(val);
+  gen->builder.CreateRet(val);
   verifyFunction(*finalFunc);
 
-  // proceding in the jitting
+  // proceeding in the jitting
   babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
 
   // retrieving and evaluating the function
