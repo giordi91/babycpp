@@ -38,9 +38,9 @@ endif()
 
 find_package(LLVM REQUIRED CONFIG)
 #options
-option(BUILD_TESTS "Wheter or not to build the tests" ON)
-option(BUILD_JIT   "Wheter or not to build the jit engine" ON)
-option(BUILD_REPL  "Wheter or not to build the interpreter" ON)
+option(BUILD_TESTS "Whether or not to build the tests" ON)
+option(BUILD_JIT   "Whether or not to build the jit engine" ON)
+option(BUILD_REPL  "Whether or not to build the interpreter" ON)
 
 message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
 message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
