@@ -3,19 +3,48 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 
 ![alt text](https://github.com/giordi91/babycpp/blob/master/images/repl.gif "")
 
-##### Table of Contents 
+##### Table of Contents
+* [How To] (#how-to)
 * [Roadmap](#roadmap)  
 * [Supported Compilers](#compilers)
 * [Grammar](#grammar)
 * [Production Rules](#production-rules)
 * [Static typing](#static-typing)
 
+## How to
+At current state of development only the REPL is usable, although not tested. What you can do is pretty much what you see in the gif. Automatic type casting should be working although I suggest to first try with same datatypes, meaning all ints or all floats.
+There are several options listed in the main CMakeLists.txt, you can disable test builds and other things. By default everything is set to ON, mainly for development easy of mind.
+
+```cmake
+option(BUILD_TESTS "Whether or not to build the tests" ON)
+option(BUILD_JIT   "Whether or not to build the jit engine" ON)
+option(BUILD_REPL  "Whether or not to build the interpreter" ON)
+```
+
+To compile:
+
+####Linux
+```bash
+mkdir build
+cd build
+cmake -- . -DCMAKE_CXX_COMPILER=clang++
+make -j
+```
+
+####Windows
+```bash
+mkdir build
+cd build
+cmake -- . -G"Visual Studio 15 2017 Win64"
+```
+The only major dependency as a library is LLVM, no extra tools/projects from the llvm family are needed. You can follow the instruction to compile LLVM from here:
+https://llvm.org/docs/GettingStarted.html
 
 ## Roadmap
 
 This project is still in development and in early stage. The current state of things is a basic REPL able to define and call functions. Although the main goal is not the REPL itself, which is a nice toy and useful for testing. The main goal is to get a compiler in the standard sense, which will allow me to compile to object file and link with a regular c++ generated object files. Here below the thing, I am going to focus next:
 
-* Error handling: the current system has no error handling, just a null return and a cout, the plan is to put in place a basic system to handle warnings and errors with some context attached to it
+* Error handling: the current system has no error handling, just a null return and a std::cout, the plan is to put in place a basic system to handle warnings and errors with some context attached to it
 * Compiler executable: get the actual compiler executable going using the core library written.
 * Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a Maya node and use to jit on the fly and execute code in the Maya graph, really similar to what fabric engine is doing.
 
@@ -27,7 +56,6 @@ The compiler used are the following:
 
 
 ## Grammar
-
 The main struggle was to be able to generate a formal definition of the rules driving the parsing process, here
 below the rules:
 
@@ -115,5 +143,5 @@ Finally we compute the result and set the resulting datatype:
 
 ##
 
-Here we evaluated correctly the stament. Finally in the case of a fuction, when we hit a return statement, the resulting type will have "bubbled up" until the return type, and we can easily perform a check against the known required return type and act accordingly.
+Here we evaluated correctly the statement. Finally in the case of a function, when we hit a return statement, the resulting type will have "bubbled up" until the return type, and we can easily perform a check against the known required return type and act accordingly.
 
