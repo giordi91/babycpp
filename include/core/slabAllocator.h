@@ -6,6 +6,13 @@
 namespace babycpp {
 namespace memory {
 
+// TO NOTE:
+// major invariant of this allocator use case is the use
+// of simple struct with no complex destructor and or
+// heap data allocation. For this reason some simplification
+// are done until the invariant will hold, please check the
+// clear implementation for more info
+
 /**
  * Simple struct representing an area of allocation
  * @param data the start of the alloated memory
@@ -51,12 +58,11 @@ struct SlabAllocator : Allocator {
    * @return  newly allocated slab
    */
   Slab &allocateSlab();
-  virtual ~SlabAllocator()
-  {
-	  //freeing all slab except first one
-	  clear();
-	  //freeing last surviving slab
-	  delete[] currentSlab->data;
+  virtual ~SlabAllocator() {
+    // freeing all slab except first one
+    clear();
+    // freeing last surviving slab
+    delete[] currentSlab->data;
   };
 
   /**

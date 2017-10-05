@@ -33,6 +33,15 @@ Slab &SlabAllocator::allocateSlab() {
 
 void SlabAllocator::clear() {
 
+  // TO NOTE:
+  //here a major simplification is done, the data
+  //put in this memory are simple structs with no
+  //data allocated on the heap or no complex destructor,
+  //actually no destructor at all. So we simplify and
+  //just deallocate the bulk of memory. If this invariant
+  //should change we are going to keep track of the generated
+  //pointers and call the destructors.
+
   //de-allocating the memory except the first one
   uint32_t currentSize = slabs.size();
   for (uint32_t i = 1; i < currentSize; ++i) {
