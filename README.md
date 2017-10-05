@@ -4,16 +4,31 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 ![alt text](https://github.com/giordi91/babycpp/blob/master/images/repl.gif "")
 
 ##### Table of Contents 
-[Roadmap](#roadmap)  
-[Grammar](#grammar)
-[Production Rules](#production)
-[Static typing](#static)
+* [Roadmap](#roadmap)  
+
+* [Grammar](#grammar)
+
+* [Production Rules](#production)
+
+* [Static typing](#static)
 
 <a name="roadmap"/>
 ## Roadmap
 
+This project is still in development and in early stages. The current state of things is a basic repl able to
+define and call functions. Although the main goal is not the REPL, which is a nice toy and useful for testing,
+the main goal is to get a compiler in the standard sense, which will allow me to compile to object file
+and link with a regular c++ compiler. Here below the thing I am going to focus next:
+
+* Error handling: the current system has not error handling, just a null return and a cout, the plan is to put
+                  in place a basic system to handle warnings and errors with some context attached to it
+* Compiler executable: get the actual compiler executable going using the core library written.
+* Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a maya node 
+and use to jit on the fly and execute code in the maya graph, really similar to what fabric engine is doing.
+
 <a name="grammar"/>
 ## Grammar
+
 The main struggle was to be able to generate a formal definition of the rules driving the parsing process, here
 below the rules:
 
