@@ -4,14 +4,14 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 ![alt text](https://github.com/giordi91/babycpp/blob/master/images/repl.gif "")
 
 ##### Table of Contents
-* [How To] (#how-to)
+* [How to] (#how-to-use-it)
 * [Roadmap](#roadmap)  
-* [Supported Compilers](#compilers)
+* [Supported Compilers](#supported-compilers)
 * [Grammar](#grammar)
 * [Production Rules](#production-rules)
 * [Static typing](#static-typing)
 
-## How to
+## How to use it
 At current state of development only the REPL is usable, although not tested. What you can do is pretty much what you see in the gif. Automatic type casting should be working although I suggest to first try with same datatypes, meaning all ints or all floats.
 There are several options listed in the main CMakeLists.txt, you can disable test builds and other things. By default everything is set to ON, mainly for development easy of mind.
 
@@ -23,7 +23,7 @@ option(BUILD_REPL  "Whether or not to build the interpreter" ON)
 
 To compile:
 
-####Linux
+### Linux
 ```bash
 mkdir build
 cd build
@@ -31,7 +31,7 @@ cmake -- . -DCMAKE_CXX_COMPILER=clang++
 make -j
 ```
 
-####Windows
+### Windows
 ```bash
 mkdir build
 cd build
