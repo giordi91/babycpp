@@ -3,12 +3,22 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 
 ![alt text](https://github.com/giordi91/babycpp/blob/master/images/repl.gif "")
 
+##### Table of Contents 
+[Roadmap](#roadmap)  
+[Grammar](#grammar)
+[Production Rules](#production)
+[Static typing](#static)
 
+<a name="roadmap"/>
+## Roadmap
+
+<a name="grammar"/>
 ## Grammar
 The main struggle was to be able to generate a formal definition of the rules driving the parsing process, here
 below the rules:
 
-## Production rules
+<a name="production"/>
+## Production Rules
 First of all some nomenclature:
 * Statement: by statement I mean a complete "sentence" a piece of code that makes sense and is valid from start to end
              in a single blob.
@@ -38,7 +48,7 @@ First of all some nomenclature:
 
 **function_call** = identifier "(" [{identifier} ","}] ")"
 
-
+<a name="static"/>
 # Static typing
 
 The way I decided to handle static typing is a bottom-up approach. Each statement is evaluated independently and whatever reference might be needed in the current statement must be defined in any previous statement. 
