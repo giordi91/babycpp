@@ -5,6 +5,7 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 
 ##### Table of Contents 
 * [Roadmap](#roadmap)  
+* [Supported Compilers](#compilers)
 * [Grammar](#grammar)
 * [Production Rules](#production)
 * [Static typing](#static)
@@ -17,6 +18,13 @@ This project is still in development and in early stage. The current state of th
 * Error handling: the current system has no error handling, just a null return and a cout, the plan is to put in place a basic system to handle warnings and errors with some context attached to it
 * Compiler executable: get the actual compiler executable going using the core library written.
 * Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a Maya node and use to jit on the fly and execute code in the Maya graph, really similar to what fabric engine is doing.
+
+## Supported Compilers
+The project is being cross developed on a Linux and Windows enviroment. 
+The compiler used are the following:
+* Ubuntu : Clang 6 from trunk / Some testing done in GCC 7.1
+* Windows: Visual Studio 2017 15.3.3
+
 
 ## Grammar
 
