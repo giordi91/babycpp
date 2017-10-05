@@ -5,14 +5,11 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 
 ##### Table of Contents 
 * [Roadmap](#roadmap)  
-
 * [Grammar](#grammar)
-
 * [Production Rules](#production)
-
 * [Static typing](#static)
 
-<a name="roadmap"/>
+
 ## Roadmap
 
 This project is still in development and in early stages. The current state of things is a basic repl able to
@@ -26,13 +23,11 @@ and link with a regular c++ compiler. Here below the thing I am going to focus n
 * Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a maya node 
 and use to jit on the fly and execute code in the maya graph, really similar to what fabric engine is doing.
 
-<a name="grammar"/>
 ## Grammar
 
 The main struggle was to be able to generate a formal definition of the rules driving the parsing process, here
 below the rules:
 
-<a name="production"/>
 ## Production Rules
 First of all some nomenclature:
 * Statement: by statement I mean a complete "sentence" a piece of code that makes sense and is valid from start to end
@@ -63,8 +58,7 @@ First of all some nomenclature:
 
 **function_call** = identifier "(" [{identifier} ","}] ")"
 
-<a name="static"/>
-# Static typing
+## Static typing
 
 The way I decided to handle static typing is a bottom-up approach. Each statement is evaluated independently and whatever reference might be needed in the current statement must be defined in any previous statement. 
 
