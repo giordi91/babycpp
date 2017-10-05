@@ -7,8 +7,8 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 * [Roadmap](#roadmap)  
 * [Supported Compilers](#compilers)
 * [Grammar](#grammar)
-* [Production Rules](#production)
-* [Static typing](#static)
+* [Production Rules](#production-rules)
+* [Static typing](#static-typing)
 
 
 ## Roadmap
