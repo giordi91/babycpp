@@ -12,16 +12,11 @@ Custom implemented language which is basically a small, **SMALL** subset of c++,
 
 ## Roadmap
 
-This project is still in development and in early stages. The current state of things is a basic repl able to
-define and call functions. Although the main goal is not the REPL, which is a nice toy and useful for testing,
-the main goal is to get a compiler in the standard sense, which will allow me to compile to object file
-and link with a regular c++ compiler. Here below the thing I am going to focus next:
+This project is still in development and in early stage. The current state of things is a basic REPL able to define and call functions. Although the main goal is not the REPL itself, which is a nice toy and useful for testing. The main goal is to get a compiler in the standard sense, which will allow me to compile to object file and link with a regular c++ generated object files. Here below the thing, I am going to focus next:
 
-* Error handling: the current system has not error handling, just a null return and a cout, the plan is to put
-                  in place a basic system to handle warnings and errors with some context attached to it
+* Error handling: the current system has no error handling, just a null return and a cout, the plan is to put in place a basic system to handle warnings and errors with some context attached to it
 * Compiler executable: get the actual compiler executable going using the core library written.
-* Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a maya node 
-and use to jit on the fly and execute code in the maya graph, really similar to what fabric engine is doing.
+* Simple integration in Autodesk Maya: as a possible use case I want to integrate the compiler in a Maya node and use to jit on the fly and execute code in the Maya graph, really similar to what fabric engine is doing.
 
 ## Grammar
 
@@ -73,9 +68,9 @@ The nodes are color-coded based on the type, each node has a type field, most of
 ```c++
 int x = 20;
 ```
-The following will boil down to a VariableAST node, with a value pointing to the right-hand side, which is a NumberAST node or can be an expression, the datatype is known at parse time and gets set accordingly. Type is also known for NumberAST nodes and function arguments. 
+The above will boil down to a VariableAST node, with a value pointing to the right-hand side, which is a NumberAST node or can be an expression, the datatype is known at parse time and gets set accordingly. Type is also known for NumberAST nodes and function arguments. 
 
-The code generation starts from the top and works its way down recursively, arriving at the leaves starts generating code and working its way up. In this case, the algorithm will go all the way down to the + binary node. 
+The code generation starts from the top and works its way down recursively, arrived at the leaves it starts generating code and working its way up. In this case, the algorithm will go all the way down to the + binary node. 
 It will call the code generation for both left and right-hand side. The right-hand side is simple, the type is known. 
 The left-hand side has no known type and needs to look it up. If the variable is defined in the context, either from the previous definition or function argument, it will extract the type and set the AST node type to the corresponding one.
 
