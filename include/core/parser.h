@@ -23,11 +23,21 @@ using lexer::Lexer;
 using lexer::Token;
 using lexer::Number;
 
+/** @brief set of flags representing the status of the parser */
 struct ParserFlags {
   bool processed_assigment : 1;
 };
 
+/**
+ * @brief struct in charge of parsing the stream of tokens
+ */
 struct Parser {
+  /**
+   * @brief construtor
+   * @param inputLexer: pointer to the lexer
+   * @param inputfactory: pointer to the factory class in charge of
+   *                      allocating the AST nodes
+   */
   explicit Parser(Lexer *inputLexer, memory::FactoryAST *inputfactory)
       : lex(inputLexer), factory(inputfactory) {
     flags.processed_assigment = false;
@@ -35,18 +45,68 @@ struct Parser {
 
   codegen::NumberExprAST *parseNumber();
   codegen::ExprAST *parseIdentifier();
+  /**
+   * @brief parses an expression
+   * Expressions is a high level concepts, not necesserly in the
+   * mathematical meaning. An expression can be a function call,
+   * an assigment a bin op etc
+   * @return ExprAST* pointer to the top of the expression subtree
+   */
   codegen::ExprAST *parseExpression();
+  /**
+   * @brief parses a binary operations
+   * @param givenPrec: this is the current precedens of the operator
+   *                   alraedy processed, in case is the first call
+   *                   in the stack a -1 should be passed, in case
+   *                   of chained binary operations, the previously
+   *                   parsed operator precedence should be passed,
+   *                   so that correct precendence is handled
+   * @param LHS: pointer to the left hand side of the operation which
+   *             has been already processed, that can be a sub operation
+   *             in case of chained operations
+   * @return : pointer to the AST node representing the RHS of the op
+   */
   codegen::ExprAST *parseBinOpRHS(int givenPrec, codegen::ExprAST *LHS);
+
+  /**@brief parses the leftmost part of an expression, or sub expression */
   codegen::ExprAST *parsePrimary();
+
+  /** @brief by statment we mean an expression with complete sense that
+   * can stand on its own, meaning a valid expression
+   * being ";" terminated. For example you can think of the body
+   * of a function as an array of statements
+   * @return: pointer to the AST node representing the statement
+   */
   codegen::ExprAST *parseStatement();
   codegen::PrototypeAST *parseExtern();
   codegen::FunctionAST *parseFunction();
+  /**@brief parses a function declaration, just the signature
+   * @return pointer to the AST node representing the signature
+   */
   codegen::PrototypeAST *parsePrototype();
+    /**
+     * @brief function called whenever a declaration token is found
+     * This can be either a function declaration, a variable, class
+     * declaration in the future etc
+     * @return: pointer to the AST node representing the declaration
+     */
   codegen::ExprAST *parseDeclaration();
+  /**@brief parses an expression wrapped in parenthesis */
   codegen::ExprAST *parseParen();
+
+  /** @brief constant map representing the different operators precedences
+   *  a higher positive number represents an higher precedence
+   */
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
 
-  static bool isDeclarationToken(int tok) {
+  /**@brief utiltiy function telling us if the given token is part
+   * of a declaration.
+   * By declaration we mean like a prototype declaration or variable
+   * declaration
+   * @param tok: token to be processed
+   * @return: whether or not the token represents a declaration
+   */
+  static inline bool isDeclarationToken(int tok) {
     bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
     bool isExtern = tok == Token::tok_extern;
     return isDatatype || isExtern;

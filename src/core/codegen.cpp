@@ -109,14 +109,15 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // alloca
 }
 
-int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
-                                      llvm::Value **Lvalue,
-                                      llvm::Value **Rvalue) {
+int Codegenerator::omogenizeOperation(ExprAST *leftAST, ExprAST *rightAST,
+                                      llvm::Value **leftValue,
+                                      llvm::Value **rightValue) {
 
-  int Ltype = L->datatype;
-  int Rtype = R->datatype;
+  int Ltype = leftAST->datatype;
+  int Rtype = rightAST->datatype;
 
   if (Ltype == 0 || Rtype == 0) {
+    //TODO(giordi) implement proper error log
     std::cout << "error cannot deduce output type of operation" << std::endl;
     return -1;
   }
@@ -128,17 +129,17 @@ int Codegenerator::omogenizeOperation(ExprAST *L, ExprAST *R,
 
   if (Ltype == Token::tok_float && Rtype == Token::tok_int) {
     // need to convert R side
-    *Rvalue = builder.CreateUIToFP(*Rvalue, llvm::Type::getFloatTy(context),
+    *rightValue = builder.CreateUIToFP(*rightValue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
-    // TODO(giordi) implement wraning log
+    // TODO(giordi) implement waning log
     // std::cout << "warning: implicit conversion int->float" << std::endl;
     return Token::tok_float;
   }
   if (Rtype == Token::tok_float && Ltype == Token::tok_int) {
     // need to convert L side
-    *Lvalue = builder.CreateUIToFP(*Lvalue, llvm::Type::getFloatTy(context),
+    *leftValue = builder.CreateUIToFP(*leftValue, llvm::Type::getFloatTy(context),
                                    "intToFPcast");
-    // TODO(giordi) implement wraning log
+    // TODO(giordi) implement waning log
     // std::cout << "warning: implicit conversion int->float" << std::endl;
     return Token::tok_float;
   }

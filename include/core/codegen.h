@@ -124,9 +124,7 @@ struct VariableExprAST : public ExprAST {
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
-/**
- * Represents a binary expression, with a lhr,rhs and the operator
- */
+/** Represents a binary expression, with a lhr,rhs and the operator */
 struct BinaryExprAST : public ExprAST {
   /** one of the supported operator, it is not a char, in this way
    * we can support varying length operators like >= or similar
@@ -147,7 +145,7 @@ struct BinaryExprAST : public ExprAST {
 struct CallExprAST : public ExprAST {
   /** name of the function to be called, not mangled*/
   std::string callee;
-  /** */
+  /** list of arguments node*/
   std::vector<ExprAST *> args;
 
   explicit CallExprAST(const std::string &callee, std::vector<ExprAST *> &args)
@@ -253,14 +251,18 @@ struct Codegenerator {
 
   /**This function takes in two datatpes and figures out the result of
    * the operation
-   * @param L
-   * @param R
-   * @param Lvalue
-   * @param Rvalue
-   * @return
+   * @param leftAST: left hand side node of the binary operation
+   * @param rightAST: right hand side node of the binary operation
+   * @param leftValue: this is a pointer to an llvm value, if any kind of
+   *                   casting operation is done the pointer to the llvm value
+   *                   will be overritten with the new llvm value after the
+   *                   cast
+   * @param rightValue: same as leftValue
+   * @return : returns what is the token type of the resulting operation
+   *                   taking into account possible cast done
    */
-  int omogenizeOperation(ExprAST *L, ExprAST *R, llvm::Value **Lvalue,
-                         llvm::Value **Rvalue);
+  int omogenizeOperation(ExprAST *leftAST, ExprAST *rightAST,
+                         llvm::Value **leftValue, llvm::Value **rightValue);
   /**Checks wheter the given token representing a datatype is the
    * same datatype in llvm
    * @param astArg : token type representing the argument, one of tok_int...
@@ -287,17 +289,19 @@ struct Codegenerator {
   static const std::unordered_map<int, int> AST_LLVM_MAP;
   /** if we are in a scope that is the fucntion representing the
    * scope, nullptr otherwise */
+
   llvm::Function *currentScope = nullptr;
 
   void generateModuleContent();
-    /**Utility function to check wheter a function is created or
-     * needs to be generated from the proto
-     * @param name : function we need to get a handle to
-     * @return , pointer to Function, null if not found
-     */
+  /**Utility function to check wheter a function is created or
+   * needs to be generated from the proto
+   * @param name : function we need to get a handle to
+   * @return , pointer to Function, null if not found
+   */
   llvm::Function *getFunction(const std::string &name);
-    /** This function keeps tracks of the proto crated, so we can
-     * generate the corresponding function on the fly */
+
+  /** This function keeps tracks of the proto crated, so we can
+   * generate the corresponding function on the fly */
   std::unordered_map<std::string, PrototypeAST *> functionProtos;
 };
 
