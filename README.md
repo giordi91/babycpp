@@ -69,7 +69,7 @@ First of all some nomenclature:
   * {} = repetition, at least one
   * [] = optionality
   * |  = or
-  * "" = literarl ascii values
+  * "" = literal ascii values
 
 **statement** =  (extern|definition|expression) ";"
 
