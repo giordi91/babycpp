@@ -72,3 +72,7 @@ if(${BUILD_TESTS} STREQUAL "ON")
         add_subdirectory(tests/repl)
     endif()
 endif()
+
+
+#adding examples
+add_subdirectory(examples/mayaNode)
