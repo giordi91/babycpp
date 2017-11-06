@@ -14,6 +14,7 @@ struct BinaryExprAST;
 struct CallExprAST;
 struct PrototypeAST;
 struct FunctionAST;
+struct IfAST;
 } // namespace codegen
 
 namespace memory {
@@ -61,6 +62,9 @@ struct FactoryAST {
   template <typename... Args>
   codegen::FunctionAST *allocFunctionAST(Args &&... args) {
     return allocASTNode<codegen::FunctionAST>(args...);
+  }
+  template <typename... Args> codegen::IfAST *allocIfAST(Args &&... args) {
+    return allocASTNode<codegen::IfAST>(args...);
   }
 
   std::vector<codegen::ExprAST *> ptrs;

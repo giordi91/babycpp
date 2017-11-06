@@ -6,13 +6,14 @@
 namespace babycpp {
 namespace parser {
 
-using lexer::Token;
-using codegen::ExprAST;
-using codegen::NumberExprAST;
-using codegen::VariableExprAST;
-using codegen::PrototypeAST;
-using codegen::FunctionAST;
 using codegen::Argument;
+using codegen::ExprAST;
+using codegen::FunctionAST;
+using codegen::IfAST;
+using codegen::NumberExprAST;
+using codegen::PrototypeAST;
+using codegen::VariableExprAST;
+using lexer::Token;
 
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
@@ -83,7 +84,7 @@ ExprAST *Parser::parseIdentifier() {
       lex->gettok();
     }
   }
-  lex->gettok(); //eat )
+  lex->gettok(); // eat )
   return factory->allocCallexprAST(idstr, args);
 }
 
@@ -187,8 +188,11 @@ ExprAST *Parser::parseDeclaration() {
       // error
       return nullptr;
     }
-    case Token::tok_open_curly:
-      return parseFunction();
+    case Token::tok_open_round:
+	{
+		//TODO(giordi) BUG!!! never called and wdoesnt work
+		return parseFunction();
+	}
     case Token::tok_assigment_operator: {
       // this can be, a direct value assignment
       // like int x = 10;
@@ -219,21 +223,20 @@ ExprAST *Parser::parseStatement() {
   ExprAST *exp = nullptr;
   if (lex->currtok == Token::tok_eof) {
     return nullptr;
-  }
-  else if (lex->currtok == Token::tok_extern) {
+  } else if (lex->currtok == Token::tok_extern) {
     exp = parseExtern();
-  }
-  else if (lex->currtok == Token::tok_return) {
+  } else if (lex->currtok == Token::tok_return) {
     lex->gettok(); // eat return
     exp = parseExpression();
     exp->flags.isReturn = true;
-  }
-  else if (isDeclarationToken(lex->currtok)) {
+  } else if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
   }
 
   else if (lex->currtok == Token::tok_identifier) {
     exp = parseExpression();
+  } else if (lex->currtok == Token::tok_if) {
+    exp = parseIfStatement();
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -359,6 +362,86 @@ ExprAST *Parser::parseParen() {
   }
   lex->gettok(); // eating )
   return exp;
+}
+
+codegen::ExprAST *Parser::parseIfStatement() {
+  lex->gettok(); // eating if tok
+  if (lex->currtok != Token::tok_open_round) {
+    std::cout << "error:, expected  ( after if ";
+    return nullptr;
+  }
+  lex->gettok(); // eating (
+  // now inside the peren we do expect an expression
+  auto *condition = parseExpression();
+  if (condition == nullptr) {
+    // TODO(giordi), verify error should be handled in expression
+    return nullptr;
+  }
+  if (lex->currtok != Token::tok_close_round) {
+    std::cout << "error:, expected  ) after if statement condition ";
+    return nullptr;
+  }
+  lex->gettok(); // eating )
+
+  if (lex->currtok != Token::tok_open_curly) {
+    std::cout << "error:, expected  { after if statement condition ";
+    return nullptr;
+  }
+  lex->gettok(); // eating {
+
+  auto *ifBranch = parseStatement();
+  if (ifBranch == nullptr) {
+    // TODO(giordi), verify error should be handled in expression
+    return nullptr;
+  }
+
+  if (lex->currtok != Token::tok_close_curly) {
+    std::cout << "error:, expected  } after if statement body";
+    return nullptr;
+  }
+  lex->gettok(); // eating {
+
+  ExprAST *elseBody = nullptr;
+  if (lex->currtok == Token::tok_else) {
+    lex->gettok(); // esting else
+    // now at this point we can have two possiblities, either directly the else
+    // body or the if for the next  contidion
+    if (lex->currtok == Token::tok_if) {
+      // TODO(giordi) support if else statement to make life easier
+      // for the programmer
+      std::cout << "error : else if construct currently not supported"
+                << std::endl;
+      return nullptr;
+    }
+
+    else if (lex->currtok == Token::tok_open_curly) {
+      // if we have an open curly we need to parse the body of
+      // the branch
+      lex->gettok(); // eat {
+      elseBody = parseStatement();
+      if (elseBody == nullptr) {
+        // TODO(giordi), verify error should be handled in expression
+        return nullptr;
+      }
+
+      if (lex->currtok != Token::tok_close_curly) {
+        std::cout << "error: expected } at end of statement" << std::endl;
+        return nullptr;
+      }
+      lex->gettok(); // eat }
+
+      // right now this is overkill, what I hope it happens is that will
+      // allow to nicely handle multiple else if blocks, we will see
+      // elseBranch = factory->allocIfAST(nullptr, elseBody, nullptr);
+
+    } else {
+      std::cout << "error: expected either if or { after else keyword"
+                << std::endl;
+      return nullptr;
+    }
+  }
+
+  return factory->allocIfAST(condition, ifBranch, elseBody);
 }
 
 PrototypeAST *Parser::parsePrototype() {

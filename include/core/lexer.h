@@ -17,7 +17,7 @@ static const std::regex MAIN_REGEX(
     R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
     R"(|[ \s]([\r\n|\r|\n]))"          // catching new line combinations
 
-    );
+);
 
 /**
  * @brief Enum defining several useful enums used in the lexer
@@ -51,6 +51,11 @@ enum Token {
   tok_end_statement = -14,
   tok_comma = -15,
   tok_return = -16,
+
+  // flow
+  tok_if = -25,
+  tok_else = -26,
+  tok_else_if = -27,
   // repl
   tok_invalid_repl = -1000,
   tok_expression_repl = -1001,
@@ -99,7 +104,8 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
     {"(", tok_open_round},  {")", tok_close_round},
     {"extern", tok_extern}, {";", tok_end_statement},
     {",", tok_comma},       {"=", tok_assigment_operator},
-    {"return", tok_return}};
+    {"return", tok_return}, {"if", tok_if},
+    {"else", tok_else}};
 
 // aliases
 using Charmatch = std::match_results<const char *>;
@@ -137,6 +143,8 @@ struct Lexer {
    * @param str: the string we are going to initialize the data
    *             with
    */
+  //TODO(giordi) refactor name to be initFromString to be uniform
+  //with codegen
   inline void initFromStr(const std::string &str) {
     data = str;
     start = data.c_str();
@@ -181,7 +189,7 @@ struct Lexer {
   /// pointer keeping track of where we are in the buffer
   const char *start = nullptr;
 
-  ///buffer of processed tokens for when looking ahead
+  /// buffer of processed tokens for when looking ahead
   std::deque<MovableToken> lookAheadToken;
 };
 

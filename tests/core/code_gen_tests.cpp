@@ -298,13 +298,13 @@ TEST_CASE("Testing function call in function", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/avg.ll");
+  // gen.dumpLlvmData(v, "tests/core/avg.ll");
   std::string expected = getFile("tests/core/avg.ll");
 
   auto v2 = p2->codegen(&gen);
   REQUIRE(v2 != nullptr);
   outs = gen.printLlvmData(v2);
-  //gen.dumpLlvmData(v2, "tests/core/callInFunc.ll");
+  // gen.dumpLlvmData(v2, "tests/core/callInFunc.ll");
   expected = getFile("tests/core/callInFunc.ll");
   REQUIRE(outs == expected);
 }
@@ -326,4 +326,38 @@ TEST_CASE("Testing function call in function2", "[codegen]") {
   auto v2 = p2->codegen(&gen);
   REQUIRE(v2 != nullptr);
   outs = gen.printLlvmData(v2);
+}
+
+TEST_CASE("Testing if statement code gen", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("if ( 3 + 1) { int x = 1 +1 ;}else{ int x = 2 + 2;}");
+
+  std::vector<llvm::Type *> funcArgs;
+  auto *returnType = llvm::Type::getFloatTy(gen.context);
+  auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
+  auto *function = llvm::Function::Create(
+      funcType, llvm::Function::ExternalLinkage, "debug", gen.module.get());
+
+  llvm::BasicBlock *block =
+      llvm::BasicBlock::Create(gen.context, "entry", function);
+  gen.builder.SetInsertPoint(block);
+  gen.currentScope = function;
+
+  auto p = gen.parser.parseIfStatement();
+  REQUIRE(p != nullptr);
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(function);
+  // gen.dumpLlvmData(function, "tests/core/basicIfStatement.ll");
+  auto expected = getFile("tests/core/basicIfStatement.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing simple if function code gen", "[codegen]") {
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int inv){int res = 0;if(inv){res = "
+                     "10;}else{res= 2;}return res;}");
+  //auto p = gen.parser.parseStatement();
+  //REQUIRE(p != nullptr);
 }

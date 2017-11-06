@@ -43,7 +43,8 @@ enum NodeType {
   BinaryNode = 3,
   CallNode = 4,
   PrototypeNode = 5,
-  FunctionNode = 6
+  FunctionNode = 6,
+  IfNode= 7
 };
 
 struct Codegenerator;
@@ -171,7 +172,7 @@ struct PrototypeAST : public ExprAST {
 struct FunctionAST : public ExprAST {
   PrototypeAST *proto;
   /** the body is defined by a series of statment, each of them
-   * has its own ast node */
+   * has its own AST node */
   std::vector<ExprAST *> body;
 
   explicit FunctionAST(PrototypeAST *inproto, std::vector<ExprAST *> &inbody)
@@ -180,6 +181,19 @@ struct FunctionAST : public ExprAST {
   }
   virtual ~FunctionAST() = default;
   llvm::Value *codegen(Codegenerator *gen) override;
+};
+
+struct IfAST: public ExprAST{
+	ExprAST* condition;
+	ExprAST* ifExpr;
+	ExprAST* elseExpr;
+  explicit IfAST(ExprAST* inCondition,ExprAST* inIfExpr, ExprAST* inElseExpr = nullptr)
+      : ExprAST(), condition(inCondition),ifExpr(inIfExpr), elseExpr(inElseExpr) {
+    nodetype = IfNode;
+  }
+  virtual ~IfAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override ;
+
 };
 
 } // namespace codegen

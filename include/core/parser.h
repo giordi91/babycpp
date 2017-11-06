@@ -94,6 +94,10 @@ struct Parser {
   /**@brief parses an expression wrapped in parenthesis */
   codegen::ExprAST *parseParen();
 
+  /**@brief parses an if statement and corresponding branches */ 
+  codegen::ExprAST *parseIfStatement();
+
+
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */

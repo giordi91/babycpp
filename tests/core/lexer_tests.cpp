@@ -4,8 +4,8 @@
 #include <lexer.h>
 
 using babycpp::lexer::Lexer;
-using babycpp::lexer::Token;
 using babycpp::lexer::MovableToken;
+using babycpp::lexer::Token;
 
 TEST_CASE("Testing empty lexer", "[lexer]") {
   Lexer lex;
@@ -132,8 +132,6 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.type == Token::tok_float);
   REQUIRE(lex.value.floatNumber == Approx(0.1135f));
 
-
-
   str = " < 19";
   lex.initFromStr(str);
   lex.gettok();
@@ -158,9 +156,9 @@ TEST_CASE("Testing operators tok", "[lexer]") {
 }
 TEST_CASE("Testing * operator with no space", "[lexer]") {
 
-  //in a situation like this, although pointers are not supported
-  //yet, there is the chance that "x*" will be parsed as a pointer
-  //and not as an operator
+  // in a situation like this, although pointers are not supported
+  // yet, there is the chance that "x*" will be parsed as a pointer
+  // and not as an operator
   std::string str{" x*4 "};
   Lexer lex;
   lex.initFromStr(str);
@@ -208,75 +206,104 @@ TEST_CASE("Testing extern tok", "[lexer]") {
 }
 
 TEST_CASE("Testing multi line", "[lexer]") {
-	std::string str{ "x \n  2.0" };
-	Lexer lex;
-	lex.initFromStr(str);
+  std::string str{"x \n  2.0"};
+  Lexer lex;
+  lex.initFromStr(str);
 
-	lex.gettok();
-	REQUIRE(lex.currtok == Token::tok_identifier);
-	REQUIRE(lex.identifierStr == "x");
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "x");
 
-	lex.gettok();
-	REQUIRE(lex.currtok == Token::tok_number);
-	REQUIRE(lex.lineNumber== 2);
-	REQUIRE(lex.value.type== Token::tok_float);
-	REQUIRE(lex.value.floatNumber== Approx(2.0f));
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.lineNumber == 2);
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(2.0f));
 }
 
 TEST_CASE("Testing testing buffering", "[lexer]") {
 
-	std::string str{ "aa 12 cc 3.14 ee" };
-	Lexer lex;
-	lex.initFromStr(str);
-    REQUIRE(lex.lookAheadToken.empty());
+  std::string str{"aa 12 cc 3.14 ee"};
+  Lexer lex;
+  lex.initFromStr(str);
+  REQUIRE(lex.lookAheadToken.empty());
 
-    bool res = lex.lookAhead(4);
-    REQUIRE(res == true);
-    REQUIRE(lex.lookAheadToken.size() ==4);
+  bool res = lex.lookAhead(4);
+  REQUIRE(res == true);
+  REQUIRE(lex.lookAheadToken.size() == 4);
 
-    lex.gettok();
-    REQUIRE(lex.lookAheadToken.size() ==3);
-	REQUIRE(lex.currtok == Token::tok_identifier);
-	REQUIRE(lex.identifierStr== "aa");
+  lex.gettok();
+  REQUIRE(lex.lookAheadToken.size() == 3);
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "aa");
 
-    lex.gettok();
-    REQUIRE(lex.lookAheadToken.size() ==2);
-	REQUIRE(lex.currtok == Token::tok_number);
-	REQUIRE(lex.value.type== Token::tok_int);
-	REQUIRE(lex.value.integerNumber== 12);
+  lex.gettok();
+  REQUIRE(lex.lookAheadToken.size() == 2);
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.type == Token::tok_int);
+  REQUIRE(lex.value.integerNumber == 12);
 
-    lex.gettok();
-    REQUIRE(lex.lookAheadToken.size() ==1);
-	REQUIRE(lex.currtok == Token::tok_identifier);
-	REQUIRE(lex.identifierStr== "cc");
+  lex.gettok();
+  REQUIRE(lex.lookAheadToken.size() == 1);
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "cc");
 
-    lex.gettok();
-    REQUIRE(lex.lookAheadToken.empty());
-	REQUIRE(lex.currtok == Token::tok_number);
-	REQUIRE(lex.value.type== Token::tok_float);
-	REQUIRE(lex.value.floatNumber == Approx(3.14f));
+  lex.gettok();
+  REQUIRE(lex.lookAheadToken.empty());
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.type == Token::tok_float);
+  REQUIRE(lex.value.floatNumber == Approx(3.14f));
 
-    //here the buffer should be emtpy
-    lex.gettok();
-    REQUIRE(lex.lookAheadToken.empty());
-	REQUIRE(lex.currtok == Token::tok_identifier);
-	REQUIRE(lex.identifierStr== "ee");
+  // here the buffer should be emtpy
+  lex.gettok();
+  REQUIRE(lex.lookAheadToken.empty());
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "ee");
 }
 TEST_CASE("Testing too much look ahead", "[lexer]") {
-	std::string str{ "xyz " };
-	Lexer lex;
-	lex.initFromStr(str);
+  std::string str{"xyz "};
+  Lexer lex;
+  lex.initFromStr(str);
 
-    bool res = lex.lookAhead(10);
-    REQUIRE(res == false);
+  bool res = lex.lookAhead(10);
+  REQUIRE(res == false);
 }
 TEST_CASE("Testing clear look ahead", "[lexer]") {
-  std::string str{ "this should be cleared after look ahead and init" };
+  std::string str{"this should be cleared after look ahead and init"};
   Lexer lex;
   lex.initFromStr(str);
 
   bool res = lex.lookAhead(4);
   REQUIRE(res == true);
   lex.initFromStr("cleanup");
-  REQUIRE(lex.lookAheadToken.size()==0);
+  REQUIRE(lex.lookAheadToken.size() == 0);
+}
+
+TEST_CASE("Testing if statement", "[lexer]") {
+  std::string str{"if else randomword else whatever ifelse elseif"};
+  Lexer lex;
+  lex.initFromStr(str);
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_if);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_else);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "randomword");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_else);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "whatever");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "ifelse");
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "elseif");
+
 }

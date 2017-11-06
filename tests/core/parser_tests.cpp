@@ -16,6 +16,7 @@ using babycpp::codegen::BinaryExprAST;
 using babycpp::codegen::CallExprAST;
 using babycpp::codegen::ExprAST;
 using babycpp::codegen::FunctionAST;
+using babycpp::codegen::IfAST;
 using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
 using babycpp::codegen::VariableExprAST;
@@ -366,8 +367,7 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   REQUIRE(val != nullptr);
 }
 
-TEST_CASE("Testing lookahead not losing tokens", "[parser]")
-{
+TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
   Lexer lex;
   lex.initFromStr("float avg(float x){ return x *2.0;}");
@@ -376,5 +376,72 @@ TEST_CASE("Testing lookahead not losing tokens", "[parser]")
   lex.lookAhead(2);
 
   REQUIRE(lex.identifierStr == "float");
+}
 
+TEST_CASE("Testing if statement parsing", "[parser]") {
+
+  Lexer lex;
+  lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else{ int x = 2 + 2;}");
+  Parser parser(&lex, &factory);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res != nullptr);
+
+  auto *res_casted = dynamic_cast<IfAST *>(res);
+  REQUIRE(res_casted != nullptr);
+
+  auto *condition = res_casted->condition;
+  auto *cond_casted = dynamic_cast<BinaryExprAST *>(condition);
+  REQUIRE(cond_casted != nullptr);
+
+  // verify the condtion got parsed correctly
+  auto *condlhs = dynamic_cast<NumberExprAST *>(cond_casted->lhs);
+  auto *condrhs = dynamic_cast<NumberExprAST *>(cond_casted->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == Token::tok_int);
+  REQUIRE(condlhs->val.integerNumber == 3);
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 1);
+
+  // verify the if branch got parsed properly
+  auto *ifBranch = dynamic_cast<VariableExprAST *>(res_casted->ifExpr);
+  REQUIRE(ifBranch != nullptr);
+  // being an assigment operation the variable will have a value assigned to it,
+  // and in this case is a  binary expression
+  auto *value = dynamic_cast<BinaryExprAST *>(ifBranch->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(ifBranch->datatype == Token::tok_int);
+
+  // checking the if branch binary expression
+  condlhs = dynamic_cast<NumberExprAST *>(value->lhs);
+  condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == Token::tok_int);
+  REQUIRE(condlhs->val.integerNumber == 1);
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 1);
+
+  // checking the else branch
+  auto *elseBranchBody = dynamic_cast<VariableExprAST*>(res_casted->elseExpr);
+  REQUIRE(elseBranchBody!= nullptr);
+  // being an assigment operation the variable will have a value assigned to it,
+  // and in this case is a  binary expression
+  value = dynamic_cast<BinaryExprAST *>(elseBranchBody->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(elseBranchBody->datatype == Token::tok_int);
+
+  // checking the if branch binary expression
+  condlhs = dynamic_cast<NumberExprAST *>(value->lhs);
+  condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == Token::tok_int);
+  REQUIRE(condlhs->val.integerNumber == 2);
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 2);
 }

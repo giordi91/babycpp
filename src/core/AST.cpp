@@ -35,6 +35,7 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   }
 
   if (flags.isDefinition) {
+
     llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
                                   gen->currentScope->getEntryBlock().begin());
     llvm::Type *varType = getType(datatype, gen);
@@ -281,6 +282,90 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   }
 
   return gen->builder.CreateCall(calleeF, argValues, "calltmp");
+}
+
+llvm::Value *IfAST::codegen(Codegenerator *gen) {
+  Value *condValue = nullptr;
+  if (condition == nullptr) {
+    // in this case a condition was not provided we know it was an else
+    // and we use a dummy condition of true
+    condValue = llvm::ConstantInt::get(gen->context, llvm::APInt(32, 1, true));
+
+  } else {
+    condValue = condition->codegen(gen);
+  }
+  if (condValue == nullptr) {
+    std::cout << "error : failed to generate if statement condition IR"
+              << std::endl;
+    return nullptr;
+  }
+  // at this point we need to figure out if is an int or
+  // float and make the corresponding comparison
+  Value *comparisonValue = nullptr;
+  if (condValue->getType()->isFloatTy()) {
+
+    // here we perform a zero comparison but hey, who am i to judge
+    auto zeroConst = llvm::ConstantFP::get(gen->context, llvm::APFloat(0.0f));
+    // ONE stands for ordered and not equal
+    comparisonValue =
+        gen->builder.CreateFCmpONE(condValue, zeroConst, "ifcond");
+  } else if (condValue->getType()->isIntegerTy()) {
+
+    auto zeroConst =
+        llvm::ConstantInt::get(gen->context, llvm::APInt(32, 0, true));
+
+    comparisonValue = gen->builder.CreateICmpNE(condValue, zeroConst, "ifcond");
+    // resolving to int
+  } else {
+    std::cout << "error undefined type for if condition expr" << std::endl;
+    return nullptr;
+  }
+  // at this point we have our value that will tell us which
+  // branche we will take, so next we create the blocks for
+  // both the if and else statment
+  llvm::Function *theFunction = gen->builder.GetInsertBlock()->getParent();
+  llvm::BasicBlock *thenBlock =
+      llvm::BasicBlock::Create(gen->context, "then", theFunction);
+  llvm::BasicBlock *elseBlock = llvm::BasicBlock::Create(gen->context, "else");
+  llvm::BasicBlock *mergeBlock =
+      llvm::BasicBlock::Create(gen->context, "merge");
+
+  gen->builder.CreateCondBr(condValue, thenBlock, elseBlock);
+  // starting to work out the branch
+  gen->builder.SetInsertPoint(thenBlock);
+
+  Value *ifBranchValue = ifExpr->codegen(gen);
+  if (ifBranchValue == nullptr) {
+    std::cout << "error in generating if branch code" << std::endl;
+    return nullptr;
+  }
+  // now that we inserted the then block we need to jump to the merge
+  gen->builder.CreateBr(mergeBlock);
+
+  // getting back up to date thenBlock
+  thenBlock = gen->builder.GetInsertBlock();
+
+  // now working on the else branch
+  theFunction->getBasicBlockList().push_back(elseBlock);
+  gen->builder.SetInsertPoint(elseBlock);
+
+  if (elseExpr != nullptr) {
+    Value *elseBranchValue = elseExpr->codegen(gen);
+    if (elseBranchValue == nullptr) {
+      std::cout << "error in generating else branch code" << std::endl;
+      return nullptr;
+    }
+    gen->builder.CreateBr(mergeBlock);
+  }
+  // updating else block for phi node
+  elseBlock = gen->builder.GetInsertBlock();
+
+  //mergin the code
+  theFunction->getBasicBlockList().push_back(mergeBlock);
+  gen->builder.SetInsertPoint(mergeBlock);
+  //we don't need a phi node since we handle everything with alloca
+
+  return comparisonValue;
 }
 
 } // namespace codegen
