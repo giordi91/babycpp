@@ -363,7 +363,7 @@ TEST_CASE("Testing simple if function code gen", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  gen.dumpLlvmData(v, "tests/core/functionWithIfstatement.ll");
+  //gen.dumpLlvmData(v, "tests/core/functionWithIfstatement.ll");
   auto expected = getFile("tests/core/functionWithIfstatement.ll");
   REQUIRE(outs == expected);
 }
