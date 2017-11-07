@@ -330,7 +330,7 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   llvm::BasicBlock *mergeBlock =
       llvm::BasicBlock::Create(gen->context, "merge");
 
-  gen->builder.CreateCondBr(condValue, thenBlock, elseBlock);
+  gen->builder.CreateCondBr(comparisonValue, thenBlock, elseBlock);
   // starting to work out the branch
   gen->builder.SetInsertPoint(thenBlock);
 

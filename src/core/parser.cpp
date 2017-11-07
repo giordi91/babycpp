@@ -172,27 +172,27 @@ ExprAST *Parser::parseDeclaration() {
   // if we have a declaration token, something like int, float etc we might have
   // several cases like, we might have a variable definition, we might have
   // a function definition etc, this require a bit of look ahead!
-  int datatype = lex->currtok;
-  lex->gettok(); // eating datatype
+
+  lex->lookAhead(2);
+  // lex->gettok(); // eating datatype
   // looking ahead 2 tokens, which should give us the identifier
   // and the next token
 
   // const lexer::MovableToken& nextTok= lex->lookAheadToken[0];
-  if (lex->currtok == Token::tok_identifier) {
-    std::string identifier = lex->identifierStr;
-    lex->gettok(); // eat identifier;
+  if (lex->lookAheadToken[0].token == Token::tok_identifier) {
+    // std::string identifier = lex->identifierStr;
+    // lex->gettok(); // eat identifier;
     // we got an identifier great, now the next token will
     // tell us whether is a function prototype or a variable
-    switch (lex->currtok) {
+    switch (lex->lookAheadToken[1].token) {
     default: {
       // error
       return nullptr;
     }
-    case Token::tok_open_round:
-	{
-		//TODO(giordi) BUG!!! never called and wdoesnt work
-		return parseFunction();
-	}
+    case Token::tok_open_round: {
+      // TODO(giordi) BUG!!! never called and wdoesnt work
+      return parseFunction();
+    }
     case Token::tok_assigment_operator: {
       // this can be, a direct value assignment
       // like int x = 10;
@@ -200,6 +200,15 @@ ExprAST *Parser::parseDeclaration() {
       // int x = 10 + y;
       // it can be a function call
       // int x = getMagicNumber();
+
+      // here we need to eat a bit of token and proces the assigment operator
+      int datatype = lex->currtok;
+      lex->gettok(); // eat datatype;
+
+      // next we eat the identifier;
+      std::string identifier = lex->identifierStr;
+      lex->gettok(); // eat identifier;
+
       lex->gettok(); // eat = operator
       auto *RHS = parseExpression();
       ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
@@ -221,6 +230,7 @@ ExprAST *Parser::parseDeclaration() {
 ExprAST *Parser::parseStatement() {
 
   ExprAST *exp = nullptr;
+  bool expectSemicolon = true;
   if (lex->currtok == Token::tok_eof) {
     return nullptr;
   } else if (lex->currtok == Token::tok_extern) {
@@ -231,22 +241,26 @@ ExprAST *Parser::parseStatement() {
     exp->flags.isReturn = true;
   } else if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
+    expectSemicolon = false;
   }
 
   else if (lex->currtok == Token::tok_identifier) {
     exp = parseExpression();
   } else if (lex->currtok == Token::tok_if) {
     exp = parseIfStatement();
+    expectSemicolon = false;
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
 
-  if (lex->currtok != Token::tok_end_statement) {
+  if (lex->currtok != Token::tok_end_statement && expectSemicolon) {
     std::cout << "expecting semicolon at end of statement" << std::endl;
     return exp;
   }
+  if (lex->currtok == Token::tok_end_statement) {
+    lex->gettok(); // eating semicolon;
+  }
 
-  lex->gettok(); // eating semicolon;
   // clearing flags, if they start to increase i will
   // change this to a clear flags
   flags.processed_assigment = false;

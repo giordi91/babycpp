@@ -349,7 +349,7 @@ TEST_CASE("Testing if statement code gen", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(function);
-  // gen.dumpLlvmData(function, "tests/core/basicIfStatement.ll");
+  //gen.dumpLlvmData(function, "tests/core/basicIfStatement.ll");
   auto expected = getFile("tests/core/basicIfStatement.ll");
   REQUIRE(outs == expected);
 }
@@ -357,7 +357,13 @@ TEST_CASE("Testing if statement code gen", "[codegen]") {
 TEST_CASE("Testing simple if function code gen", "[codegen]") {
   Codegenerator gen;
   gen.initFromString("int testFunc(int inv){int res = 0;if(inv){res = "
-                     "10;}else{res= 2;}return res;}");
-  //auto p = gen.parser.parseStatement();
-  //REQUIRE(p != nullptr);
+                     "10;}else{res= 2;} return res;}");
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  gen.dumpLlvmData(v, "tests/core/functionWithIfstatement.ll");
+  auto expected = getFile("tests/core/functionWithIfstatement.ll");
+  REQUIRE(outs == expected);
 }

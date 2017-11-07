@@ -51,6 +51,7 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
   }
   if (codeDirty) {
 
+	  //std::cout<<"is handle empty? "<<handle
     std::cout << "code is dirty!!!!" << std::endl;
 
     if (isHandle == true) {
@@ -86,7 +87,9 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
   /*
           if (plug==output)
           {
-                  
+                  
+
+
 
 
 
@@ -112,19 +115,25 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
                   for (int unsigned
      i=0;i<inputMatrixH.elementCount();i++,inputMatrixH.next())
                   {
-                          
+                          
+
+
 
 
 
 
                           MMatrix currentMatrix =
      inputMatrixH.inputValue(&stat).asMatrix() ;
-                          
+                          
+
+
 
 
 
                           //Compensate the locator matrix
-                          
+                          
+
+
 
 
 
@@ -132,12 +141,16 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
                           MPoint matrixP
      (fixedMatrix[3][0],fixedMatrix[3][1],fixedMatrix[3][2]);
                           pointArray.append(matrixP);
-                          
+                          
+
+
 
 
 
                   }
-                  
+                  
+
+
 
 
 
@@ -146,7 +159,9 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
           MObject curveData= curveDataFn.create();
 
           curveFn.createWithEditPoints(pointArray,degreeValue,MFnNurbsCurve::kOpen,0,0,0,curveData,&stat);
-          
+          
+
+
 
 
 
