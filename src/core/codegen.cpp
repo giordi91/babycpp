@@ -25,7 +25,7 @@ Codegenerator::createEntryBlockAlloca(llvm::Function *function,
 }
 
 Codegenerator::Codegenerator()
-    : parser(&lexer, &factory), builder(context),
+    : diagnostic(), lexer(diagnostic), parser(&lexer, &factory), builder(context),
       module(new llvm::Module("", context)) {}
 
 void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {

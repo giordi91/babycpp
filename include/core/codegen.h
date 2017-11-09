@@ -2,6 +2,7 @@
 #include <memory>
 #include <unordered_map>
 
+#include "diagnostic.h"
 #include "AST.h"
 #include "factoryAST.h"
 #include "lexer.h"
@@ -111,6 +112,7 @@ struct Codegenerator {
    * memory */
   memory::FactoryAST factory;
 
+  diagnostic::Diagnostic diagnostic;
   lexer::Lexer lexer;
   parser::Parser parser;
 

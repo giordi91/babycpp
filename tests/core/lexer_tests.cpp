@@ -7,21 +7,23 @@ using babycpp::lexer::Lexer;
 using babycpp::lexer::MovableToken;
 using babycpp::lexer::Token;
 
+babycpp::diagnostic::Diagnostic	 diagnostic;
+
 TEST_CASE("Testing empty lexer", "[lexer]") {
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_empty_lexer);
 }
 
 TEST_CASE("Testing empty string", "[lexer]") {
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr("");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_eof);
 }
 
 TEST_CASE("Testing no match", "[lexer]") {
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(" ~~~~~~~ ");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_no_match);
@@ -29,7 +31,7 @@ TEST_CASE("Testing no match", "[lexer]") {
 
 TEST_CASE("Testing keyword tok", "[lexer]") {
   std::string str{" int"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -52,7 +54,7 @@ TEST_CASE("Testing keyword tok", "[lexer]") {
 
 TEST_CASE("Testing numbers tok", "[lexer]") {
   std::string str{" 12334 "};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -87,7 +89,7 @@ TEST_CASE("Testing numbers tok", "[lexer]") {
 
 TEST_CASE("Testing operators tok", "[lexer]") {
   std::string str{" + 99 "};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -160,7 +162,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
   // yet, there is the chance that "x*" will be parsed as a pointer
   // and not as an operator
   std::string str{" x*4 "};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -178,7 +180,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
 }
 TEST_CASE("Testing extern tok", "[lexer]") {
   std::string str{" extern sin( float x);"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -207,7 +209,7 @@ TEST_CASE("Testing extern tok", "[lexer]") {
 
 TEST_CASE("Testing multi line", "[lexer]") {
   std::string str{"x \n  2.0"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();
@@ -224,7 +226,7 @@ TEST_CASE("Testing multi line", "[lexer]") {
 TEST_CASE("Testing testing buffering", "[lexer]") {
 
   std::string str{"aa 12 cc 3.14 ee"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
   REQUIRE(lex.lookAheadToken.empty());
 
@@ -262,7 +264,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
 }
 TEST_CASE("Testing too much look ahead", "[lexer]") {
   std::string str{"xyz "};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   bool res = lex.lookAhead(10);
@@ -270,7 +272,7 @@ TEST_CASE("Testing too much look ahead", "[lexer]") {
 }
 TEST_CASE("Testing clear look ahead", "[lexer]") {
   std::string str{"this should be cleared after look ahead and init"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   bool res = lex.lookAhead(4);
@@ -281,7 +283,7 @@ TEST_CASE("Testing clear look ahead", "[lexer]") {
 
 TEST_CASE("Testing if statement", "[lexer]") {
   std::string str{"if else randomword else whatever ifelse elseif"};
-  Lexer lex;
+  Lexer lex(diagnostic);
   lex.initFromStr(str);
 
   lex.gettok();

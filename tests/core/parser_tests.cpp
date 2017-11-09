@@ -23,8 +23,10 @@ using babycpp::codegen::VariableExprAST;
 
 static babycpp::memory::FactoryAST factory;
 
+babycpp::diagnostic::Diagnostic	 diagnosticParserTests;
+
 TEST_CASE("Testing number parser", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   Parser parser(&lex, &factory);
   lex.initFromStr("1.0");
   // getting first token
@@ -37,7 +39,7 @@ TEST_CASE("Testing number parser", "[parser]") {
 }
 
 TEST_CASE("Testing function call parsing", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("testFunction ();");
   Parser parser(&lex, &factory);
 
@@ -62,7 +64,7 @@ TEST_CASE("Testing function call parsing", "[parser]") {
 }
 
 TEST_CASE("Testing extern call", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("extern float sin(float x);");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -82,7 +84,7 @@ TEST_CASE("Testing extern call", "[parser]") {
 }
 
 TEST_CASE("Testing variable definition", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("int x = 2;");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -103,7 +105,7 @@ TEST_CASE("Testing variable definition", "[parser]") {
 }
 
 TEST_CASE("Testing expression", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("x * y");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -133,7 +135,7 @@ TEST_CASE("Testing expression", "[parser]") {
 }
 
 TEST_CASE("Testing expression for function call", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("testFunction()");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -182,7 +184,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 }
 
 TEST_CASE("Testing identifier and  function call", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -210,7 +212,7 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
 }
 
 TEST_CASE("Testing more complex expression", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("x + 2 * y+z");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -244,7 +246,7 @@ TEST_CASE("Testing more complex expression", "[parser]") {
   REQUIRE(lhs_y->name == "y");
 }
 TEST_CASE("Testing more complex expression with paren", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("x + 2.0 * (y+z)");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -281,7 +283,7 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
   REQUIRE(rhs_z->name == "z");
 }
 TEST_CASE("Testing expression from top level", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("x = y + z;");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -316,7 +318,7 @@ TEST_CASE("Testing expression from top level", "[parser]") {
 }
 
 TEST_CASE("Testing simple function", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0;}");
   Parser parser(&lex, &factory);
@@ -327,7 +329,7 @@ TEST_CASE("Testing simple function", "[parser]") {
 }
 
 TEST_CASE("Testing simple function with return", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0; return avg;}");
   Parser parser(&lex, &factory);
@@ -349,7 +351,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
 }
 
 TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - "
                   "2.0; return temp;}");
   Parser parser(&lex, &factory);
@@ -369,7 +371,7 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
 
 TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("float avg(float x){ return x *2.0;}");
   Parser parser(&lex, &factory);
   lex.gettok();
@@ -380,7 +382,7 @@ TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
 TEST_CASE("Testing if statement parsing", "[parser]") {
 
-  Lexer lex;
+  Lexer lex(diagnosticParserTests);
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else{ int x = 2 + 2;}");
   Parser parser(&lex, &factory);
   lex.gettok();

@@ -4,6 +4,7 @@
 #include <regex>
 #include <string>
 #include <unordered_map>
+#include "diagnostic.h"
 
 namespace babycpp {
 namespace lexer {
@@ -134,7 +135,7 @@ struct MovableToken {
 struct Lexer {
 
   /** @brief default constructor */
-  explicit Lexer() : expr(MAIN_REGEX) {}
+  explicit Lexer(diagnostic::Diagnostic& indiagnostic) : expr(MAIN_REGEX), diagnostic(indiagnostic) {}
   /** @brief  constructor
    * @param reg: provide custom regex to apply on the string */
   explicit Lexer(std::regex &reg) : expr(reg) {}
@@ -191,6 +192,8 @@ struct Lexer {
 
   /// buffer of processed tokens for when looking ahead
   std::deque<MovableToken> lookAheadToken;
+  diagnostic::Diagnostic diagnostic;
+
 };
 
 } // namespace lexer
