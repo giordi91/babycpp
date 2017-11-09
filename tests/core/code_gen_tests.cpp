@@ -367,3 +367,17 @@ TEST_CASE("Testing simple if function code gen", "[codegen]") {
   auto expected = getFile("tests/core/functionWithIfstatement.ll");
   REQUIRE(outs == expected);
 }
+
+TEST_CASE("Testing more complex if function code gen", "[codegen]") {
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int a, int b){int res = 0;if(a - (3*b)){res = "
+                     "a+ 10;}else{res= 2 - b;} return res;}");
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/functionWithIfstatement2.ll");
+  auto expected = getFile("tests/core/functionWithIfstatement2.ll");
+  REQUIRE(outs == expected);
+}
