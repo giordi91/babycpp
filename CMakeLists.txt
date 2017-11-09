@@ -71,6 +71,10 @@ if(${BUILD_TESTS} STREQUAL "ON")
     if(${BUILD_REPL} STREQUAL "ON")
         add_subdirectory(tests/repl)
     endif()
+
+    if(${BUILD_JIT} STREQUAL "ON" AND  ${BUILD_REPL} STREQUAL "ON"  )
+        add_subdirectory(tests)
+	endif()
 endif()
 
 

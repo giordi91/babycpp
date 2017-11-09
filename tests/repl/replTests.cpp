@@ -1,4 +1,7 @@
+//this define is to disable the config main so that we can build all the test in a single executable
+#ifndef CUMULATIVE_TESTS
 #define CATCH_CONFIG_MAIN // This tells Catch to provide a main() - only do this
+#endif
 // in one cpp file
 
 #include <parser.h>
