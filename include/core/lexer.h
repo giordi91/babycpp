@@ -124,6 +124,8 @@ struct MovableToken {
   std::string identifierStr;
   /// possible value associated with the token
   Number value;
+  ///offset to add to the column number once we processed it
+  int columnOffset;
 };
 
 /**
@@ -150,6 +152,7 @@ struct Lexer {
     data = str;
     start = data.c_str();
     lineNumber = 1;
+	columnNumber = 0;
     lookAheadToken.clear();
   }
 
@@ -182,6 +185,7 @@ struct Lexer {
   Number value;
   /// current line number in the file
   uint32_t lineNumber = 1;
+  int32_t columnNumber = 1;
 
   // regex classes
   std::regex expr;

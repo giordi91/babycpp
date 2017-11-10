@@ -32,7 +32,7 @@ inline std::string extractStringFromMatch(const Charmatch &matcher,
   return "";
 }
 
-int processNumber(const std::string &str, Lexer* L) {
+int processNumber(const std::string &str, Lexer *L) {
   const char *ptr = str.c_str();
   uint32_t cLen = str.length();
   bool dotFound = false;
@@ -72,12 +72,13 @@ void Lexer::gettok() {
   }
 
   if (!lookAheadToken.empty()) {
-      const MovableToken& mov = lookAheadToken.front();
-      currtok = mov.token;
-      identifierStr = mov.identifierStr;
-      value = mov.value;
-      lookAheadToken.pop_front();
-      return;
+    const MovableToken &mov = lookAheadToken.front();
+    currtok = mov.token;
+    identifierStr = mov.identifierStr;
+    value = mov.value;
+	columnNumber += mov.columnOffset;
+    lookAheadToken.pop_front();
+    return;
   }
 
   bool gotMatch = std::regex_search(start, matcher, expr,
@@ -89,72 +90,74 @@ void Lexer::gettok() {
   std::string extractedString = extractStringFromMatch(matcher, &offset);
   // handling case of not match
   if (!gotMatch) {
-    currtok =  handleNoMatchFromRegex(start);
+    currtok = handleNoMatchFromRegex(start);
     return;
   }
 
   if (isNewLine(extractedString)) {
     lineNumber++;
+    columnNumber = 0;
     start += offset; // eating the token;
+
     // we skipped the new line and spaces and we go to the new
     // token
     gettok();
-    return ;
+    return;
   }
 
   // handling builtin word
   int tok = isBuiltInKeyword(extractedString);
   if (tok != tok_no_match) {
     start += offset; // eating the token;
+	columnNumber += offset; //adding the offset to the column
     identifierStr = extractedString;
     currtok = tok;
-    return ;
+    return;
   }
 
   // if is not a built in word it must be an identifier or an ascii value
   if (isdigit(extractedString[0]) != 0) {
     // procerssing number since variables are not allowed to start with a number
     start += offset; // eating the token;
+	columnNumber += offset; //adding the offset to the column
     currtok = processNumber(extractedString, this);
     return;
   }
   if (isalpha(extractedString[0]) != 0) {
     start += offset; // eating the token;
+	columnNumber += offset; //adding the offset to the column
     identifierStr = extractedString;
     currtok = tok_identifier;
     return;
   }
 }
-bool Lexer::lookAhead(uint32_t count)
-{
-    std::string old = identifierStr;
-    int old_tok = currtok;
-    Number oldNumb = value;
+bool Lexer::lookAhead(uint32_t count) {
+  std::string old = identifierStr;
+  int old_tok = currtok;
+  Number oldNumb = value;
 
-    //here we need a temp buffer, we cannot push directly inside
-    //the lookAheadToken queue, otherwise it will be popped right
-    //away from the next gettok(). We write to a temp buffer and then
-    //transfer to the queue, not super pretty, might be a better way
-    std::vector<MovableToken> tempBuffer;
-    tempBuffer.reserve(count);
+  // here we need a temp buffer, we cannot push directly inside
+  // the lookAheadToken queue, otherwise it will be popped right
+  // away from the next gettok(). We write to a temp buffer and then
+  // transfer to the queue, not super pretty, might be a better way
+  std::vector<MovableToken> tempBuffer;
+  tempBuffer.reserve(count);
 
-    for(uint32_t t =0; t<count;++t)
-    {
-        gettok();
-        if(currtok == tok_eof || currtok == tok_no_match)
-        {
-            return false;
-        }
-        tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
+  for (uint32_t t = 0; t < count; ++t) {
+    gettok();
+    if (currtok == tok_eof || currtok == tok_no_match) {
+      return false;
     }
+    tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
+  }
 
-    for (uint32_t t = 0; t < count; ++t) {
-      lookAheadToken.push_back(tempBuffer[t]);
-    }
-    identifierStr = old;
-    currtok= old_tok;
-    value = oldNumb;
-    return true;
+  for (uint32_t t = 0; t < count; ++t) {
+    lookAheadToken.push_back(tempBuffer[t]);
+  }
+  identifierStr = old;
+  currtok = old_tok;
+  value = oldNumb;
+  return true;
 }
 
 } // namespace lexer

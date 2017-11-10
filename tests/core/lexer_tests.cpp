@@ -7,7 +7,7 @@ using babycpp::lexer::Lexer;
 using babycpp::lexer::MovableToken;
 using babycpp::lexer::Token;
 
-babycpp::diagnostic::Diagnostic	 diagnostic;
+babycpp::diagnostic::Diagnostic diagnostic;
 
 TEST_CASE("Testing empty lexer", "[lexer]") {
   Lexer lex(diagnostic);
@@ -223,6 +223,61 @@ TEST_CASE("Testing multi line", "[lexer]") {
   REQUIRE(lex.value.floatNumber == Approx(2.0f));
 }
 
+TEST_CASE("Testing column advancement 1", "[lexer]") {
+
+  std::string str{"aa 12 cc 3.14 ee"};
+  Lexer lex(diagnostic);
+  lex.initFromStr(str);
+  REQUIRE(lex.lookAheadToken.empty());
+  REQUIRE(lex.columnNumber == 0);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 2);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 5);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 8);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 13);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 16);
+}
+
+TEST_CASE("Testing column advancement 2", "[lexer]") {
+  std::string str{"if else randomword \n \n else \n whatever \n ifelse elseif"};
+  Lexer lex(diagnostic);
+  lex.initFromStr(str);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 2);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 7);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 18);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 5);
+  REQUIRE(lex.lineNumber == 3);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 9);
+  REQUIRE(lex.lineNumber == 4);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 7);
+  REQUIRE(lex.lineNumber == 5);
+
+  lex.gettok();
+  REQUIRE(lex.columnNumber == 14);
+  REQUIRE(lex.lineNumber == 5);
+}
+
 TEST_CASE("Testing testing buffering", "[lexer]") {
 
   std::string str{"aa 12 cc 3.14 ee"};
@@ -262,6 +317,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "ee");
 }
+
 TEST_CASE("Testing too much look ahead", "[lexer]") {
   std::string str{"xyz "};
   Lexer lex(diagnostic);
@@ -307,5 +363,4 @@ TEST_CASE("Testing if statement", "[lexer]") {
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "elseif");
-
 }
