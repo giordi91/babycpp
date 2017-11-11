@@ -22,8 +22,8 @@ int inline isBuiltInKeyword(const std::string &str) {
 
 inline std::string extractStringFromMatch(const Charmatch &matcher,
                                           int *offset) {
-  uint32_t matcherSize = matcher.size();
-  for (uint32_t i = 1; i < matcherSize; ++i) {
+  int matcherSize = matcher.size();
+  for (int i = 1; i < matcherSize; ++i) {
     if (matcher[i].matched) {
       (*offset) = matcher.length();
       return matcher[i];
@@ -34,9 +34,9 @@ inline std::string extractStringFromMatch(const Charmatch &matcher,
 
 int processNumber(const std::string &str, Lexer *L) {
   const char *ptr = str.c_str();
-  uint32_t cLen = str.length();
+  int cLen = str.length();
   bool dotFound = false;
-  for (uint32_t i = 0; i < cLen; ++i) {
+  for (int i = 0; i < cLen; ++i) {
     const char c = (*(ptr + i));
     if (isdigit(c) != 0) {
       continue;
@@ -131,7 +131,7 @@ void Lexer::gettok() {
     return;
   }
 }
-bool Lexer::lookAhead(uint32_t count) {
+bool Lexer::lookAhead(int count) {
   std::string old = identifierStr;
   int old_tok = currtok;
   Number oldNumb = value;
@@ -143,7 +143,7 @@ bool Lexer::lookAhead(uint32_t count) {
   std::vector<MovableToken> tempBuffer;
   tempBuffer.reserve(count);
 
-  for (uint32_t t = 0; t < count; ++t) {
+  for (int t = 0; t < count; ++t) {
     gettok();
     if (currtok == tok_eof || currtok == tok_no_match) {
       return false;
@@ -151,7 +151,7 @@ bool Lexer::lookAhead(uint32_t count) {
     tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
   }
 
-  for (uint32_t t = 0; t < count; ++t) {
+  for (int t = 0; t < count; ++t) {
     lookAheadToken.push_back(tempBuffer[t]);
   }
   identifierStr = old;

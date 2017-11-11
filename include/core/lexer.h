@@ -1,6 +1,4 @@
 #pragma once
-#include <fstream>
-#include <queue>
 #include <regex>
 #include <string>
 #include <unordered_map>
@@ -174,7 +172,7 @@ struct Lexer {
    *               this might fail when the file ends before
    *               the specific amount of tokens are processed
    */
-  bool lookAhead(uint32_t count);
+  bool lookAhead(int count);
 
   // lexed data
   /// the current active token
@@ -184,7 +182,7 @@ struct Lexer {
   /// possible value of the processed token if it is a numeric value
   Number value;
   /// current line number in the file
-  uint32_t lineNumber = 1;
+  int lineNumber = 1;
   int32_t columnNumber = 1;
 
   // regex classes

@@ -22,6 +22,16 @@ const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
 inline bool isDatatype(int tok) {
   return (tok == Token::tok_float || tok == Token::tok_int);
 }
+//ERROR LOGGING
+inline void logMissingRoundParenOrCommaInFunctionCall(Lexer* lex, diagnostic::Diagnostic* diagnostic) {
+	diagnostic::Issue err{
+		"expected ')' or , in function call", lex->lineNumber,
+		lex->columnNumber, diagnostic::IssueType::PARSER,
+		diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL };
+	diagnostic->pushError(err);
+}
+
+
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
 // interesting to think of casting as "anonymous declaration maybe?"
@@ -76,7 +86,7 @@ ExprAST *Parser::parseIdentifier() {
       }
 
       if (lex->currtok != Token::tok_comma) {
-        std::cout << "Error: expected ')' or , in function call" << std::endl;
+		  logMissingRoundParenOrCommaInFunctionCall(lex, diagnostic);
         return nullptr;
       }
 
@@ -495,6 +505,5 @@ PrototypeAST *Parser::parsePrototype() {
 //////////////////////////////////////////////////
 //// CODE GEN
 //////////////////////////////////////////////////
-
 } // namespace parser
 } // namespace babycpp

@@ -11,7 +11,7 @@ struct ExprAST;
 struct NumberExprAST;
 struct PrototypeAST;
 struct FunctionAST;
-}
+} // namespace codegen
 
 namespace memory {
 struct FactoryAST;
@@ -20,8 +20,8 @@ struct FactoryAST;
 namespace parser {
 
 using lexer::Lexer;
-using lexer::Token;
 using lexer::Number;
+using lexer::Token;
 
 /** @brief set of flags representing the status of the parser */
 struct ParserFlags {
@@ -38,8 +38,9 @@ struct Parser {
    * @param inputfactory: pointer to the factory class in charge of
    *                      allocating the AST nodes
    */
-  explicit Parser(Lexer *inputLexer, memory::FactoryAST *inputfactory)
-      : lex(inputLexer), factory(inputfactory) {
+  explicit Parser(Lexer *inputLexer, memory::FactoryAST *inputfactory,
+                  diagnostic::Diagnostic *indiagnostic)
+      : lex(inputLexer), factory(inputfactory), diagnostic(indiagnostic) {
     flags.processed_assigment = false;
   }
 
@@ -84,19 +85,18 @@ struct Parser {
    * @return pointer to the AST node representing the signature
    */
   codegen::PrototypeAST *parsePrototype();
-    /**
-     * @brief function called whenever a declaration token is found
-     * This can be either a function declaration, a variable, class
-     * declaration in the future etc
-     * @return: pointer to the AST node representing the declaration
-     */
+  /**
+   * @brief function called whenever a declaration token is found
+   * This can be either a function declaration, a variable, class
+   * declaration in the future etc
+   * @return: pointer to the AST node representing the declaration
+   */
   codegen::ExprAST *parseDeclaration();
   /**@brief parses an expression wrapped in parenthesis */
   codegen::ExprAST *parseParen();
 
-  /**@brief parses an if statement and corresponding branches */ 
+  /**@brief parses an if statement and corresponding branches */
   codegen::ExprAST *parseIfStatement();
-
 
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
@@ -118,6 +118,7 @@ struct Parser {
   // data
   Lexer *lex;
   memory::FactoryAST *factory;
+  diagnostic::Diagnostic* diagnostic;
   ParserFlags flags;
 };
 

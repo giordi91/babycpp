@@ -161,7 +161,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
   // in a situation like this, although pointers are not supported
   // yet, there is the chance that "x*" will be parsed as a pointer
   // and not as an operator
-  std::string str{" x*4 "};
+  const std::string str{" x*4 "};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -179,7 +179,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
   REQUIRE(lex.value.integerNumber == 4);
 }
 TEST_CASE("Testing extern tok", "[lexer]") {
-  std::string str{" extern sin( float x);"};
+  const std::string str{" extern sin( float x);"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -208,7 +208,7 @@ TEST_CASE("Testing extern tok", "[lexer]") {
 }
 
 TEST_CASE("Testing multi line", "[lexer]") {
-  std::string str{"x \n  2.0"};
+  const std::string str{"x \n  2.0"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -225,7 +225,7 @@ TEST_CASE("Testing multi line", "[lexer]") {
 
 TEST_CASE("Testing column advancement 1", "[lexer]") {
 
-  std::string str{"aa 12 cc 3.14 ee"};
+  const std::string str{"aa 12 cc 3.14 ee"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
   REQUIRE(lex.lookAheadToken.empty());
@@ -248,7 +248,7 @@ TEST_CASE("Testing column advancement 1", "[lexer]") {
 }
 
 TEST_CASE("Testing column advancement 2", "[lexer]") {
-  std::string str{"if else randomword \n \n else \n whatever \n ifelse elseif"};
+  const std::string str{"if else randomword \n \n else \n whatever \n ifelse elseif"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -280,7 +280,7 @@ TEST_CASE("Testing column advancement 2", "[lexer]") {
 
 TEST_CASE("Testing testing buffering", "[lexer]") {
 
-  std::string str{"aa 12 cc 3.14 ee"};
+  const std::string str{"aa 12 cc 3.14 ee"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
   REQUIRE(lex.lookAheadToken.empty());
@@ -319,7 +319,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
 }
 
 TEST_CASE("Testing too much look ahead", "[lexer]") {
-  std::string str{"xyz "};
+  const std::string str{"xyz "};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -327,7 +327,7 @@ TEST_CASE("Testing too much look ahead", "[lexer]") {
   REQUIRE(res == false);
 }
 TEST_CASE("Testing clear look ahead", "[lexer]") {
-  std::string str{"this should be cleared after look ahead and init"};
+  const std::string str{"this should be cleared after look ahead and init"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 
@@ -338,7 +338,7 @@ TEST_CASE("Testing clear look ahead", "[lexer]") {
 }
 
 TEST_CASE("Testing if statement", "[lexer]") {
-  std::string str{"if else randomword else whatever ifelse elseif"};
+  const std::string str{"if else randomword else whatever ifelse elseif"};
   Lexer lex(diagnostic);
   lex.initFromStr(str);
 

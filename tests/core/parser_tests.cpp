@@ -23,11 +23,11 @@ using babycpp::codegen::VariableExprAST;
 
 static babycpp::memory::FactoryAST factory;
 
-babycpp::diagnostic::Diagnostic	 diagnosticParserTests;
+babycpp::diagnostic::Diagnostic diagnosticParserTests;
 
 TEST_CASE("Testing number parser", "[parser]") {
   Lexer lex(diagnosticParserTests);
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.initFromStr("1.0");
   // getting first token
   lex.gettok();
@@ -41,7 +41,7 @@ TEST_CASE("Testing number parser", "[parser]") {
 TEST_CASE("Testing function call parsing", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("testFunction ();");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
 
   lex.gettok();
   auto *p = parser.parseIdentifier();
@@ -62,11 +62,27 @@ TEST_CASE("Testing function call parsing", "[parser]") {
   REQUIRE(p_casted->callee == "functionWithWeirdName__324_NOW");
   REQUIRE(p_casted->args.size() == 0);
 }
+TEST_CASE("Testing function call parsing error 1", "[parser]") {
+
+  Lexer lex(diagnosticParserTests);
+  lex.initFromStr("testFunction (xx xx );");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  // a function call gets parsed when the identifier is parsed,
+  // we check if the next top is a round paren, if so we process the func call
+  auto res = parser.parseIdentifier();
+
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == true);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL);
+}
 
 TEST_CASE("Testing extern call", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("extern float sin(float x);");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseExtern();
@@ -86,7 +102,7 @@ TEST_CASE("Testing extern call", "[parser]") {
 TEST_CASE("Testing variable definition", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("int x = 2;");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseDeclaration();
@@ -107,7 +123,7 @@ TEST_CASE("Testing variable definition", "[parser]") {
 TEST_CASE("Testing expression", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("x * y");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -137,7 +153,7 @@ TEST_CASE("Testing expression", "[parser]") {
 TEST_CASE("Testing expression for function call", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("testFunction()");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -186,7 +202,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 TEST_CASE("Testing identifier and  function call", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseDeclaration();
@@ -214,7 +230,7 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
 TEST_CASE("Testing more complex expression", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("x + 2 * y+z");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -248,7 +264,7 @@ TEST_CASE("Testing more complex expression", "[parser]") {
 TEST_CASE("Testing more complex expression with paren", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("x + 2.0 * (y+z)");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseExpression();
@@ -285,7 +301,7 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
 TEST_CASE("Testing expression from top level", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("x = y + z;");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseStatement();
@@ -321,7 +337,7 @@ TEST_CASE("Testing simple function", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0;}");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseFunction();
@@ -332,7 +348,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0; return avg;}");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto *p = parser.parseFunction();
@@ -354,7 +370,7 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - "
                   "2.0; return temp;}");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   auto *p = parser.parseFunction();
   REQUIRE(p != nullptr);
@@ -373,7 +389,7 @@ TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("float avg(float x){ return x *2.0;}");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   lex.lookAhead(2);
 
@@ -384,7 +400,7 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
 
   Lexer lex(diagnosticParserTests);
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else{ int x = 2 + 2;}");
-  Parser parser(&lex, &factory);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   auto res = parser.parseIfStatement();
   REQUIRE(res != nullptr);
@@ -428,8 +444,8 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(condrhs->val.integerNumber == 1);
 
   // checking the else branch
-  auto *elseBranchBody = dynamic_cast<VariableExprAST*>(res_casted->elseExpr);
-  REQUIRE(elseBranchBody!= nullptr);
+  auto *elseBranchBody = dynamic_cast<VariableExprAST *>(res_casted->elseExpr);
+  REQUIRE(elseBranchBody != nullptr);
   // being an assigment operation the variable will have a value assigned to it,
   // and in this case is a  binary expression
   value = dynamic_cast<BinaryExprAST *>(elseBranchBody->value);
