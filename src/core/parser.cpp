@@ -13,6 +13,8 @@ using codegen::IfAST;
 using codegen::NumberExprAST;
 using codegen::PrototypeAST;
 using codegen::VariableExprAST;
+using diagnostic::Diagnostic;
+using diagnostic::IssueCode;
 using lexer::Token;
 
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
@@ -69,6 +71,54 @@ inline void logExpectedSemicolonAtEndOfStatemetn(
       lex->lineNumber, lex->columnNumber, diagnostic::IssueType::PARSER,
       diagnostic::IssueCode::EXPECTED_END_STATEMENT_TOKEN};
   diagnostic->pushError(err);
+}
+
+inline void logExpectedReturnTypeForExtern(Lexer *lex,
+                                           diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{"expected return data type after extern",
+                        lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::EXPECTED_TYPE_AFTER_EXTERN};
+  diagnostic->pushError(err);
+}
+
+inline void
+logExpectedDatatypeForFunctionArgument(const std::string &msg, Lexer *lex,
+                                       diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG};
+  diagnostic->pushError(err);
+}
+inline void logExpectedIdentifierName(const std::string &msg, Lexer *lex,
+                                      diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::EXPECTED_IDENTIFIER_NAME};
+  diagnostic->pushError(err);
+}
+inline void logExpectedToken(const std::string &msg, Lexer *lex,
+                             diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::EXPECTED_TOKEN};
+  diagnostic->pushError(err);
+}
+
+inline void logParserError(const std::string &msg, Lexer *lexer,
+                           IssueCode code) {
+
+  diagnostic::Issue err{msg, lexer->lineNumber, lexer->columnNumber,
+                        diagnostic::IssueType::PARSER, code};
+  lexer->diagnostic->pushError(err);
+}
+
+inline void logParserError(const std::string &msg, Parser *parser,
+                           IssueCode code) {
+
+  diagnostic::Issue err{msg, parser->lex->lineNumber, parser->lex->columnNumber,
+                        diagnostic::IssueType::PARSER, code};
+  parser->diagnostic->pushError(err);
 }
 
 // this function defines whether or not a token is a declaration
@@ -161,6 +211,8 @@ ExprAST *Parser::parseExpression() {
       return LHS;
     }
 
+    // having hard time to replicate this, is mostly prevented by other errors
+    // check if i find a way to trigger it i ll add a test for it
     std::cout << "error,  cannot have multiple assignment in a statement"
               << std::endl;
     return nullptr;
@@ -304,7 +356,7 @@ ExprAST *Parser::parseStatement() {
 
   if (lex->currtok != Token::tok_end_statement && expectSemicolon) {
     logExpectedSemicolonAtEndOfStatemetn(lex, diagnostic, lex->currtok);
-    //return exp;
+    // return exp;
     return nullptr;
   }
   if (lex->currtok == Token::tok_end_statement) {
@@ -321,7 +373,7 @@ PrototypeAST *Parser::parseExtern() {
   // eating extern token;
   lex->gettok();
   if (!isDatatype(lex->currtok)) {
-    std::cout << "expected return data type after extern" << std::endl;
+    logExpectedReturnTypeForExtern(lex, diagnostic);
     return nullptr;
   }
   return parsePrototype();
@@ -336,9 +388,10 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       lex->gettok(); // eat )
       return true;
     }
-    // we expect to see seq of data_type identifier comma
+    // we expect to see seqence of data_type identifier comma
     if (!isDatatype(lex->currtok)) {
-      std::cout << "expected data type identifier for argument" << std::endl;
+      logExpectedDatatypeForFunctionArgument(
+          "expected data type identifier for argument", lex, lex->diagnostic);
       return false;
     }
     // saving datatype
@@ -346,7 +399,8 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
     lex->gettok(); // eat datatype
 
     if (lex->currtok != Token::tok_identifier) {
-      std::cout << "expected identifier name for argument" << std::endl;
+      logExpectedIdentifierName("expected identifier name for argument", lex,
+                                lex->diagnostic);
       return false;
     }
 
@@ -359,8 +413,10 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       lex->gettok(); // eating the comma
       // checking if we have a paren if so we  have
       // an error
-      if (lex->currtok == Token::tok_close_curly) {
-        std::cout << "expected data type identifier after comma" << std::endl;
+      if (lex->currtok == Token::tok_close_round) {
+        logParserError("expected data type identifier after comma, got :" +
+                           std::to_string(lex->currtok),
+                       lex, IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
         return false;
       }
     }
@@ -382,7 +438,9 @@ FunctionAST *Parser::parseFunction() {
 
   // we expect an open curly brace starting the body of the function
   if (lex->currtok != Token::tok_open_curly) {
-    std::cout << "error expected { after function prototype" << std::endl;
+    logParserError("error expected { after function prototype, got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
 

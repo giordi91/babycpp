@@ -26,6 +26,7 @@ static babycpp::memory::FactoryAST factory;
 babycpp::diagnostic::Diagnostic diagnosticParserTests;
 
 TEST_CASE("Testing number parser", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.initFromStr("1.0");
@@ -39,6 +40,7 @@ TEST_CASE("Testing number parser", "[parser]") {
 }
 
 TEST_CASE("Testing function call parsing", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("testFunction ();");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -64,6 +66,7 @@ TEST_CASE("Testing function call parsing", "[parser]") {
 }
 TEST_CASE("Testing function call parsing error 1", "[parser]") {
 
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("testFunction (xx xx );");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -89,6 +92,7 @@ TEST_CASE("Testing function call parsing error 1", "[parser]") {
 
 TEST_CASE("Testing function call parsing error 2", "[parser]") {
 
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("testFunction (xx,   );");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -123,6 +127,7 @@ TEST_CASE("Testing function call parsing error 2", "[parser]") {
 }
 
 TEST_CASE("Testing extern call", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("extern float sin(float x);");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -141,8 +146,23 @@ TEST_CASE("Testing extern call", "[parser]") {
   REQUIRE(arg.name == "x");
   REQUIRE(arg.type == Token::tok_float);
 }
+TEST_CASE("Testing extern call error 1", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("extern sin(float x);");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto *res = parser.parseExtern();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code ==
+          babycpp::diagnostic::IssueCode::EXPECTED_TYPE_AFTER_EXTERN);
+}
 
 TEST_CASE("Testing variable definition", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("int x = 2;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -162,24 +182,27 @@ TEST_CASE("Testing variable definition", "[parser]") {
   REQUIRE(v_casted->val.type == Token::tok_int);
   REQUIRE(v_casted->val.integerNumber == 2);
 }
-TEST_CASE("Testing variable definition error", "[parser]") {
-  Lexer lex(&diagnosticParserTests);
-  lex.initFromStr("int x = 3 y;");
-  Parser parser(&lex, &factory, &diagnosticParserTests);
-  lex.gettok();
+// TODO(giordi) cannot find a way to trigger this error, re-enable if happens
+// TEST_CASE("Testing variable definition error", "[parser]") {
+//  diagnosticParserTests.clear();
+//  Lexer lex(&diagnosticParserTests);
+//  lex.initFromStr("int x = 3 y;");
+//  Parser parser(&lex, &factory, &diagnosticParserTests);
+//  lex.gettok();
 
-  // auto *p = parser.parseDeclaration();
-  // REQUIRE(p == nullptr);
-  // REQUIRE(parser.diagnostic->hasErrors() == true);
-  // auto err = parser.diagnostic->getError();
-  // REQUIRE(
-  //    err.code ==
-  //    babycpp::diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL);
-  // const std::string errorMessage = parser.diagnostic->printErorr(err);
-  // std::cout << errorMessage << std::endl;
-}
+//  auto *p = parser.parseDeclaration();
+//  REQUIRE(p == nullptr);
+//  REQUIRE(parser.diagnostic->hasErrors() == true);
+//  auto err = parser.diagnostic->getError();
+//  REQUIRE(
+//     err.code ==
+//     babycpp::diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL);
+//  const std::string errorMessage = parser.diagnostic->printErorr(err);
+//  std::cout << errorMessage << std::endl;
+//}
 
 TEST_CASE("Testing expression", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("x * y");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -210,6 +233,7 @@ TEST_CASE("Testing expression", "[parser]") {
 }
 
 TEST_CASE("Testing expression for function call", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("testFunction()");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -259,6 +283,7 @@ TEST_CASE("Testing expression for function call", "[parser]") {
 }
 
 TEST_CASE("Testing identifier and  function call", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("float meaningOfLife = computeMeaningOfLife(me);");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -287,6 +312,7 @@ TEST_CASE("Testing identifier and  function call", "[parser]") {
 }
 
 TEST_CASE("Testing more complex expression", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("x + 2 * y+z");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -321,6 +347,7 @@ TEST_CASE("Testing more complex expression", "[parser]") {
   REQUIRE(lhs_y->name == "y");
 }
 TEST_CASE("Testing more complex expression with paren", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("x + 2.0 * (y+z)");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -358,6 +385,7 @@ TEST_CASE("Testing more complex expression with paren", "[parser]") {
   REQUIRE(rhs_z->name == "z");
 }
 TEST_CASE("Testing expression from top level", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("x = y + z;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -393,6 +421,7 @@ TEST_CASE("Testing expression from top level", "[parser]") {
 }
 
 TEST_CASE("Testing simple function", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0;}");
@@ -403,7 +432,54 @@ TEST_CASE("Testing simple function", "[parser]") {
   REQUIRE(p != nullptr);
 }
 
+TEST_CASE("Testing simple function error missing datatype arg", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float average(a, float b) \n { \n"
+                  "avg = (a+b)/2.0;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code ==
+          babycpp::diagnostic::IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
+}
+
+TEST_CASE("Testing simple function error missing name arg", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float average(float , float b) \n { \n"
+                  "avg = (a+b)/2.0;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_IDENTIFIER_NAME);
+}
+
+TEST_CASE("Testing simple function error with extra comma in args",
+          "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float average(float ,)\n { \n"
+                  "avg = (a+b)/2.0;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_IDENTIFIER_NAME);
+}
 TEST_CASE("Testing simple function with return", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("float average(float a, float b) \n { \n"
                   "avg = (a+b)/2.0; return avg;}");
@@ -425,6 +501,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   REQUIRE(lex.currtok == Token::tok_eof);
 }
 TEST_CASE("Testing no end of statement", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("int avg = (a+b)/2.0");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -432,10 +509,14 @@ TEST_CASE("Testing no end of statement", "[parser]") {
 
   auto *p = parser.parseStatement();
   REQUIRE(p == nullptr);
-  REQUIRE(lex.diagnostic->hasErrors() == 1);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code ==
+          babycpp::diagnostic::IssueCode::EXPECTED_END_STATEMENT_TOKEN);
 }
 
 TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("float complexAdd(float x){ float temp = x * 2.0;temp = x - "
                   "2.0; return temp;}");
@@ -456,6 +537,7 @@ TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
 
 TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("float avg(float x){ return x *2.0;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
@@ -467,6 +549,7 @@ TEST_CASE("Testing lookahead not losing tokens", "[parser]") {
 
 TEST_CASE("Testing if statement parsing", "[parser]") {
 
+  diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else{ int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);

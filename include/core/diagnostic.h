@@ -60,8 +60,8 @@ public:
   inline void pushWarning(Issue &issue) { warnings.push_back(issue); }
 
   void clear() {
-    errors.clear();
-    warnings.clear();
+    errors.resize(0);
+    warnings.resize(0);
   }
 
 private:
