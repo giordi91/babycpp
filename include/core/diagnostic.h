@@ -1,8 +1,8 @@
 #pragma once
-#include <deque>
-#include <unordered_map>
-
 #include <diagnosticCodes.h>
+
+#include <deque>
+#include <sstream>
 
 namespace babycpp {
 namespace diagnostic {
@@ -17,8 +17,7 @@ struct Issue {
 
 class Diagnostic {
 public:
-  inline bool hasWarning() const { return !warnings.empty(); }
-  inline bool hasErrors() const { return !errors.empty(); }
+  inline int hasErrors() const { return errors.size(); }
   inline const Issue &peakError() const { return errors.front(); }
   inline Issue getError() {
     auto err = errors.front();
@@ -26,6 +25,32 @@ public:
     return err;
   }
   inline void pushError(Issue &issue) { errors.push_back(issue); }
+  inline std::string printErorr(Issue &issue) {
+    //
+    std::ostringstream oss;
+    oss << "[ERROR ";
+
+    std::string errorType;
+    auto typeFound = issueTypeLookUp.find(issue.type);
+    if (typeFound != issueTypeLookUp.end()) {
+      errorType = typeFound->second;
+    } else {
+      errorType = "UNKNOWN_ERROR_TYPE";
+    }
+	oss << errorType << ": ";
+
+    std::string errorCode;
+    auto found = issueCodeLookUp.find(issue.code);
+    if (found != issueCodeLookUp.end()) {
+      errorCode = found->second;
+    } else {
+      errorCode = "UNKNOWN_ERROR_CODE";
+    }
+	oss << errorCode << " ] at line "<< issue.line<< " column "<<issue.column<<": " << issue.message;
+	return oss.str();
+  }
+
+  inline int hasWarning() const { return warnings.size(); }
   inline const Issue &peakWarning() const { return warnings.front(); }
   inline Issue getWarning() {
     auto wan = warnings.front();

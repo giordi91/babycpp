@@ -22,15 +22,54 @@ const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
 inline bool isDatatype(int tok) {
   return (tok == Token::tok_float || tok == Token::tok_int);
 }
-//ERROR LOGGING
-inline void logMissingRoundParenOrCommaInFunctionCall(Lexer* lex, diagnostic::Diagnostic* diagnostic) {
-	diagnostic::Issue err{
-		"expected ')' or , in function call", lex->lineNumber,
-		lex->columnNumber, diagnostic::IssueType::PARSER,
-		diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL };
-	diagnostic->pushError(err);
+// ERROR LOGGING
+inline void
+logMissingRoundParenOrCommaInFunctionCall(Lexer *lex,
+                                          diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{
+      "expected ')' or , in function call", lex->lineNumber, lex->columnNumber,
+      diagnostic::IssueType::PARSER,
+      diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL};
+  diagnostic->pushError(err);
 }
 
+inline void logMissingArgInFunctionCall(Lexer *lex,
+                                        diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{"expected argument after comma in function call",
+                        lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::MISSING_ARG_IN_FUNC_CALL};
+  diagnostic->pushError(err);
+}
+inline void logLhsMustBeVariableError(Lexer *lex,
+                                      diagnostic::Diagnostic *diagnostic) {
+  diagnostic::Issue err{"LHS of assigment operator must be a variable",
+                        lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::EXPECTED_VARIABLE};
+  diagnostic->pushError(err);
+}
+
+inline void logUnexpectedTokenInPrimary(Lexer *lex,
+                                        diagnostic::Diagnostic *diagnostic,
+                                        int token) {
+  diagnostic::Issue err{"unknown token when expecting expression, supported "
+                        "token are number, identifier or open paren, got: " +
+                            std::to_string(token),
+                        lex->lineNumber, lex->columnNumber,
+                        diagnostic::IssueType::PARSER,
+                        diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION};
+  diagnostic->pushError(err);
+}
+
+inline void logExpectedSemicolonAtEndOfStatemetn(
+    Lexer *lex, diagnostic::Diagnostic *diagnostic, int token) {
+  diagnostic::Issue err{
+      "expecting semicolon at end of statement got: " + std::to_string(token),
+      lex->lineNumber, lex->columnNumber, diagnostic::IssueType::PARSER,
+      diagnostic::IssueCode::EXPECTED_END_STATEMENT_TOKEN};
+  diagnostic->pushError(err);
+}
 
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
@@ -78,6 +117,7 @@ ExprAST *Parser::parseIdentifier() {
     while (true) {
       ExprAST *arg = parseExpression();
       if (arg == nullptr) {
+        logMissingArgInFunctionCall(lex, diagnostic);
         return nullptr;
       }
       args.push_back(arg);
@@ -86,7 +126,7 @@ ExprAST *Parser::parseIdentifier() {
       }
 
       if (lex->currtok != Token::tok_comma) {
-		  logMissingRoundParenOrCommaInFunctionCall(lex, diagnostic);
+        logMissingRoundParenOrCommaInFunctionCall(lex, diagnostic);
         return nullptr;
       }
 
@@ -110,15 +150,13 @@ ExprAST *Parser::parseExpression() {
       lex->gettok(); // eating assignment operator;
 
       auto *RHS = parseExpression();
-      auto *LHScasted = static_cast<VariableExprAST *>(LHS);
-      // TODO(giordi): investigate if there is any kind of safety check i can
-      // do here
-      if (LHScasted == nullptr) {
-        std::cout << "error, LHS of '=' operator must be a variable"
-                  << std::endl;
+      if (LHS->nodetype != codegen::VariableNode) {
+        logLhsMustBeVariableError(lex, diagnostic);
         return nullptr;
       }
 
+      // setting the right hand side as value;
+      auto *LHScasted = static_cast<VariableExprAST *>(LHS);
       LHScasted->value = RHS;
       return LHS;
     }
@@ -163,7 +201,7 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
 ExprAST *Parser::parsePrimary() {
   switch (lex->currtok) {
   default: {
-    std::cout << "unknown token when expecting expression" << std::endl;
+    logUnexpectedTokenInPrimary(lex, diagnostic, lex->currtok);
     return nullptr;
   }
   case Token::tok_identifier: {
@@ -200,7 +238,6 @@ ExprAST *Parser::parseDeclaration() {
       return nullptr;
     }
     case Token::tok_open_round: {
-      // TODO(giordi) BUG!!! never called and wdoesnt work
       return parseFunction();
     }
     case Token::tok_assigment_operator: {
@@ -251,7 +288,9 @@ ExprAST *Parser::parseStatement() {
     exp->flags.isReturn = true;
   } else if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
-    expectSemicolon = false;
+    if (exp->nodetype == codegen::FunctionNode) {
+      expectSemicolon = false;
+    }
   }
 
   else if (lex->currtok == Token::tok_identifier) {
@@ -264,8 +303,9 @@ ExprAST *Parser::parseStatement() {
   // if (lex->currtok == Token::tok_open_paren){}
 
   if (lex->currtok != Token::tok_end_statement && expectSemicolon) {
-    std::cout << "expecting semicolon at end of statement" << std::endl;
-    return exp;
+    logExpectedSemicolonAtEndOfStatemetn(lex, diagnostic, lex->currtok);
+    //return exp;
+    return nullptr;
   }
   if (lex->currtok == Token::tok_end_statement) {
     lex->gettok(); // eating semicolon;
