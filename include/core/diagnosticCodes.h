@@ -21,7 +21,8 @@ enum class IssueCode {
   EXPECTED_DATATYPE_FUNCTION_ARG = 1006,
   EXPECTED_IDENTIFIER_NAME = 1007,
   EXPECTED_TOKEN= 1008,
-  // 2000-2999 code gen codes
+  EXPECTED_RETURN_DATATYPE = 1009,
+	// 2000-2999 code gen codes
 };
 
 /**
@@ -52,6 +53,8 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
      "EXPECTED_DATATYPE_FUNCTION_ARG"},
     {IssueCode::EXPECTED_TOKEN,
      "EXPECTED_TOKEN"},
+    {IssueCode::EXPECTED_RETURN_DATATYPE,
+     "EXPECTED_RETURN_DATATYPE"},
 
 };
 

@@ -25,86 +25,6 @@ inline bool isDatatype(int tok) {
   return (tok == Token::tok_float || tok == Token::tok_int);
 }
 // ERROR LOGGING
-inline void
-logMissingRoundParenOrCommaInFunctionCall(Lexer *lex,
-                                          diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{
-      "expected ')' or , in function call", lex->lineNumber, lex->columnNumber,
-      diagnostic::IssueType::PARSER,
-      diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL};
-  diagnostic->pushError(err);
-}
-
-inline void logMissingArgInFunctionCall(Lexer *lex,
-                                        diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{"expected argument after comma in function call",
-                        lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::MISSING_ARG_IN_FUNC_CALL};
-  diagnostic->pushError(err);
-}
-inline void logLhsMustBeVariableError(Lexer *lex,
-                                      diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{"LHS of assigment operator must be a variable",
-                        lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::EXPECTED_VARIABLE};
-  diagnostic->pushError(err);
-}
-
-inline void logUnexpectedTokenInPrimary(Lexer *lex,
-                                        diagnostic::Diagnostic *diagnostic,
-                                        int token) {
-  diagnostic::Issue err{"unknown token when expecting expression, supported "
-                        "token are number, identifier or open paren, got: " +
-                            std::to_string(token),
-                        lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION};
-  diagnostic->pushError(err);
-}
-
-inline void logExpectedSemicolonAtEndOfStatemetn(
-    Lexer *lex, diagnostic::Diagnostic *diagnostic, int token) {
-  diagnostic::Issue err{
-      "expecting semicolon at end of statement got: " + std::to_string(token),
-      lex->lineNumber, lex->columnNumber, diagnostic::IssueType::PARSER,
-      diagnostic::IssueCode::EXPECTED_END_STATEMENT_TOKEN};
-  diagnostic->pushError(err);
-}
-
-inline void logExpectedReturnTypeForExtern(Lexer *lex,
-                                           diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{"expected return data type after extern",
-                        lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::EXPECTED_TYPE_AFTER_EXTERN};
-  diagnostic->pushError(err);
-}
-
-inline void
-logExpectedDatatypeForFunctionArgument(const std::string &msg, Lexer *lex,
-                                       diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG};
-  diagnostic->pushError(err);
-}
-inline void logExpectedIdentifierName(const std::string &msg, Lexer *lex,
-                                      diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::EXPECTED_IDENTIFIER_NAME};
-  diagnostic->pushError(err);
-}
-inline void logExpectedToken(const std::string &msg, Lexer *lex,
-                             diagnostic::Diagnostic *diagnostic) {
-  diagnostic::Issue err{msg, lex->lineNumber, lex->columnNumber,
-                        diagnostic::IssueType::PARSER,
-                        diagnostic::IssueCode::EXPECTED_TOKEN};
-  diagnostic->pushError(err);
-}
-
 inline void logParserError(const std::string &msg, Lexer *lexer,
                            IssueCode code) {
 
@@ -167,7 +87,9 @@ ExprAST *Parser::parseIdentifier() {
     while (true) {
       ExprAST *arg = parseExpression();
       if (arg == nullptr) {
-        logMissingArgInFunctionCall(lex, diagnostic);
+        logParserError("expected argument after comma in function call got:" +
+                           std::to_string(lex->currtok),
+                       lex, IssueCode::MISSING_ARG_IN_FUNC_CALL);
         return nullptr;
       }
       args.push_back(arg);
@@ -176,7 +98,11 @@ ExprAST *Parser::parseIdentifier() {
       }
 
       if (lex->currtok != Token::tok_comma) {
-        logMissingRoundParenOrCommaInFunctionCall(lex, diagnostic);
+        logParserError("expected ')' or , in function call got:" +
+                           std::to_string(lex->currtok),
+                       lex,
+                       IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL);
+
         return nullptr;
       }
 
@@ -201,7 +127,10 @@ ExprAST *Parser::parseExpression() {
 
       auto *RHS = parseExpression();
       if (LHS->nodetype != codegen::VariableNode) {
-        logLhsMustBeVariableError(lex, diagnostic);
+
+        logParserError("LHS of assigment operator must be a variable got:" +
+                           std::to_string(lex->currtok),
+                       lex, IssueCode::EXPECTED_VARIABLE);
         return nullptr;
       }
 
@@ -253,7 +182,11 @@ ExprAST *Parser::parseBinOpRHS(int givenPrec, ExprAST *LHS) {
 ExprAST *Parser::parsePrimary() {
   switch (lex->currtok) {
   default: {
-    logUnexpectedTokenInPrimary(lex, diagnostic, lex->currtok);
+    logParserError("unknown token when expecting expression, supported "
+                   "token are number, identifier or open paren, got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+
     return nullptr;
   }
   case Token::tok_identifier: {
@@ -355,7 +288,9 @@ ExprAST *Parser::parseStatement() {
   // if (lex->currtok == Token::tok_open_paren){}
 
   if (lex->currtok != Token::tok_end_statement && expectSemicolon) {
-    logExpectedSemicolonAtEndOfStatemetn(lex, diagnostic, lex->currtok);
+    logParserError("expecting semicolon at end of statement got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_END_STATEMENT_TOKEN);
     // return exp;
     return nullptr;
   }
@@ -373,7 +308,9 @@ PrototypeAST *Parser::parseExtern() {
   // eating extern token;
   lex->gettok();
   if (!isDatatype(lex->currtok)) {
-    logExpectedReturnTypeForExtern(lex, diagnostic);
+    logParserError("expected return data type after extern got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_TYPE_AFTER_EXTERN);
     return nullptr;
   }
   return parsePrototype();
@@ -390,8 +327,9 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
     }
     // we expect to see seqence of data_type identifier comma
     if (!isDatatype(lex->currtok)) {
-      logExpectedDatatypeForFunctionArgument(
-          "expected data type identifier for argument", lex, lex->diagnostic);
+      logParserError("expected data type identifier for argument got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
       return false;
     }
     // saving datatype
@@ -399,8 +337,9 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
     lex->gettok(); // eat datatype
 
     if (lex->currtok != Token::tok_identifier) {
-      logExpectedIdentifierName("expected identifier name for argument", lex,
-                                lex->diagnostic);
+      logParserError("expected identifier name for argument got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::EXPECTED_IDENTIFIER_NAME);
       return false;
     }
 
@@ -445,7 +384,7 @@ FunctionAST *Parser::parseFunction() {
   }
 
   lex->gettok(); // eating curly
-  int SECURITY = 2000;
+  const int SECURITY = 2000;
   int counter = 0;
   std::vector<ExprAST *> statements;
   while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
@@ -458,7 +397,8 @@ FunctionAST *Parser::parseFunction() {
 
     // check if we are at end of file
     if (lex->currtok == Token::tok_eof) {
-      std::cout << "error, expected } got EOF" << std::endl;
+    logParserError("error, expected } got EOF" ,
+                   this, IssueCode::EXPECTED_TOKEN);
       return nullptr;
     }
   }
@@ -467,7 +407,9 @@ FunctionAST *Parser::parseFunction() {
   // if not it means something went wrong or we hit the
   // security limit
   if (lex->currtok != Token::tok_close_curly) {
-    std::cout << "error: expected } at end of function body" << std::endl;
+    logParserError("expected } at end of function bodygot:" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
 
@@ -479,7 +421,9 @@ ExprAST *Parser::parseParen() {
   lex->gettok(); // eating paren
   auto *exp = parseExpression();
   if (lex->currtok != Token::tok_close_round) {
-    std::cout << "error:, expected close paren after expression";
+    logParserError("expected close paren after expression got:" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
   lex->gettok(); // eating )
@@ -489,7 +433,9 @@ ExprAST *Parser::parseParen() {
 codegen::ExprAST *Parser::parseIfStatement() {
   lex->gettok(); // eating if tok
   if (lex->currtok != Token::tok_open_round) {
-    std::cout << "error:, expected  ( after if ";
+    logParserError("expected  ( after if , got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
   lex->gettok(); // eating (
@@ -500,13 +446,17 @@ codegen::ExprAST *Parser::parseIfStatement() {
     return nullptr;
   }
   if (lex->currtok != Token::tok_close_round) {
-    std::cout << "error:, expected  ) after if statement condition ";
+    logParserError("expected   ) after if statement condition, got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
   lex->gettok(); // eating )
 
   if (lex->currtok != Token::tok_open_curly) {
-    std::cout << "error:, expected  { after if statement condition ";
+    logParserError("expected  { after if statement condition, got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
   lex->gettok(); // eating {
@@ -518,7 +468,9 @@ codegen::ExprAST *Parser::parseIfStatement() {
   }
 
   if (lex->currtok != Token::tok_close_curly) {
-    std::cout << "error:, expected  } after if statement body";
+    logParserError("expected  } after if statement body , got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
   lex->gettok(); // eating {
@@ -531,8 +483,8 @@ codegen::ExprAST *Parser::parseIfStatement() {
     if (lex->currtok == Token::tok_if) {
       // TODO(giordi) support if else statement to make life easier
       // for the programmer
-      std::cout << "error : else if construct currently not supported"
-                << std::endl;
+      logParserError("error : else if construct currently not supported:", this,
+                     IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
       return nullptr;
     }
 
@@ -547,18 +499,17 @@ codegen::ExprAST *Parser::parseIfStatement() {
       }
 
       if (lex->currtok != Token::tok_close_curly) {
-        std::cout << "error: expected } at end of statement" << std::endl;
+        std::cout << "expected } at end of statement" << std::endl;
         return nullptr;
       }
       lex->gettok(); // eat }
-
-      // right now this is overkill, what I hope it happens is that will
-      // allow to nicely handle multiple else if blocks, we will see
-      // elseBranch = factory->allocIfAST(nullptr, elseBody, nullptr);
-
     } else {
-      std::cout << "error: expected either if or { after else keyword"
-                << std::endl;
+      std::cout << "" << std::endl;
+
+      // TODO(giordi) support else if construct
+      logParserError("expected  { after else keyword , got :" +
+                         std::to_string(lex->currtok),
+                     this, IssueCode::EXPECTED_TOKEN);
       return nullptr;
     }
   }
@@ -569,15 +520,20 @@ codegen::ExprAST *Parser::parseIfStatement() {
 PrototypeAST *Parser::parsePrototype() {
 
   if (!isDatatype(lex->currtok)) {
-    std::cout << "expected return data type after extern" << std::endl;
+    logParserError(
+        "expected return data type in function protoype or extern , got :" +
+            std::to_string(lex->currtok),
+        this, IssueCode::EXPECTED_RETURN_DATATYPE);
     return nullptr;
   }
   int datatype = lex->currtok;
   lex->gettok(); // eating datatype
 
   if (lex->currtok != Token::tok_identifier) {
-    std::cout << "expected identifier after extern return datatype"
-              << std::endl;
+    logParserError("expected identifier name after function prototype return "
+                   "datatype, got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_IDENTIFIER_NAME);
     return nullptr;
   }
   // we know that we need a function call so we get started
@@ -585,8 +541,12 @@ PrototypeAST *Parser::parsePrototype() {
   lex->gettok(); // eat identifier
 
   if (lex->currtok != Token::tok_open_round) {
-    std::cout << "expected ( after extern function name" << std::endl;
-    // should i eat bad identifier here?
+    logParserError("expected ( after function protoype name, got :" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
+
+    // should I eat bad identifier here or not?
+    lex->gettok(); // earting bad identifier
     return nullptr;
   }
   // parsing arguments
@@ -600,8 +560,6 @@ PrototypeAST *Parser::parsePrototype() {
   // here we can generate the prototype node;
   return factory->allocPrototypeAST(datatype, funName, args, true);
 }
-//////////////////////////////////////////////////
-//// CODE GEN
-//////////////////////////////////////////////////
+
 } // namespace parser
 } // namespace babycpp

@@ -82,12 +82,6 @@ TEST_CASE("Testing function call parsing error 1", "[parser]") {
   REQUIRE(
       err.code ==
       babycpp::diagnostic::IssueCode::MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL);
-  const std::string errorMessage = parser.diagnostic->printErorr(err);
-  const std::string expected{"[ERROR PARSER: "
-                             "MISSING_OPEN_ROUND_OR_COMMA_IN_FUNC_CALL ] at "
-                             "line 1 column 19: expected ')' or , in function "
-                             "call"};
-  REQUIRE(errorMessage == expected);
 }
 
 TEST_CASE("Testing function call parsing error 2", "[parser]") {
@@ -107,23 +101,60 @@ TEST_CASE("Testing function call parsing error 2", "[parser]") {
   auto err = parser.diagnostic->getError();
   REQUIRE(err.code ==
           babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
-  std::string errorMessage = parser.diagnostic->printErorr(err);
-  std::string expected{"[ERROR PARSER: UNEXPECTED_TOKEN_IN_EXPRESSION ] at "
-                       "line 1 column 21: unknown token when expecting "
-                       "expression, supported token are number, identifier or "
-                       "open paren, got: -13"};
 
-  REQUIRE(errorMessage == expected);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err2 = parser.diagnostic->getError();
 
   REQUIRE(err2.code ==
           babycpp::diagnostic::IssueCode::MISSING_ARG_IN_FUNC_CALL);
-  errorMessage = parser.diagnostic->printErorr(err2);
-  expected = "[ERROR PARSER: MISSING_ARG_IN_FUNC_CALL ] at line 1 "
-             "column 21: expected argument after comma in function "
-             "call";
-  REQUIRE(errorMessage == expected);
+}
+
+TEST_CASE("Testing parsing prototype error 1", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float testFunction xx;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parsePrototype();
+
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
+TEST_CASE("Testing parsing prototype error 2", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float ( xx;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parsePrototype();
+
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_IDENTIFIER_NAME);
+}
+
+TEST_CASE("Testing parsing prototype error 3", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("myFuncProtoype ( int xx);");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parsePrototype();
+
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_RETURN_DATATYPE);
 }
 
 TEST_CASE("Testing extern call", "[parser]") {
@@ -448,6 +479,22 @@ TEST_CASE("Testing simple function error missing datatype arg", "[parser]") {
           babycpp::diagnostic::IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
 }
 
+TEST_CASE("Testing simple function error missing close curly ", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("float average(float a, float b) \n { \n"
+                  "avg = (a+b)/2.0;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto *p = parser.parseFunction();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(err.code ==
+          babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
 TEST_CASE("Testing simple function error missing name arg", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
@@ -614,4 +661,104 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(condlhs->val.integerNumber == 2);
   REQUIRE(condrhs->datatype == Token::tok_int);
   REQUIRE(condrhs->val.integerNumber == 2);
+}
+TEST_CASE("Testing if statement parsing error 1", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here there is a missing { after the else, we expect either and if or {
+  //although right now else if is not supported
+  lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
+TEST_CASE("Testing if statement parsing error 2", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here else if construct which is not supported
+  lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else if {int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+}
+
+TEST_CASE("Testing if statement parsing error 3", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here missing } after if body
+  lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ; else if {int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
+TEST_CASE("Testing if statement parsing error 4", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here missing } after if body
+  lex.initFromStr("if ( 3 + 1)  int x = 1 +1 ;} else if {int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+TEST_CASE("Testing if statement parsing error 5", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here missing } after if body
+  lex.initFromStr("if ( 3 + 1 { int x = 1 +1 ;} else if {int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+TEST_CASE("Testing if statement parsing error 6", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  //here missing } after if body
+  lex.initFromStr("if  3 + 1- 30) { int x = 1 +1 ;} else if {int x = 2 + 2;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+  auto err = parser.diagnostic->getError();
+  REQUIRE(
+      err.code ==
+      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
