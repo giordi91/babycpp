@@ -41,6 +41,38 @@ inline void logParserError(const std::string &msg, Parser *parser,
   parser->diagnostic->pushError(err);
 }
 
+bool parseStatementsUntillCurly(std::vector<ExprAST *> &statements,
+                                Parser *parser) {
+
+  Lexer *lex = parser->lex;
+  const int SECURITY = 2000;
+  int counter = 0;
+  while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
+    auto *curr_statement = parser->parseStatement();
+    if (curr_statement == nullptr) {
+      // error should be handled by parse statement;
+      return nullptr;
+    }
+    statements.push_back(curr_statement);
+
+    // check if we are at end of file
+    if (lex->currtok == Token::tok_eof) {
+      logParserError("error, expected } got EOF", parser,
+                     IssueCode::EXPECTED_TOKEN);
+      return nullptr;
+    }
+  }
+
+  // here we should have all the statements, expected }
+  // if not it means something went wrong or we hit the
+  // security limit
+  if (lex->currtok != Token::tok_close_curly) {
+    logParserError("expected } at end of function bodygot:" +
+                       std::to_string(lex->currtok),
+                   parser, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+}
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
 // interesting to think of casting as "anonymous declaration maybe?"
@@ -384,34 +416,38 @@ FunctionAST *Parser::parseFunction() {
   }
 
   lex->gettok(); // eating curly
-  const int SECURITY = 2000;
-  int counter = 0;
   std::vector<ExprAST *> statements;
-  while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
-    auto *curr_statement = parseStatement();
-    if (curr_statement == nullptr) {
-      // error should be handled by parse statement;
-      return nullptr;
-    }
-    statements.push_back(curr_statement);
-
-    // check if we are at end of file
-    if (lex->currtok == Token::tok_eof) {
-    logParserError("error, expected } got EOF" ,
-                   this, IssueCode::EXPECTED_TOKEN);
-      return nullptr;
-    }
-  }
-
-  // here we should have all the statements, expected }
-  // if not it means something went wrong or we hit the
-  // security limit
-  if (lex->currtok != Token::tok_close_curly) {
-    logParserError("expected } at end of function bodygot:" +
-                       std::to_string(lex->currtok),
-                   this, IssueCode::EXPECTED_TOKEN);
+  bool res = parseStatementsUntillCurly(statements, this);
+  if (!res) {
     return nullptr;
   }
+  // const int SECURITY = 2000;
+  // int counter = 0;
+  // while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
+  //  auto *curr_statement = parseStatement();
+  //  if (curr_statement == nullptr) {
+  //    // error should be handled by parse statement;
+  //    return nullptr;
+  //  }
+  //  statements.push_back(curr_statement);
+
+  //  // check if we are at end of file
+  //  if (lex->currtok == Token::tok_eof) {
+  //    logParserError("error, expected } got EOF", this,
+  //                   IssueCode::EXPECTED_TOKEN);
+  //    return nullptr;
+  //  }
+  //}
+
+  //// here we should have all the statements, expected }
+  //// if not it means something went wrong or we hit the
+  //// security limit
+  // if (lex->currtok != Token::tok_close_curly) {
+  //  logParserError("expected } at end of function bodygot:" +
+  //                     std::to_string(lex->currtok),
+  //                 this, IssueCode::EXPECTED_TOKEN);
+  //  return nullptr;
+  //}
 
   lex->gettok(); // eat }
   return factory->allocFunctionAST(proto, statements);
