@@ -42,16 +42,25 @@ inline void logParserError(const std::string &msg, Parser *parser,
 }
 
 bool parseStatementsUntillCurly(std::vector<ExprAST *> &statements,
-                                Parser *parser) {
+                                Parser *parser, bool processingIf = false) {
 
   Lexer *lex = parser->lex;
   const int SECURITY = 2000;
   int counter = 0;
-  while (lex->currtok != Token::tok_close_curly && counter < SECURITY) {
+  while ((lex->currtok != Token::tok_close_curly) & (counter < SECURITY)) {
+    // there might be the case where you have a else statement before anything
+    // else  this should not be allowed.If the number of not supported stand alone
+    // keywords incresases we might  have to change this check to one more
+    // appropriate
+    if (lex->currtok == Token::tok_else && processingIf == true) {
+      logParserError("error, expected } got else statement, please close the curly bracket", parser,
+                     IssueCode::EXPECTED_TOKEN);
+      return false;
+    }
     auto *curr_statement = parser->parseStatement();
     if (curr_statement == nullptr) {
       // error should be handled by parse statement;
-      return nullptr;
+      return false;
     }
     statements.push_back(curr_statement);
 
@@ -59,7 +68,7 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> &statements,
     if (lex->currtok == Token::tok_eof) {
       logParserError("error, expected } got EOF", parser,
                      IssueCode::EXPECTED_TOKEN);
-      return nullptr;
+      return false;
     }
   }
 
@@ -70,8 +79,9 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> &statements,
     logParserError("expected } at end of function bodygot:" +
                        std::to_string(lex->currtok),
                    parser, IssueCode::EXPECTED_TOKEN);
-    return nullptr;
+    return false;
   }
+  return true;
 }
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
@@ -497,8 +507,11 @@ codegen::ExprAST *Parser::parseIfStatement() {
   }
   lex->gettok(); // eating {
 
-  auto *ifBranch = parseStatement();
-  if (ifBranch == nullptr) {
+  std::vector<ExprAST *> ifStatements;
+  auto res = parseStatementsUntillCurly(ifStatements, this, true);
+  // auto *ifBranch = parseStatement();
+  // if (ifBranch == nullptr) {
+  if (!res) {
     // TODO(giordi), verify error should be handled in expression
     return nullptr;
   }
@@ -511,7 +524,7 @@ codegen::ExprAST *Parser::parseIfStatement() {
   }
   lex->gettok(); // eating {
 
-  ExprAST *elseBody = nullptr;
+  std::vector<ExprAST *> elseStatements;
   if (lex->currtok == Token::tok_else) {
     lex->gettok(); // esting else
     // now at this point we can have two possiblities, either directly the else
@@ -528,8 +541,11 @@ codegen::ExprAST *Parser::parseIfStatement() {
       // if we have an open curly we need to parse the body of
       // the branch
       lex->gettok(); // eat {
-      elseBody = parseStatement();
-      if (elseBody == nullptr) {
+
+      auto elseres = parseStatementsUntillCurly(elseStatements, this);
+      // elseBody = parseStatement();
+      // if (elseBody == nullptr) {
+      if (!elseres) {
         // TODO(giordi), verify error should be handled in expression
         return nullptr;
       }
@@ -550,7 +566,7 @@ codegen::ExprAST *Parser::parseIfStatement() {
     }
   }
 
-  return factory->allocIfAST(condition, ifBranch, elseBody);
+  return factory->allocIfAST(condition, ifStatements, elseStatements);
 }
 
 PrototypeAST *Parser::parsePrototype() {
@@ -573,7 +589,7 @@ PrototypeAST *Parser::parsePrototype() {
     return nullptr;
   }
   // we know that we need a function call so we get started
-  std::string funName = lex->identifierStr;
+  std::string functionName = lex->identifierStr;
   lex->gettok(); // eat identifier
 
   if (lex->currtok != Token::tok_open_round) {
@@ -594,7 +610,7 @@ PrototypeAST *Parser::parsePrototype() {
   }
   // need to check semicolon at the end;
   // here we can generate the prototype node;
-  return factory->allocPrototypeAST(datatype, funName, args, true);
+  return factory->allocPrototypeAST(datatype, functionName, args, true);
 }
 
 } // namespace parser

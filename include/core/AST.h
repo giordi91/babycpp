@@ -185,9 +185,9 @@ struct FunctionAST : public ExprAST {
 
 struct IfAST: public ExprAST{
 	ExprAST* condition;
-	ExprAST* ifExpr;
-	ExprAST* elseExpr;
-  explicit IfAST(ExprAST* inCondition,ExprAST* inIfExpr, ExprAST* inElseExpr = nullptr)
+	std::vector<ExprAST*> ifExpr;
+	std::vector<ExprAST*> elseExpr;
+  explicit IfAST(ExprAST* inCondition,std::vector<ExprAST*> inIfExpr, std::vector<ExprAST*> inElseExpr)
       : ExprAST(), condition(inCondition),ifExpr(inIfExpr), elseExpr(inElseExpr) {
     nodetype = IfNode;
   }

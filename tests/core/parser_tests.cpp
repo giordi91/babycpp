@@ -491,8 +491,7 @@ TEST_CASE("Testing simple function error missing close curly ", "[parser]") {
   REQUIRE(p == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(err.code ==
-          babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
 
 TEST_CASE("Testing simple function error missing name arg", "[parser]") {
@@ -623,7 +622,7 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(condrhs->val.integerNumber == 1);
 
   // verify the if branch got parsed properly
-  auto *ifBranch = dynamic_cast<VariableExprAST *>(res_casted->ifExpr);
+  auto *ifBranch = dynamic_cast<VariableExprAST *>(res_casted->ifExpr[0]);
   REQUIRE(ifBranch != nullptr);
   // being an assigment operation the variable will have a value assigned to it,
   // and in this case is a  binary expression
@@ -643,7 +642,8 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(condrhs->val.integerNumber == 1);
 
   // checking the else branch
-  auto *elseBranchBody = dynamic_cast<VariableExprAST *>(res_casted->elseExpr);
+  auto *elseBranchBody =
+      dynamic_cast<VariableExprAST *>(res_casted->elseExpr[0]);
   REQUIRE(elseBranchBody != nullptr);
   // being an assigment operation the variable will have a value assigned to it,
   // and in this case is a  binary expression
@@ -651,7 +651,6 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(value != nullptr);
   REQUIRE(elseBranchBody->datatype == Token::tok_int);
 
-  // checking the if branch binary expression
   condlhs = dynamic_cast<NumberExprAST *>(value->lhs);
   condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
   REQUIRE(condlhs != nullptr);
@@ -662,12 +661,124 @@ TEST_CASE("Testing if statement parsing", "[parser]") {
   REQUIRE(condrhs->datatype == Token::tok_int);
   REQUIRE(condrhs->val.integerNumber == 2);
 }
+
+TEST_CASE("Testing if statement parsing multi statements", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromStr("if ( z*2 ) { int x = k +1 ; x = x - y;}else{ "
+                  "int x = 2 + 2; x = x + y;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+  auto res = parser.parseIfStatement();
+
+  REQUIRE(res != nullptr);
+
+  auto *res_casted = dynamic_cast<IfAST *>(res);
+  REQUIRE(res_casted != nullptr);
+
+  auto *condition = res_casted->condition;
+  auto *cond_casted = dynamic_cast<BinaryExprAST *>(condition);
+  REQUIRE(cond_casted != nullptr);
+
+  // verify the condtion got parsed correctly
+  auto *condlhs = dynamic_cast<VariableExprAST *>(cond_casted->lhs);
+  auto *condrhs = dynamic_cast<NumberExprAST *>(cond_casted->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == 0);
+  REQUIRE(condlhs->name == "z");
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 2);
+  REQUIRE(cond_casted->op == "*");
+
+  // verify the if branch got parsed properly
+  REQUIRE(res_casted->ifExpr.size() == 2);
+  auto *ifBranch = dynamic_cast<VariableExprAST *>(res_casted->ifExpr[0]);
+  REQUIRE(ifBranch != nullptr);
+  // being an assigment operation the variable will have a value assigned to it,
+  // and in this case is a  binary expression
+  auto *value = dynamic_cast<BinaryExprAST *>(ifBranch->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(ifBranch->datatype == Token::tok_int);
+
+  // checking the if branch binary expression
+  condlhs = dynamic_cast<VariableExprAST *>(value->lhs);
+  condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == 0);
+  REQUIRE(condlhs->name == "k");
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 1);
+
+  // checking second statement in the if branch
+  ifBranch = dynamic_cast<VariableExprAST *>(res_casted->ifExpr[1]);
+  value = dynamic_cast<BinaryExprAST *>(ifBranch->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(ifBranch->datatype == 0);
+
+  // checking the if branch binary expression
+  condlhs = dynamic_cast<VariableExprAST *>(value->lhs);
+  auto *condrhs2 = dynamic_cast<VariableExprAST *>(value->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs->datatype == 0);
+  REQUIRE(condlhs->name == "x");
+  REQUIRE(condrhs2->name == "y");
+  REQUIRE(condrhs2->datatype == 0);
+  REQUIRE(value->op == "-");
+
+  // now checking else statement
+  REQUIRE(res_casted->elseExpr.size() == 2);
+  auto *elseBranchBody =
+      dynamic_cast<VariableExprAST *>(res_casted->elseExpr[0]);
+  REQUIRE(elseBranchBody != nullptr);
+  // being an assigment operation the variable will have a value assigned to it,
+  // and in this case is a  binary expression
+  value = dynamic_cast<BinaryExprAST *>(elseBranchBody->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(elseBranchBody->datatype == Token::tok_int);
+
+  auto* condlhs2 = dynamic_cast<NumberExprAST *>(value->lhs);
+  condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
+  REQUIRE(condlhs != nullptr);
+  REQUIRE(condrhs != nullptr);
+
+  REQUIRE(condlhs2->datatype == Token::tok_int);
+  REQUIRE(condlhs2->val.integerNumber == 2);
+  REQUIRE(condrhs->datatype == Token::tok_int);
+  REQUIRE(condrhs->val.integerNumber == 2);
+
+
+  // checking second statement in the if branch
+  elseBranchBody = dynamic_cast<VariableExprAST *>(res_casted->elseExpr[1]);
+  REQUIRE(elseBranchBody != nullptr);
+  value = dynamic_cast<BinaryExprAST *>(elseBranchBody->value);
+  REQUIRE(value != nullptr);
+  REQUIRE(ifBranch->datatype == 0);
+
+
+  auto* condlhs3 = dynamic_cast<VariableExprAST*>(value->lhs);
+  auto* condrhs3 = dynamic_cast<VariableExprAST*>(value->rhs);
+  REQUIRE(condlhs3 != nullptr);
+  REQUIRE(condrhs3 != nullptr);
+
+  REQUIRE(condlhs3->datatype == 0);
+  REQUIRE(condlhs3->name == "x");
+  REQUIRE(condrhs3->datatype == 0);
+  REQUIRE(condrhs3->name == "y");
+}
+
 TEST_CASE("Testing if statement parsing error 1", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here there is a missing { after the else, we expect either and if or {
-  //although right now else if is not supported
+  // here there is a missing { after the else, we expect either and if or {
+  // although right now else if is not supported
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -675,16 +786,14 @@ TEST_CASE("Testing if statement parsing error 1", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
 
 TEST_CASE("Testing if statement parsing error 2", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here else if construct which is not supported
+  // here else if construct which is not supported
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ;}else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -692,16 +801,15 @@ TEST_CASE("Testing if statement parsing error 2", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+  REQUIRE(err.code ==
+          babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
 }
 
 TEST_CASE("Testing if statement parsing error 3", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here missing } after if body
+  // here missing } after if body
   lex.initFromStr("if ( 3 + 1) { int x = 1 +1 ; else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -709,16 +817,14 @@ TEST_CASE("Testing if statement parsing error 3", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
 
 TEST_CASE("Testing if statement parsing error 4", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here missing } after if body
+  // here missing } after if body
   lex.initFromStr("if ( 3 + 1)  int x = 1 +1 ;} else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -726,15 +832,13 @@ TEST_CASE("Testing if statement parsing error 4", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
 TEST_CASE("Testing if statement parsing error 5", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here missing } after if body
+  // here missing } after if body
   lex.initFromStr("if ( 3 + 1 { int x = 1 +1 ;} else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -742,15 +846,13 @@ TEST_CASE("Testing if statement parsing error 5", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }
 TEST_CASE("Testing if statement parsing error 6", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  //here missing } after if body
+  // here missing } after if body
   lex.initFromStr("if  3 + 1- 30) { int x = 1 +1 ;} else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -758,7 +860,5 @@ TEST_CASE("Testing if statement parsing error 6", "[parser]") {
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
-  REQUIRE(
-      err.code ==
-      babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+  REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
 }

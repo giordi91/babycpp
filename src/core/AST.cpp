@@ -334,7 +334,10 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   // starting to work out the branch
   gen->builder.SetInsertPoint(thenBlock);
 
-  Value *ifBranchValue = ifExpr->codegen(gen);
+  Value *ifBranchValue = nullptr;
+  for (auto &ifE : ifExpr) {
+    ifBranchValue = ifE->codegen(gen);
+  }
   if (ifBranchValue == nullptr) {
     std::cout << "error in generating if branch code" << std::endl;
     return nullptr;
@@ -349,8 +352,12 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   theFunction->getBasicBlockList().push_back(elseBlock);
   gen->builder.SetInsertPoint(elseBlock);
 
-  if (elseExpr != nullptr) {
-    Value *elseBranchValue = elseExpr->codegen(gen);
+  if (elseExpr.size() != 0) {
+
+    Value *elseBranchValue = nullptr;
+    for (auto elseE : elseExpr) {
+      elseBranchValue = elseE->codegen(gen);
+    }
     if (elseBranchValue == nullptr) {
       std::cout << "error in generating else branch code" << std::endl;
       return nullptr;
@@ -360,10 +367,10 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   // updating else block for phi node
   elseBlock = gen->builder.GetInsertBlock();
 
-  //mergin the code
+  // mergin the code
   theFunction->getBasicBlockList().push_back(mergeBlock);
   gen->builder.SetInsertPoint(mergeBlock);
-  //we don't need a phi node since we handle everything with alloca
+  // we don't need a phi node since we handle everything with alloca
 
   return comparisonValue;
 }
