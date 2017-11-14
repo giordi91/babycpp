@@ -386,10 +386,16 @@ TEST_CASE("Testing more complex if function code gen", "[codegen]") {
 TEST_CASE("Testing more complex if function with multi statement code gen",
           "[codegen]") {
   Codegenerator gen;
-  gen.initFromString(
-      "int testFunc(int a, int b, int c, int k){int res = 0;if(a *2){ "
-      "int x = k +1; res = "
-      "a+ x;}else{int x = c - 1; res= x - b;} return res;}");
+  gen.initFromString("int testFunc(int a, int b, int c, int k){"
+                     "int res = 0;"
+                     "if(a *2){ "
+                     "int x = k +1;"
+                     "res = a+ x;"
+                     "}else{"
+                     "int x = c - 1;"
+                     "res= x - b;"
+                     "}"
+                     "return res;}");
   auto p = gen.parser.parseStatement();
   REQUIRE(p != nullptr);
 
