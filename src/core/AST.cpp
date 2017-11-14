@@ -6,6 +6,18 @@
 namespace babycpp {
 namespace codegen {
 
+// utility
+
+using diagnostic::IssueCode;
+inline void logCodegenError(const std::string &msg, Codegenerator *codegen,
+                            diagnostic::IssueCode code) {
+
+  Lexer *lexer = &(codegen->lexer);
+  diagnostic::Issue err{msg, lexer->lineNumber, lexer->columnNumber,
+                        diagnostic::IssueType::CODEGEN, code};
+  lexer->diagnostic->pushError(err);
+}
+
 using llvm::Value;
 Value *NumberExprAST::codegen(Codegenerator *gen) {
 
@@ -30,7 +42,8 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // if we get a nullptr and the variable is not a definition
   // we got an error
   if (v == nullptr && datatype == 0) {
-    std::cout << "Error variable " << name << " not defined" << std::endl;
+    logCodegenError("Error variable " + name + " not defined", gen,
+                    IssueCode::UNDEFINED_VARIABLE);
     return nullptr;
   }
 
@@ -49,6 +62,14 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
     Value *valGen = value->codegen(gen);
     // return gen->builder.CreateLoad(v, name.c_str());
+    if (valGen == nullptr) {
+      // we were not able to generate the error for this, the error should be
+      // handled in  code gen but we are gonna log one eitherway to givem ore of
+      // a stack trace
+      logCodegenError("cannot generate RHS of variable assigment", gen,
+                      IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
+      return nullptr;
+    }
     return gen->builder.CreateStore(valGen, v);
   }
 
@@ -337,10 +358,11 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   Value *ifBranchValue = nullptr;
   for (auto &ifE : ifExpr) {
     ifBranchValue = ifE->codegen(gen);
-  }
-  if (ifBranchValue == nullptr) {
-    std::cout << "error in generating if branch code" << std::endl;
-    return nullptr;
+    if (ifBranchValue == nullptr) {
+      logCodegenError("Error in generating if branch code", gen,
+                      IssueCode::BRANCH_CODE_FAILURE);
+      return nullptr;
+    }
   }
   // now that we inserted the then block we need to jump to the merge
   gen->builder.CreateBr(mergeBlock);
@@ -357,10 +379,11 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
     Value *elseBranchValue = nullptr;
     for (auto elseE : elseExpr) {
       elseBranchValue = elseE->codegen(gen);
-    }
-    if (elseBranchValue == nullptr) {
-      std::cout << "error in generating else branch code" << std::endl;
-      return nullptr;
+      if (elseBranchValue == nullptr) {
+        logCodegenError("Error in generating else branch code", gen,
+                        IssueCode::BRANCH_CODE_FAILURE);
+        return nullptr;
+      }
     }
     gen->builder.CreateBr(mergeBlock);
   }

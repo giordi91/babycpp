@@ -109,6 +109,11 @@ struct Codegenerator {
    */
   static bool compareASTArgWithLLVMArg(ExprAST *astArg,
                                        llvm::Argument *llvmArg);
+
+
+  std::string printDiagnostic();
+
+
   /**Factory in charge to allocate the factory nodes, it owns the
    * memory */
   memory::FactoryAST factory;

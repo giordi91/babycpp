@@ -349,7 +349,7 @@ TEST_CASE("Testing if statement code gen", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(function);
-  //gen.dumpLlvmData(function, "tests/core/basicIfStatement.ll");
+  // gen.dumpLlvmData(function, "tests/core/basicIfStatement.ll");
   auto expected = getFile("tests/core/basicIfStatement.ll");
   REQUIRE(outs == expected);
 }
@@ -363,21 +363,40 @@ TEST_CASE("Testing simple if function code gen", "[codegen]") {
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/functionWithIfstatement.ll");
+  // gen.dumpLlvmData(v, "tests/core/functionWithIfstatement.ll");
   auto expected = getFile("tests/core/functionWithIfstatement.ll");
   REQUIRE(outs == expected);
 }
 
 TEST_CASE("Testing more complex if function code gen", "[codegen]") {
   Codegenerator gen;
-  gen.initFromString("int testFunc(int a, int b){int res = 0;if(a - (3*b)){res = "
-                     "a+ 10;}else{res= 2 - b;} return res;}");
+  gen.initFromString(
+      "int testFunc(int a, int b){int res = 0;if(a - (3*b)){res = "
+      "a+ 10;}else{res= 2 - b;} return res;}");
   auto p = gen.parser.parseStatement();
   REQUIRE(p != nullptr);
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/functionWithIfstatement2.ll");
+  // gen.dumpLlvmData(v, "tests/core/functionWithIfstatement2.ll");
   auto expected = getFile("tests/core/functionWithIfstatement2.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing more complex if function with multi statement code gen",
+          "[codegen]") {
+  Codegenerator gen;
+  gen.initFromString(
+      "int testFunc(int a, int b, int c, int k){int res = 0;if(a *2){ "
+      "int x = k +1; res = "
+      "a+ x;}else{int x = c - 1; res= x - b;} return res;}");
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  gen.dumpLlvmData(v, "tests/core/functionWithIfstatement3.ll");
+  auto expected = getFile("tests/core/functionWithIfstatement3.ll");
   REQUIRE(outs == expected);
 }

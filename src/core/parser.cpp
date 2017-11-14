@@ -49,12 +49,13 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> &statements,
   int counter = 0;
   while ((lex->currtok != Token::tok_close_curly) & (counter < SECURITY)) {
     // there might be the case where you have a else statement before anything
-    // else  this should not be allowed.If the number of not supported stand alone
-    // keywords incresases we might  have to change this check to one more
+    // else  this should not be allowed.If the number of not supported stand
+    // alone keywords incresases we might  have to change this check to one more
     // appropriate
     if (lex->currtok == Token::tok_else && processingIf == true) {
-      logParserError("error, expected } got else statement, please close the curly bracket", parser,
-                     IssueCode::EXPECTED_TOKEN);
+      logParserError("error, expected } got else statement, please close the "
+                     "curly bracket",
+                     parser, IssueCode::EXPECTED_TOKEN);
       return false;
     }
     auto *curr_statement = parser->parseStatement();
@@ -315,6 +316,9 @@ ExprAST *Parser::parseStatement() {
     exp->flags.isReturn = true;
   } else if (isDeclarationToken(lex->currtok)) {
     exp = parseDeclaration();
+    if (exp == nullptr) {
+      return nullptr;
+    }
     if (exp->nodetype == codegen::FunctionNode) {
       expectSemicolon = false;
     }
