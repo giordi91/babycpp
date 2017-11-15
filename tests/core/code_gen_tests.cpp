@@ -406,3 +406,20 @@ TEST_CASE("Testing more complex if function with multi statement code gen",
   auto expected = getFile("tests/core/functionWithIfstatement3.ll");
   REQUIRE(outs == expected);
 }
+
+TEST_CASE("Testing for loop gen",
+          "[codegen]") {
+  Codegenerator gen;
+  gen.initFromString(" int testFunc(int a){"
+                     "int x = 0; "
+                     "for ( int i = 0; i < a ; i= i+1){ "
+                     "x = x + i;}"
+                     " return x;}");
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+
+}
