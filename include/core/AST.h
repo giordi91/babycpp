@@ -44,7 +44,7 @@ enum NodeType {
   CallNode = 4,
   PrototypeNode = 5,
   FunctionNode = 6,
-  IfNode= 7
+  IfNode = 7
 };
 
 struct Codegenerator;
@@ -183,17 +183,31 @@ struct FunctionAST : public ExprAST {
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
-struct IfAST: public ExprAST{
-	ExprAST* condition;
-	std::vector<ExprAST*> ifExpr;
-	std::vector<ExprAST*> elseExpr;
-  explicit IfAST(ExprAST* inCondition,std::vector<ExprAST*> inIfExpr, std::vector<ExprAST*> inElseExpr)
-      : ExprAST(), condition(inCondition),ifExpr(inIfExpr), elseExpr(inElseExpr) {
+struct IfAST : public ExprAST {
+  ExprAST *condition;
+  std::vector<ExprAST *> ifExpr;
+  std::vector<ExprAST *> elseExpr;
+  explicit IfAST(ExprAST *inCondition, std::vector<ExprAST *> inIfExpr,
+                 std::vector<ExprAST *> inElseExpr)
+      : ExprAST(), condition(inCondition), ifExpr(inIfExpr),
+        elseExpr(inElseExpr) {
     nodetype = IfNode;
   }
   virtual ~IfAST() = default;
-  llvm::Value *codegen(Codegenerator *gen) override ;
+  llvm::Value *codegen(Codegenerator *gen) override;
+};
 
+struct ForAST : public ExprAST {
+  ExprAST *initialization;
+  ExprAST *condition;
+  ExprAST *increment;
+  std::vector<ExprAST *> body;
+  explicit ForAST(ExprAST *inInitialization, ExprAST* inCondition, ExprAST* inIncrement, std::vector<ExprAST *> inBody)
+      : ExprAST(), initialization(inInitialization), condition(inCondition), increment(inIncrement), body(inBody){
+    nodetype = IfNode;
+  }
+  virtual ~ForAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 } // namespace codegen

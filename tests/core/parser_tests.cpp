@@ -866,7 +866,7 @@ TEST_CASE("Testing parsing correct for statement", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing } after if body
-  lex.initFromStr("for ( int i = 0; i < 20 ; i= i+1){ x = x + i} ");
+  lex.initFromStr("for ( int i = 0; i < 20 ; i= i+1){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -879,7 +879,7 @@ TEST_CASE("Testing parsing for missing (", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing } after if body
-  lex.initFromStr("for  int i = 0; i < 20 ; i= i+1){ x = x + i} ");
+  lex.initFromStr("for  int i = 0; i < 20 ; i= i+1){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -895,7 +895,7 @@ TEST_CASE("Testing parsing for missing assigment in init", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  assigment in init
-  lex.initFromStr("for ( int i  0; i < 20 ; i= i+1){ x = x + i} ");
+  lex.initFromStr("for ( int i  0; i < 20 ; i= i+1){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -911,7 +911,7 @@ TEST_CASE("Testing parsing for bad header 1 ", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  assigment in init
-  lex.initFromStr("for(  i  0; i < 20 ; i= i+1){ x = x + i} ");
+  lex.initFromStr("for(  i  0; i < 20 ; i= i+1){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -927,7 +927,7 @@ TEST_CASE("Testing parsing for bad header 2", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing assigment in increment 
-  lex.initFromStr("for(  i = 0; i < 20 ; i= ){ x = x + i} ");
+  lex.initFromStr("for(  i = 0; i < 20 ; i= ){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -947,7 +947,7 @@ TEST_CASE("Testing parsing for bad header 3", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  ) at end of header
-  lex.initFromStr("for(  i = 0; i < 20 ; i= i +1 { x = x + i} ");
+  lex.initFromStr("for(  i = 0; i < 20 ; i= i +1 { x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -963,7 +963,7 @@ TEST_CASE("Testing parsing for bad header 4", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  ) at start of body 
-  lex.initFromStr("for(  i = 0; i < 20 ; i= i +1)  x = x + i} ");
+  lex.initFromStr("for(  i = 0; i < 20 ; i= i +1)  x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 

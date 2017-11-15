@@ -336,6 +336,7 @@ ExprAST *Parser::parseStatement() {
     expectSemicolon = false;
   } else if (lex->currtok == Token::tok_for) {
     exp = parseForStatement();
+	expectSemicolon = false;
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -634,7 +635,7 @@ codegen::ExprAST *Parser::parseForStatement() {
   // ate the ; because the parse statement takes care of that
   // next we need to parse the condition
   ExprAST *condition = parseStatement();
-  if (initialisationExp == nullptr) {
+  if (condition == nullptr) {
     // failed to parse condition of for loop
     logParserError("error parsing condition for FOR loop", lex,
                    IssueCode::FOR_LOOP_FAILURE);
@@ -643,6 +644,8 @@ codegen::ExprAST *Parser::parseForStatement() {
 
   // at this point we just have the increment expression to take care of
   ExprAST *increment = parseExpression();
+  //clearing up the assigment flag in the parser
+  flags.processed_assigment = false;
   if (increment == nullptr) {
     logParserError("error parsing increment for FOR loop", lex,
                    IssueCode::FOR_LOOP_FAILURE);
@@ -657,7 +660,7 @@ codegen::ExprAST *Parser::parseForStatement() {
     return nullptr;
   }
 
-  lex->gettok();//eating )
+  lex->gettok(); // eating )
   if (lex->currtok != Token::tok_open_curly) {
     logParserError("expected { afyer for loop header "
                    "got:" +
@@ -665,11 +668,26 @@ codegen::ExprAST *Parser::parseForStatement() {
                    lex, IssueCode::EXPECTED_TOKEN);
     return nullptr;
   }
-  lex->gettok();//eating }
+  lex->gettok(); // eating {
 
-  //ready to parse body
+  // ready to parse body
+  std::vector<ExprAST *> statements;
+  bool res = parseStatementsUntillCurly(statements, this);
+  if (!res) {
+	  return nullptr;
+  }
+  if (lex->currtok != Token::tok_close_curly) {
+	  logParserError("expected { afyer for loop header "
+		  "got:" +
+		  std::to_string(lex->currtok),
+		  lex, IssueCode::EXPECTED_TOKEN);
+	  return nullptr;
+  }
+  lex->gettok(); //eat }
 
-  return nullptr;
+
+
+  return factory->allocForAST(initialisationExp, condition, increment, statements);
 } // namespace parser
 
 PrototypeAST *Parser::parsePrototype() {

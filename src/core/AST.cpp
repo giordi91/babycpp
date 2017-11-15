@@ -398,5 +398,9 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   return comparisonValue;
 }
 
+	llvm::Value* ForAST::codegen(Codegenerator* gen)
+	{
+		return nullptr;
+	}
 } // namespace codegen
 } // namespace babycpp
