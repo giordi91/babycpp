@@ -364,3 +364,20 @@ TEST_CASE("Testing if statement", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "elseif");
 }
+
+TEST_CASE("Testing for loop keyword lexer", "[lexer]") {
+
+  const std::string str{"for forfor for{"};
+  Lexer lex(&diagnostic);
+  lex.initFromStr(str);
+
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_for);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_for);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_open_curly);
+}
+

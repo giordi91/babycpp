@@ -743,7 +743,7 @@ TEST_CASE("Testing if statement parsing multi statements", "[parser]") {
   REQUIRE(value != nullptr);
   REQUIRE(elseBranchBody->datatype == Token::tok_int);
 
-  auto* condlhs2 = dynamic_cast<NumberExprAST *>(value->lhs);
+  auto *condlhs2 = dynamic_cast<NumberExprAST *>(value->lhs);
   condrhs = dynamic_cast<NumberExprAST *>(value->rhs);
   REQUIRE(condlhs != nullptr);
   REQUIRE(condrhs != nullptr);
@@ -753,7 +753,6 @@ TEST_CASE("Testing if statement parsing multi statements", "[parser]") {
   REQUIRE(condrhs->datatype == Token::tok_int);
   REQUIRE(condrhs->val.integerNumber == 2);
 
-
   // checking second statement in the if branch
   elseBranchBody = dynamic_cast<VariableExprAST *>(res_casted->elseExpr[1]);
   REQUIRE(elseBranchBody != nullptr);
@@ -761,9 +760,8 @@ TEST_CASE("Testing if statement parsing multi statements", "[parser]") {
   REQUIRE(value != nullptr);
   REQUIRE(ifBranch->datatype == 0);
 
-
-  auto* condlhs3 = dynamic_cast<VariableExprAST*>(value->lhs);
-  auto* condrhs3 = dynamic_cast<VariableExprAST*>(value->rhs);
+  auto *condlhs3 = dynamic_cast<VariableExprAST *>(value->lhs);
+  auto *condrhs3 = dynamic_cast<VariableExprAST *>(value->rhs);
   REQUIRE(condlhs3 != nullptr);
   REQUIRE(condrhs3 != nullptr);
 
@@ -861,4 +859,17 @@ TEST_CASE("Testing if statement parsing error 6", "[parser]") {
   REQUIRE(parser.diagnostic->hasErrors() == 1);
   auto err = parser.diagnostic->getError();
   REQUIRE(err.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
+TEST_CASE("Testing parsing correct for statement", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing } after if body
+  lex.initFromStr("for ( int i = 0; i < 20 ; i= i+1){ x = x + i} ");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parseStatement();
+  REQUIRE(res != nullptr);
 }

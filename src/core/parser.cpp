@@ -329,6 +329,8 @@ ExprAST *Parser::parseStatement() {
   } else if (lex->currtok == Token::tok_if) {
     exp = parseIfStatement();
     expectSemicolon = false;
+  } else if (lex->currtok == Token::tok_for) {
+    exp = parseForStatement();
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -571,6 +573,13 @@ codegen::ExprAST *Parser::parseIfStatement() {
   }
 
   return factory->allocIfAST(condition, ifStatements, elseStatements);
+}
+
+codegen::ExprAST * Parser::parseForStatement()
+{
+	std::cout << "for parsing " << std::endl;
+	lex->gettok(); //eating for token
+	return nullptr;
 }
 
 PrototypeAST *Parser::parsePrototype() {

@@ -1,8 +1,8 @@
 #pragma once
+#include "diagnostic.h"
 #include <regex>
 #include <string>
 #include <unordered_map>
-#include "diagnostic.h"
 
 namespace babycpp {
 namespace lexer {
@@ -55,6 +55,7 @@ enum Token {
   tok_if = -25,
   tok_else = -26,
   tok_else_if = -27,
+  tok_for = -28,
   // repl
   tok_invalid_repl = -1000,
   tok_expression_repl = -1001,
@@ -104,7 +105,7 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
     {"extern", tok_extern}, {";", tok_end_statement},
     {",", tok_comma},       {"=", tok_assigment_operator},
     {"return", tok_return}, {"if", tok_if},
-    {"else", tok_else}};
+    {"else", tok_else},     {"for", tok_for}};
 
 // aliases
 using Charmatch = std::match_results<const char *>;
@@ -122,7 +123,7 @@ struct MovableToken {
   std::string identifierStr;
   /// possible value associated with the token
   Number value;
-  ///offset to add to the column number once we processed it
+  /// offset to add to the column number once we processed it
   int columnOffset;
 };
 
@@ -135,7 +136,8 @@ struct MovableToken {
 struct Lexer {
 
   /** @brief default constructor */
-  explicit Lexer(diagnostic::Diagnostic* indiagnostic) : expr(MAIN_REGEX), diagnostic(indiagnostic) {}
+  explicit Lexer(diagnostic::Diagnostic *indiagnostic)
+      : expr(MAIN_REGEX), diagnostic(indiagnostic) {}
   /** @brief  constructor
    * @param reg: provide custom regex to apply on the string */
   explicit Lexer(std::regex &reg) : expr(reg) {}
@@ -144,13 +146,13 @@ struct Lexer {
    * @param str: the string we are going to initialize the data
    *             with
    */
-  //TODO(giordi) refactor name to be initFromString to be uniform
-  //with codegen
+  // TODO(giordi) refactor name to be initFromString to be uniform
+  // with codegen
   inline void initFromStr(const std::string &str) {
     data = str;
     start = data.c_str();
     lineNumber = 1;
-	columnNumber = 0;
+    columnNumber = 0;
     lookAheadToken.clear();
   }
 
@@ -195,7 +197,6 @@ struct Lexer {
   /// buffer of processed tokens for when looking ahead
   std::deque<MovableToken> lookAheadToken;
   diagnostic::Diagnostic *diagnostic;
-
 };
 
 } // namespace lexer
