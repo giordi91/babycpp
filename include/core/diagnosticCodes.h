@@ -27,6 +27,7 @@ enum class IssueCode {
   ERROR_RHS_VARIABLE_ASSIGMENT = 2000,
   UNDEFINED_VARIABLE = 2001,
   BRANCH_CODE_FAILURE = 2002,
+  FOR_LOOP_FAILURE = 2003,
 
 };
 
@@ -60,6 +61,7 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
     {IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT, "ERROR_RHS_VARIABLE_ASSIGMENT"},
     {IssueCode::UNDEFINED_VARIABLE, "UNDEFINED_VARIABLE"},
     {IssueCode::BRANCH_CODE_FAILURE, "BRANCH_CODE_FAILURE"},
+    {IssueCode::FOR_LOOP_FAILURE, "FOR_LOOP_FAILURE"},
 
 };
 

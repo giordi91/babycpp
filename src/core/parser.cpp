@@ -169,6 +169,11 @@ ExprAST *Parser::parseExpression() {
       lex->gettok(); // eating assignment operator;
 
       auto *RHS = parseExpression();
+      if (RHS == nullptr) {
+        logParserError("expected valid expression of RHS of assigment operator",
+                       lex, IssueCode::EXPECTED_VARIABLE);
+        return nullptr;
+      }
       if (LHS->nodetype != codegen::VariableNode) {
 
         logParserError("LHS of assigment operator must be a variable got:" +
@@ -562,8 +567,6 @@ codegen::ExprAST *Parser::parseIfStatement() {
       }
       lex->gettok(); // eat }
     } else {
-      std::cout << "" << std::endl;
-
       // TODO(giordi) support else if construct
       logParserError("expected  { after else keyword , got :" +
                          std::to_string(lex->currtok),
@@ -575,12 +578,99 @@ codegen::ExprAST *Parser::parseIfStatement() {
   return factory->allocIfAST(condition, ifStatements, elseStatements);
 }
 
-codegen::ExprAST * Parser::parseForStatement()
-{
-	std::cout << "for parsing " << std::endl;
-	lex->gettok(); //eating for token
-	return nullptr;
-}
+codegen::ExprAST *Parser::parseForStatement() {
+  lex->gettok(); // eating for token
+  if (lex->currtok != Token::tok_open_round) {
+    logParserError("expected ( after for keyword got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+
+  lex->gettok(); // eating (
+
+  // at this point we expect a variable declaration + assigment or
+  // variable + assigment
+  lex->lookAhead(2);
+  ExprAST *initialisationExp = nullptr;
+  if (isDatatype(lex->currtok)) {
+    // if is a datatype we then expect an identifier and an assigment
+    if (lex->lookAheadToken[0].token != Token::tok_identifier) {
+
+      logParserError("expected identifier after datatype in for loop variable "
+                     "initalisation got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::EXPECTED_IDENTIFIER_NAME);
+      return nullptr;
+    }
+    if (lex->lookAheadToken[1].token != Token::tok_assigment_operator) {
+
+      logParserError("expected assigment operator after varible declaration in "
+                     "for loop header got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::EXPECTED_TOKEN);
+      return nullptr;
+    }
+
+    initialisationExp = parseStatement();
+  } else if (lex->currtok == Token::tok_identifier) {
+    if (lex->lookAheadToken[0].token != Token::tok_assigment_operator) {
+
+      logParserError("expected assigment operator after varible declaration in "
+                     "for loop header got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::EXPECTED_TOKEN);
+      return nullptr;
+    }
+
+    initialisationExp = parseStatement();
+  }
+
+  if (initialisationExp == nullptr) {
+    // failed to parse initalization of for loop
+    return nullptr;
+  }
+  // at this point we have parsed the initalization, and already
+  // ate the ; because the parse statement takes care of that
+  // next we need to parse the condition
+  ExprAST *condition = parseStatement();
+  if (initialisationExp == nullptr) {
+    // failed to parse condition of for loop
+    logParserError("error parsing condition for FOR loop", lex,
+                   IssueCode::FOR_LOOP_FAILURE);
+    return nullptr;
+  }
+
+  // at this point we just have the increment expression to take care of
+  ExprAST *increment = parseExpression();
+  if (increment == nullptr) {
+    logParserError("error parsing increment for FOR loop", lex,
+                   IssueCode::FOR_LOOP_FAILURE);
+    return nullptr;
+  }
+  // at this point we expect a ) and { before the body of the loop
+  if (lex->currtok != Token::tok_close_round) {
+    logParserError("expected ) at end of for loop header "
+                   "got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+
+  lex->gettok();//eating )
+  if (lex->currtok != Token::tok_open_curly) {
+    logParserError("expected { afyer for loop header "
+                   "got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+  lex->gettok();//eating }
+
+  //ready to parse body
+
+  return nullptr;
+} // namespace parser
 
 PrototypeAST *Parser::parsePrototype() {
 
