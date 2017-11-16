@@ -146,7 +146,7 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
     }
     if (op == "<") {
       L = gen->builder.CreateICmpULT(L, R, "cmptmp");
-	  return L;
+      return L;
     }
   }
   std::cout << "error unrecognized operator" << std::endl;
@@ -404,52 +404,57 @@ llvm::Value *ForAST::codegen(Codegenerator *gen) {
                     gen, IssueCode::FOR_LOOP_CODE_FAILURE);
     return nullptr;
   }
+  llvm::Function *function = gen->builder.GetInsertBlock()->getParent();
+  llvm::BasicBlock *PreheaderBB = gen->builder.GetInsertBlock();
+  llvm::BasicBlock *LoopBB =
+      llvm::BasicBlock::Create(gen->context, "loop", function);
+  llvm::BasicBlock *AfterBB =
+      llvm::BasicBlock::Create(gen->context, "afterloop", function);
 
   // here we generate the condition and we evaluate
   Value *conditionValue = condition->codegen(gen);
+  // Insert the conditional branch into the end of LoopEndBB.
+  // here we valuate the condition for the first time, if it valid we 
+  // jump to the loop, otherwise we get out after the loop immediatly,
+  // this handle gracefully the insertion from entry block to after
+  // or loop block
+  gen->builder.CreateCondBr(conditionValue, LoopBB, AfterBB);
 
-  //llvm::Function *function = gen->builder.GetInsertBlock()->getParent();
-  //llvm::BasicBlock *PreheaderBB = gen->builder.GetInsertBlock();
-  //llvm::BasicBlock *LoopBB =
-  //    llvm::BasicBlock::Create(gen->context, "loop", function);
+  // Start insertion in LoopBB.
+  gen->builder.SetInsertPoint(LoopBB);
+  Value *bodyValue = nullptr;
+  for (auto *s : body) {
+    bodyValue = s->codegen(gen);
+    if (bodyValue == nullptr) {
+      logCodegenError("Error in body for the for loop", gen,
+                      IssueCode::FOR_LOOP_CODE_FAILURE);
+      return nullptr;
+    }
+  }
 
-  //// Insert an explicit fall through from the current block to the LoopBB.
-  //gen->builder.CreateBr(LoopBB);
-  //// Start insertion in LoopBB.
-  //gen->builder.SetInsertPoint(LoopBB);
-  //Value *bodyValue = nullptr;
-  //for (auto *s : body) {
-  //  bodyValue = s->codegen(gen);
-  //  if (bodyValue == nullptr) {
-  //    logCodegenError("Error in body for the for loop", gen,
-  //                    IssueCode::FOR_LOOP_CODE_FAILURE);
-  //    return nullptr;
-  //  }
-  //}
+  // here we need to do the increment;
+  Value *incrementValue = increment->codegen(gen);
+  if (incrementValue == nullptr) {
+    logCodegenError("Error in generating increment of the for loop", gen,
+                    IssueCode::FOR_LOOP_CODE_FAILURE);
+    return nullptr;
+  }
 
-  //// here we need to do the increment;
-  //Value *incrementValue = increment->codegen(gen);
-  //if (incrementValue == nullptr) {
-  //  logCodegenError("Error in generating increment of the for loop", gen,
-  //                  IssueCode::FOR_LOOP_CODE_FAILURE);
-  //  return nullptr;
-  //}
+  // here we need to perform the check on the condition
+  conditionValue = condition->codegen(gen);
+  // need to add the branch here
 
-  ////here we need to perform the check on the condition 
-  //conditionValue = condition->codegen(gen);
+  // Create the "after loop" block and insert it.
+  llvm::BasicBlock *LoopEndBB = gen->builder.GetInsertBlock();
 
-  //// Create the "after loop" block and insert it.
-  //  llvm::BasicBlock *LoopEndBB = gen->builder.GetInsertBlock();
-  //  llvm::BasicBlock *AfterBB =
-  //  	llvm::BasicBlock::Create(gen->context, "afterloop", function);
+  // Insert the conditional branch into the end of LoopEndBB.
+  gen->builder.CreateCondBr(conditionValue, LoopBB, AfterBB);
 
-  //// Insert the conditional branch into the end of LoopEndBB.
-  //gen->builder.CreateCondBr(conditionValue, LoopBB, AfterBB);
+  // Any new code will be inserted in AfterBB.
+  gen->builder.SetInsertPoint(AfterBB);
 
-  //// Any new code will be inserted in AfterBB.
-  //gen->builder.SetInsertPoint(AfterBB);
-
-  return nullptr;
+  return conditionValue;
+  // return nullptr;
 }
 } // namespace codegen
 } // namespace babycpp

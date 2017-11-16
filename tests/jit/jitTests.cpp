@@ -7,6 +7,7 @@
 #include "catch.hpp"
 
 #include <codegen.h>
+#include <iostream>
 #include <jit.h>
 
 inline std::string getFile(const ::std::string &path) {
@@ -141,6 +142,32 @@ TEST_CASE("if function with multi statement jit", "[jit]") {
   auto symbol = jit.findSymbol("testFunc");
   auto func = (int (*)(int, int, int, int))(intptr_t)llvm::cantFail(
       symbol.getAddress());
-  REQUIRE(func(2, 5, 7 ,1) == 4);
+  REQUIRE(func(2, 5, 7, 1) == 4);
   REQUIRE(func(0, 5, 3, 7) == -3);
+}
+TEST_CASE("testing basic for loop jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(" int testFunc(int a){"
+                     "int x = 0; "
+                     "for ( int i = 1; i < a+1 ; i= i+1){ "
+                     "x = x + i;}"
+                     " return x;}");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int (*)(int))(intptr_t)llvm::cantFail(symbol.getAddress());
+  //defining the closed formula for sum of first N numbers
+  auto sumN = [](int x) { return (x * (x + 1)) / 2; };
+  //testing the first x numbers 
+  for (int i = 0; i < 30; ++i) {
+    REQUIRE(func(i) == sumN(i));
+  }
 }

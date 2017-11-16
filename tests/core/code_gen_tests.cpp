@@ -421,5 +421,6 @@ TEST_CASE("Testing for loop gen",
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
+  std::cout << outs << std::endl;
 
 }
