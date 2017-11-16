@@ -421,6 +421,8 @@ TEST_CASE("Testing for loop gen",
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  std::cout << outs << std::endl;
+  //gen.dumpLlvmData(v, "tests/core/forLoop1.ll");
+  auto expected = getFile("tests/core/forLoop1.ll");
+  REQUIRE(outs == expected);
 
 }

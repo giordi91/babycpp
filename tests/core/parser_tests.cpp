@@ -926,7 +926,7 @@ TEST_CASE("Testing parsing for bad header 2", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing assigment in increment 
+  // here missing assigment in increment
   lex.initFromStr("for(  i = 0; i < 20 ; i= ){ x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -934,8 +934,8 @@ TEST_CASE("Testing parsing for bad header 2", "[parser]") {
   auto res = parser.parseForStatement();
   REQUIRE(res == nullptr);
   REQUIRE(parser.diagnostic->hasErrors() == 3);
-  //here we pull out the 3rd error since is the one related
-  //with the foor loop
+  // here we pull out the 3rd error since is the one related
+  // with the foor loop
   auto err1 = parser.diagnostic->getError();
   auto err2 = parser.diagnostic->getError();
   auto err3 = parser.diagnostic->getError();
@@ -962,7 +962,7 @@ TEST_CASE("Testing parsing for bad header 4", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  ) at start of body 
+  // here missing  ) at start of body
   lex.initFromStr("for(  i = 0; i < 20 ; i= i +1)  x = x + i;} ");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -973,4 +973,21 @@ TEST_CASE("Testing parsing for bad header 4", "[parser]") {
 
   auto err1 = parser.diagnostic->getError();
   REQUIRE(err1.code == babycpp::diagnostic::IssueCode::EXPECTED_TOKEN);
+}
+
+TEST_CASE("Testing calling extern in function", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  ) at start of body
+  lex.initFromStr(
+                  "float testFunc(float a){"
+                  "extern float cos(float a);"
+                  "float x = cos(a); "
+                  " return x;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parseStatement();
+  REQUIRE(res != nullptr);
 }

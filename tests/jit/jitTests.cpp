@@ -164,10 +164,32 @@ TEST_CASE("testing basic for loop jit", "[jit]") {
   jit.addModule(gen.module);
   auto symbol = jit.findSymbol("testFunc");
   auto func = (int (*)(int))(intptr_t)llvm::cantFail(symbol.getAddress());
-  //defining the closed formula for sum of first N numbers
+  // defining the closed formula for sum of first N numbers
   auto sumN = [](int x) { return (x * (x + 1)) / 2; };
-  //testing the first x numbers 
+  // testing the first x numbers
   for (int i = 0; i < 30; ++i) {
     REQUIRE(func(i) == sumN(i));
   }
+}
+TEST_CASE("testing bind with c functions", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(" "
+                     "float testFunc(float a){"
+                     " extern float cosf(float a);"
+                     "float x=0.0;"
+	                  "x= cosf(a); "
+                     " return x;}");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+   auto v = p->codegen(&gen);
+   REQUIRE(v != nullptr);
+
+   jit.addModule(gen.module);
+   auto symbol = jit.findSymbol("testFunc");
+   auto func = (float(*)(float))(intptr_t)llvm::cantFail(symbol.getAddress());
+   REQUIRE(func(0.5) == Approx(cos(0.5f)));
 }

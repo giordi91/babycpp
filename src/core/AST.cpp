@@ -448,7 +448,7 @@ llvm::Value *ForAST::codegen(Codegenerator *gen) {
   llvm::BasicBlock *LoopEndBB = gen->builder.GetInsertBlock();
 
   // Insert the conditional branch into the end of LoopEndBB.
-  gen->builder.CreateCondBr(conditionValue, LoopBB, AfterBB);
+  gen->builder.CreateCondBr(conditionValue, LoopEndBB, AfterBB);
 
   // Any new code will be inserted in AfterBB.
   gen->builder.SetInsertPoint(AfterBB);
