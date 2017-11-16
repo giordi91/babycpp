@@ -405,7 +405,6 @@ llvm::Value *ForAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
   llvm::Function *function = gen->builder.GetInsertBlock()->getParent();
-  llvm::BasicBlock *PreheaderBB = gen->builder.GetInsertBlock();
   llvm::BasicBlock *LoopBB =
       llvm::BasicBlock::Create(gen->context, "loop", function);
   llvm::BasicBlock *AfterBB =

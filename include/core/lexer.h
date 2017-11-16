@@ -148,7 +148,7 @@ struct Lexer {
    */
   // TODO(giordi) refactor name to be initFromString to be uniform
   // with codegen
-  inline void initFromStr(const std::string &str) {
+  inline void initFromString(const std::string &str) {
     data = str;
     start = data.c_str();
     lineNumber = 1;

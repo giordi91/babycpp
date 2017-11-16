@@ -47,7 +47,7 @@ struct Codegenerator {
    * analysis
    */
   inline void initFromString(const std::string &str) {
-    lexer.initFromStr(str);
+    lexer.initFromString(str);
     // getting first token so the parser is ready to go
     lexer.gettok();
   };

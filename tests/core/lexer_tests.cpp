@@ -17,14 +17,14 @@ TEST_CASE("Testing empty lexer", "[lexer]") {
 
 TEST_CASE("Testing empty string", "[lexer]") {
   Lexer lex(&diagnostic);
-  lex.initFromStr("");
+  lex.initFromString("");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_eof);
 }
 
 TEST_CASE("Testing no match", "[lexer]") {
   Lexer lex(&diagnostic);
-  lex.initFromStr(" ~~~~~~~ ");
+  lex.initFromString(" ~~~~~~~ ");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_no_match);
 }
@@ -32,7 +32,7 @@ TEST_CASE("Testing no match", "[lexer]") {
 TEST_CASE("Testing keyword tok", "[lexer]") {
   std::string str{" int"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_int);
@@ -40,12 +40,12 @@ TEST_CASE("Testing keyword tok", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_eof);
 
   str = " float lksdfjlj";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_float);
 
   str = "string ";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_string);
   lex.gettok();
@@ -55,7 +55,7 @@ TEST_CASE("Testing keyword tok", "[lexer]") {
 TEST_CASE("Testing numbers tok", "[lexer]") {
   std::string str{" 12334 "};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
@@ -63,24 +63,24 @@ TEST_CASE("Testing numbers tok", "[lexer]") {
   REQUIRE(lex.value.integerNumber == 12334);
 
   str = "0.3234214";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
   REQUIRE(lex.value.type == Token::tok_float);
   REQUIRE(lex.value.floatNumber == Approx(0.3234214f));
 
   str = "0.3.4214";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_malformed_number);
 
   str = "3240..34214";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_malformed_number);
 
   str = "3240.";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_number);
   REQUIRE(lex.value.type == Token::tok_float);
@@ -90,7 +90,7 @@ TEST_CASE("Testing numbers tok", "[lexer]") {
 TEST_CASE("Testing operators tok", "[lexer]") {
   std::string str{" + 99 "};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_operator);
@@ -102,7 +102,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.integerNumber == 99);
 
   str = " - 0.314";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_operator);
   REQUIRE(lex.identifierStr == "-");
@@ -113,7 +113,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.floatNumber == Approx(0.314f));
 
   str = " * 1191";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_operator);
   REQUIRE(lex.identifierStr == "*");
@@ -124,7 +124,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.integerNumber == 1191);
 
   str = " / 0.1135";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_operator);
   REQUIRE(lex.identifierStr == "/");
@@ -135,7 +135,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.floatNumber == Approx(0.1135f));
 
   str = " < 19";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_operator);
   REQUIRE(lex.identifierStr == "<");
@@ -146,7 +146,7 @@ TEST_CASE("Testing operators tok", "[lexer]") {
   REQUIRE(lex.value.integerNumber == 19);
 
   str = " = 3242235";
-  lex.initFromStr(str);
+  lex.initFromString(str);
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_assigment_operator);
   REQUIRE(lex.identifierStr == "=");
@@ -163,7 +163,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
   // and not as an operator
   const std::string str{" x*4 "};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_identifier);
@@ -181,7 +181,7 @@ TEST_CASE("Testing * operator with no space", "[lexer]") {
 TEST_CASE("Testing extern tok", "[lexer]") {
   const std::string str{" extern sin( float x);"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_extern);
@@ -210,7 +210,7 @@ TEST_CASE("Testing extern tok", "[lexer]") {
 TEST_CASE("Testing multi line", "[lexer]") {
   const std::string str{"x \n  2.0"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_identifier);
@@ -227,7 +227,7 @@ TEST_CASE("Testing column advancement 1", "[lexer]") {
 
   const std::string str{"aa 12 cc 3.14 ee"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
   REQUIRE(lex.lookAheadToken.empty());
   REQUIRE(lex.columnNumber == 0);
 
@@ -248,9 +248,10 @@ TEST_CASE("Testing column advancement 1", "[lexer]") {
 }
 
 TEST_CASE("Testing column advancement 2", "[lexer]") {
-  const std::string str{"if else randomword \n \n else \n whatever \n ifelse elseif"};
+  const std::string str{
+      "if else randomword \n \n else \n whatever \n ifelse elseif"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.columnNumber == 2);
@@ -282,7 +283,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
 
   const std::string str{"aa 12 cc 3.14 ee"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
   REQUIRE(lex.lookAheadToken.empty());
 
   bool res = lex.lookAhead(4);
@@ -321,7 +322,7 @@ TEST_CASE("Testing testing buffering", "[lexer]") {
 TEST_CASE("Testing too much look ahead", "[lexer]") {
   const std::string str{"xyz "};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   bool res = lex.lookAhead(10);
   REQUIRE(res == false);
@@ -329,18 +330,18 @@ TEST_CASE("Testing too much look ahead", "[lexer]") {
 TEST_CASE("Testing clear look ahead", "[lexer]") {
   const std::string str{"this should be cleared after look ahead and init"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   bool res = lex.lookAhead(4);
   REQUIRE(res == true);
-  lex.initFromStr("cleanup");
+  lex.initFromString("cleanup");
   REQUIRE(lex.lookAheadToken.size() == 0);
 }
 
 TEST_CASE("Testing if statement", "[lexer]") {
   const std::string str{"if else randomword else whatever ifelse elseif"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_if);
@@ -369,7 +370,7 @@ TEST_CASE("Testing for loop keyword lexer", "[lexer]") {
 
   const std::string str{"for forfor for{"};
   Lexer lex(&diagnostic);
-  lex.initFromStr(str);
+  lex.initFromString(str);
 
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_for);
@@ -381,3 +382,18 @@ TEST_CASE("Testing for loop keyword lexer", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_open_curly);
 }
 
+TEST_CASE("Testing pointer correctly", "[lexer]") {
+
+  const std::string str{"int* myFunction()"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+
+  // the key thing here is that we let the lexer not include * in the
+  // token after that we let the lexer figure based on the type what to do
+  REQUIRE(lex.currtok == Token::tok_int);
+  REQUIRE(lex.identifierStr == "int");
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_operator);
+  REQUIRE(lex.identifierStr == "*");
+}
