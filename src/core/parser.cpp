@@ -249,12 +249,45 @@ ExprAST *Parser::parsePrimary() {
   }
 }
 
+ExprAST *Parser::parseAssigment() {
+
+  // this can be, a direct value assignment
+  // like int x = 10;
+  // it can be a math expression like :
+  // int x = 10 + y;
+  // it can be a function call
+  // int x = getMagicNumber();
+
+  // here we need to eat a bit of token and proces the assigment operator
+  int datatype = lex->currtok;
+  lex->gettok(); // eat datatype;
+
+  int isPtr = false;
+  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*")
+  {
+	  isPtr = true;
+	  lex->gettok(); //eating pointer
+  }
+
+  // next we eat the identifier;
+  std::string identifier = lex->identifierStr;
+  lex->gettok(); // eat identifier;
+
+  lex->gettok(); // eat = operator
+  auto *RHS = parseExpression();
+  ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
+  node->flags.isDefinition = true;
+  node->flags.isPointer = isPtr;
+
+  return node;
+}
+
 ExprAST *Parser::parseDeclaration() {
   // if we have a declaration token, something like int, float etc we might have
   // several cases like, we might have a variable definition, we might have
   // a function definition etc, this require a bit of look ahead!
 
-  lex->lookAhead(2);
+  lex->lookAhead(3);
   // lex->gettok(); // eating datatype
   // looking ahead 2 tokens, which should give us the identifier
   // and the next token
@@ -266,44 +299,42 @@ ExprAST *Parser::parseDeclaration() {
     // we got an identifier great, now the next token will
     // tell us whether is a function prototype or a variable
     switch (lex->lookAheadToken[1].token) {
-    default: {
-      // error
-      return nullptr;
-    }
     case Token::tok_open_round: {
       return parseFunction();
     }
     case Token::tok_assigment_operator: {
-      // this can be, a direct value assignment
-      // like int x = 10;
-      // it can be a math expression like :
-      // int x = 10 + y;
-      // it can be a function call
-      // int x = getMagicNumber();
-
-      // here we need to eat a bit of token and proces the assigment operator
-      int datatype = lex->currtok;
-      lex->gettok(); // eat datatype;
-
-      // next we eat the identifier;
-      std::string identifier = lex->identifierStr;
-      lex->gettok(); // eat identifier;
-
-      lex->gettok(); // eat = operator
-      auto *RHS = parseExpression();
-      ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
-      node->flags.isDefinition = true;
-
-      return node;
+      return parseAssigment();
     }
-      // not supported yet, declaring a function without init
-      // int x; should be easy to do having default values
-      // case Token::tok_end_statement:
-      //    return parseVariableDefinition();
+    }
+  } else if (lex->lookAheadToken[0].token == Token::tok_operator) {
+    if (lex->lookAheadToken[0].identifierStr != "*") {
+
+      logParserError(
+          "only supported operator after datatype is * for pointers, got" +
+              std::to_string(lex->currtok),
+          lex, IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION);
+      return nullptr;
+    }
+
+    switch (lex->lookAheadToken[2].token) {
+    case Token::tok_open_round: {
+      return parseFunction();
+    }
+    case Token::tok_assigment_operator: {
+      return parseAssigment();
+    }
     }
   }
 
+  // not supported yet, declaring a function without init
+  // int x; should be easy to do having default values
+  // case Token::tok_end_statement:
+  //    return parseVariableDefinition();
+
   // error
+  logParserError("undexpected token while parsing declaration got: " +
+                     std::to_string(lex->currtok),
+                 lex, IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION);
   return nullptr;
 }
 
@@ -336,7 +367,7 @@ ExprAST *Parser::parseStatement() {
     expectSemicolon = false;
   } else if (lex->currtok == Token::tok_for) {
     exp = parseForStatement();
-	expectSemicolon = false;
+    expectSemicolon = false;
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -644,7 +675,7 @@ codegen::ExprAST *Parser::parseForStatement() {
 
   // at this point we just have the increment expression to take care of
   ExprAST *increment = parseExpression();
-  //clearing up the assigment flag in the parser
+  // clearing up the assigment flag in the parser
   flags.processed_assigment = false;
   if (increment == nullptr) {
     logParserError("error parsing increment for FOR loop", lex,
@@ -674,20 +705,19 @@ codegen::ExprAST *Parser::parseForStatement() {
   std::vector<ExprAST *> statements;
   bool res = parseStatementsUntillCurly(statements, this);
   if (!res) {
-	  return nullptr;
+    return nullptr;
   }
   if (lex->currtok != Token::tok_close_curly) {
-	  logParserError("expected { afyer for loop header "
-		  "got:" +
-		  std::to_string(lex->currtok),
-		  lex, IssueCode::EXPECTED_TOKEN);
-	  return nullptr;
+    logParserError("expected { afyer for loop header "
+                   "got:" +
+                       std::to_string(lex->currtok),
+                   lex, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
   }
-  lex->gettok(); //eat }
+  lex->gettok(); // eat }
 
-
-
-  return factory->allocForAST(initialisationExp, condition, increment, statements);
+  return factory->allocForAST(initialisationExp, condition, increment,
+                              statements);
 } // namespace parser
 
 PrototypeAST *Parser::parsePrototype() {

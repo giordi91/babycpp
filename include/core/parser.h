@@ -101,6 +101,7 @@ struct Parser {
   /**@brief parses a for loop statement and corresponding body*/
   codegen::ExprAST *parseForStatement();
 
+  codegen::ExprAST *parseAssigment();
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */

@@ -64,6 +64,17 @@ public:
     warnings.resize(0);
   }
 
+std::string printAll() {
+  std::string diagnosticMessage =
+      "================== ERRORS ================= \n";
+  while (hasErrors()) {
+    auto err =getError();
+    diagnosticMessage += printErorr(err);
+    diagnosticMessage += "\n";
+  }
+  return diagnosticMessage;
+}
+
 private:
   std::deque<Issue> errors;
   std::deque<Issue> warnings;

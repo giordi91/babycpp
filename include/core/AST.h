@@ -18,6 +18,7 @@ struct ASTFlags {
   bool isReturn : 1;
   /** define wheter or not the AST defines a type or a function*/
   bool isDefinition : 1;
+  bool isPointer : 1;
 };
 
 /**Simple structure defining an argument type for function
@@ -56,10 +57,12 @@ struct ExprAST {
   ExprAST() {
     flags.isReturn = false;
     flags.isDefinition = false;
+    flags.isPointer = false;
   };
   ExprAST(int type) : datatype(type) {
     flags.isReturn = false;
     flags.isDefinition = false;
+    flags.isPointer = false;
   }
   virtual ~ExprAST() = default;
   /**
@@ -202,8 +205,10 @@ struct ForAST : public ExprAST {
   ExprAST *condition;
   ExprAST *increment;
   std::vector<ExprAST *> body;
-  explicit ForAST(ExprAST *inInitialization, ExprAST* inCondition, ExprAST* inIncrement, std::vector<ExprAST *> inBody)
-      : ExprAST(), initialization(inInitialization), condition(inCondition), increment(inIncrement), body(inBody){
+  explicit ForAST(ExprAST *inInitialization, ExprAST *inCondition,
+                  ExprAST *inIncrement, std::vector<ExprAST *> inBody)
+      : ExprAST(), initialization(inInitialization), condition(inCondition),
+        increment(inIncrement), body(inBody) {
     nodetype = IfNode;
   }
   virtual ~ForAST() = default;

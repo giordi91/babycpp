@@ -455,7 +455,7 @@ TEST_CASE("Testing simple function", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(float a, float b) \n { \n"
-                  "avg = (a+b)/2.0;}");
+                     "avg = (a+b)/2.0;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -467,7 +467,7 @@ TEST_CASE("Testing simple function error missing datatype arg", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(a, float b) \n { \n"
-                  "avg = (a+b)/2.0;}");
+                     "avg = (a+b)/2.0;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -483,7 +483,7 @@ TEST_CASE("Testing simple function error missing close curly ", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(float a, float b) \n { \n"
-                  "avg = (a+b)/2.0;");
+                     "avg = (a+b)/2.0;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -498,7 +498,7 @@ TEST_CASE("Testing simple function error missing name arg", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(float , float b) \n { \n"
-                  "avg = (a+b)/2.0;}");
+                     "avg = (a+b)/2.0;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -514,7 +514,7 @@ TEST_CASE("Testing simple function error with extra comma in args",
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(float ,)\n { \n"
-                  "avg = (a+b)/2.0;}");
+                     "avg = (a+b)/2.0;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -528,7 +528,7 @@ TEST_CASE("Testing simple function with return", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("float average(float a, float b) \n { \n"
-                  "avg = (a+b)/2.0; return avg;}");
+                     "avg = (a+b)/2.0; return avg;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
@@ -564,8 +564,9 @@ TEST_CASE("Testing no end of statement", "[parser]") {
 TEST_CASE("Testing function with variable declaration and expr", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  lex.initFromString("float complexAdd(float x){ float temp = x * 2.0;temp = x - "
-                  "2.0; return temp;}");
+  lex.initFromString(
+      "float complexAdd(float x){ float temp = x * 2.0;temp = x - "
+      "2.0; return temp;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   auto *p = parser.parseFunction();
@@ -667,7 +668,7 @@ TEST_CASE("Testing if statement parsing multi statements", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString("if ( z*2 ) { int x = k +1 ; x = x - y;}else{ "
-                  "int x = 2 + 2; x = x + y;}");
+                     "int x = 2 + 2; x = x + y;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   auto res = parser.parseIfStatement();
@@ -851,7 +852,8 @@ TEST_CASE("Testing if statement parsing error 6", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing } after if body
-  lex.initFromString("if  3 + 1- 30) { int x = 1 +1 ;} else if {int x = 2 + 2;}");
+  lex.initFromString(
+      "if  3 + 1- 30) { int x = 1 +1 ;} else if {int x = 2 + 2;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
   auto res = parser.parseIfStatement();
@@ -980,14 +982,51 @@ TEST_CASE("Testing calling extern in function", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  ) at start of body
-  lex.initFromString(
-                  "float testFunc(float a){"
-                  "extern float cos(float a);"
-                  "float x = cos(a); "
-                  " return x;}");
+  lex.initFromString("float testFunc(float a){"
+                     "extern float cos(float a);"
+                     "float x = cos(a); "
+                     " return x;}");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto res = parser.parseStatement();
   REQUIRE(res != nullptr);
+}
+TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assigment in init
+  lex.initFromString("int* myPtr = nullptr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  std::cout << parser.diagnostic->printAll() << std::endl;
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<VariableExprAST*>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->datatype == Token::tok_int);
+  REQUIRE(p_casted->flags.isPointer== true);
+
+  //TODO(giordi) what to do with the null ptr????
+
+}
+TEST_CASE("Testing pointer variable declaration wrong operator parsing ",
+          "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assigment in init
+  lex.initFromString("int- myPtr = nullptr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parseStatement();
+  REQUIRE(res == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+
+  auto err1 = parser.diagnostic->getError();
+  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION);
 }
