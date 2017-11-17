@@ -1002,7 +1002,6 @@ TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
   lex.gettok();
 
   auto p = parser.parseStatement();
-  std::cout << parser.diagnostic->printAll() << std::endl;
   REQUIRE(p != nullptr);
 
   auto *p_casted = dynamic_cast<VariableExprAST*>(p);
@@ -1010,7 +1009,13 @@ TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
   REQUIRE(p_casted->datatype == Token::tok_int);
   REQUIRE(p_casted->flags.isPointer== true);
 
-  //TODO(giordi) what to do with the null ptr????
+  auto *v_casted = dynamic_cast<NumberExprAST*>(p_casted->value);
+  REQUIRE(v_casted != nullptr);
+  REQUIRE(v_casted->datatype == Token::tok_int);
+  REQUIRE(v_casted->flags.isPointer== true);
+  REQUIRE(v_casted->val.integerNumber == 0);
+
+  //TODO(giordi) what to do with the nullptr????
 
 }
 TEST_CASE("Testing pointer variable declaration wrong operator parsing ",

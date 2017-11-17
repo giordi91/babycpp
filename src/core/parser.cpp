@@ -246,6 +246,9 @@ ExprAST *Parser::parsePrimary() {
   case Token::tok_open_round: {
     return parseParen();
   }
+  case Token::tok_nullptr: {
+    return parseNullptr();
+  }
   }
 }
 
@@ -263,10 +266,9 @@ ExprAST *Parser::parseAssigment() {
   lex->gettok(); // eat datatype;
 
   int isPtr = false;
-  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*")
-  {
-	  isPtr = true;
-	  lex->gettok(); //eating pointer
+  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+    isPtr = true;
+    lex->gettok(); // eating pointer
   }
 
   // next we eat the identifier;
@@ -719,6 +721,17 @@ codegen::ExprAST *Parser::parseForStatement() {
   return factory->allocForAST(initialisationExp, condition, increment,
                               statements);
 } // namespace parser
+
+codegen::NumberExprAST *Parser::parseNullptr() {
+	Number zero;
+	zero.integerNumber = 0;
+	zero.type = Token::tok_int;
+  auto* node = factory->allocNuberAST(zero);
+  node->datatype = Token::tok_int;
+  node->flags.isPointer = true;
+  lex->gettok(); //eat nullptr;
+  return node;
+}
 
 PrototypeAST *Parser::parsePrototype() {
 

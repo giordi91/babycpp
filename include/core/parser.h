@@ -101,6 +101,10 @@ struct Parser {
   /**@brief parses a for loop statement and corresponding body*/
   codegen::ExprAST *parseForStatement();
 
+  /**@brief parses a null pointer return a NumberExpression as 0 and ptr which identifies nullptr */
+  codegen::NumberExprAST *parseNullptr();
+
+  /**@brief parses a statement which involves an assigment, both LHS anr RHS*/
   codegen::ExprAST *parseAssigment();
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
@@ -122,7 +126,7 @@ struct Parser {
   // data
   Lexer *lex;
   memory::FactoryAST *factory;
-  diagnostic::Diagnostic* diagnostic;
+  diagnostic::Diagnostic *diagnostic;
   ParserFlags flags;
 };
 
