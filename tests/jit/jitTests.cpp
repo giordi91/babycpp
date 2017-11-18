@@ -178,18 +178,63 @@ TEST_CASE("testing bind with c functions", "[jit]") {
                      "float testFunc(float a){"
                      " extern float cosf(float a);"
                      "float x=0.0;"
-	                  "x= cosf(a); "
+                     "x= cosf(a); "
                      " return x;}");
 
   auto p = gen.parser.parseFunction();
   REQUIRE(p != nullptr);
 
   // making sure the code is generated
-   auto v = p->codegen(&gen);
-   REQUIRE(v != nullptr);
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
 
-   jit.addModule(gen.module);
-   auto symbol = jit.findSymbol("testFunc");
-   auto func = (float(*)(float))(intptr_t)llvm::cantFail(symbol.getAddress());
-   REQUIRE(func(0.5) == Approx(cos(0.5f)));
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (float (*)(float))(intptr_t)llvm::cantFail(symbol.getAddress());
+  REQUIRE(func(0.5) == Approx(cos(0.5f)));
+}
+TEST_CASE("testing pointer derefenence float jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString("float testFunc(float* a){ float res = *a;return res;};");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (float (*)(float *))(intptr_t)llvm::cantFail(symbol.getAddress());
+  float data = 0.125f;
+  REQUIRE(func(&data) == Approx(0.125f));
+  data = -1.23234f;
+  REQUIRE(func(&data) == Approx(-1.23234f));
+}
+TEST_CASE("testing pointer derefenence int jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int* a, int* b){ int res = 0; int aValue = "
+                     "*a; int bValue = *b; res = aValue + bValue; return "
+                     "res;};");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int (*)(int*, int*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  int a = 10;
+  int b = -5;
+  REQUIRE(func(&a,&b) == 5);
+  a = 102;
+  b = 8;
+
+  REQUIRE(func(&a, &b) ==  110);
 }

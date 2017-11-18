@@ -14,19 +14,19 @@ using babycpp::parser::Parser;
 using babycpp::codegen::Argument;
 using babycpp::codegen::BinaryExprAST;
 using babycpp::codegen::CallExprAST;
+using babycpp::codegen::DereferenceAST;
 using babycpp::codegen::ExprAST;
 using babycpp::codegen::FunctionAST;
 using babycpp::codegen::IfAST;
 using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
 using babycpp::codegen::VariableExprAST;
-using babycpp::codegen::DereferenceAST;
 
 static babycpp::memory::FactoryAST factory;
 
 babycpp::diagnostic::Diagnostic diagnosticParserTests;
 
-void checkErrors() {
+static void checkParserErrors() {
   if (diagnosticParserTests.hasErrors()) {
     std::cout << diagnosticParserTests.printAll() << std::endl;
   }
@@ -1045,12 +1045,12 @@ TEST_CASE("Testing pointer value dereference", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  assignment in init
-  lex.initFromString("float x = *myIntPtr;");
+  lex.initFromString("float x = *myFloatPtr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
   auto p = parser.parseStatement();
-  checkErrors();
+  checkParserErrors();
   REQUIRE(p != nullptr);
   auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
@@ -1061,5 +1061,59 @@ TEST_CASE("Testing pointer value dereference", "[parser]") {
   REQUIRE(v_casted != nullptr);
   REQUIRE(v_casted->datatype == 0);
   REQUIRE(v_casted->flags.isPointer);
-  REQUIRE(v_casted->identifierName == "myIntPtr");
+  REQUIRE(v_casted->identifierName == "myFloatPtr");
 }
+
+;
+TEST_CASE("Testing pointer value in func arg", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString("float testFunc(float* a){ float res = *a;return res;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+
+  auto *proto_casted = dynamic_cast<PrototypeAST *>(p_casted->proto);
+  REQUIRE(proto_casted->isExtern == false);
+  REQUIRE(proto_casted->datatype == Token::tok_float);
+  REQUIRE(!proto_casted->flags.isPointer);
+
+  REQUIRE(proto_casted->args[0].isPointer);
+  REQUIRE(proto_casted->args[0].name == "a");
+  REQUIRE(proto_casted->args[0].type == Token::tok_float);
+
+  // lets now check the body
+  auto& body1 = p_casted->body[0];
+  auto* body1_casted = dynamic_cast<VariableExprAST*>(body1);
+  REQUIRE(body1_casted != nullptr);
+  REQUIRE(body1_casted->datatype == Token::tok_float);
+  REQUIRE(body1_casted->name == "res");
+  REQUIRE(body1_casted->value != nullptr);
+
+  //lets now investigate the value
+  auto* value_casted = dynamic_cast<DereferenceAST*>(body1_casted->value);
+  REQUIRE(value_casted != nullptr);
+  REQUIRE(value_casted->datatype == 0);
+  REQUIRE(value_casted->flags.isPointer);
+  REQUIRE(value_casted->identifierName == "a");
+
+  
+  // lets now check the body second line
+  auto& body2 = p_casted->body[1];
+  auto* body2_casted = dynamic_cast<VariableExprAST*>(body2);
+  REQUIRE(body2_casted != nullptr);
+  REQUIRE(body2_casted->datatype == 0);
+  REQUIRE(body2_casted->name == "res");
+  REQUIRE(body2_casted->value == nullptr);
+  REQUIRE(body2_casted->flags.isReturn);
+}
+
+// TODO(giordi) check function which return pointers

@@ -15,10 +15,10 @@ const std::unordered_map<int, int> Codegenerator::AST_LLVM_MAP{
 
 llvm::AllocaInst *
 Codegenerator::createEntryBlockAlloca(llvm::Function *function,
-                                      const std::string &varName, int type) {
+                                      const std::string &varName, int type, bool isPointer) {
   llvm::IRBuilder<> tempBuilder(&function->getEntryBlock(),
                                 function->getEntryBlock().begin());
-  llvm::Type *varType = getType(type, this);
+  llvm::Type *varType = getType(type, this, isPointer);
   return tempBuilder.CreateAlloca(varType, nullptr, varName);
 }
 

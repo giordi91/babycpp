@@ -3,8 +3,8 @@
 #include <memory>
 #include <unordered_map>
 
-#include "diagnostic.h"
 #include "AST.h"
+#include "diagnostic.h"
 #include "factoryAST.h"
 #include "lexer.h"
 #include "parser.h"
@@ -24,8 +24,6 @@ using parser::Parser;
 namespace codegen {
 
 using lexer::Number;
-
-
 
 /** This class is the heavy lifter in the compiler, it
  * is an agglomerate of parser and lexer, its job is to
@@ -85,7 +83,7 @@ struct Codegenerator {
    */
   llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *function,
                                            const std::string &varName,
-                                           int type);
+                                           int type, bool isPointer);
 
   /**This function takes in two datatpes and figures out the result of
    * the operation
@@ -110,9 +108,7 @@ struct Codegenerator {
   static bool compareASTArgWithLLVMArg(ExprAST *astArg,
                                        llvm::Argument *llvmArg);
 
-
   std::string printDiagnostic();
-
 
   /**Factory in charge to allocate the factory nodes, it owns the
    * memory */
@@ -149,10 +145,21 @@ struct Codegenerator {
   std::unordered_map<std::string, PrototypeAST *> functionProtos;
 };
 
-inline llvm::Type *getType(int type, Codegenerator *gen) {
+inline llvm::Type *getType(int type, Codegenerator *gen,
+                           bool isPointer = false) {
   if (type == Token::tok_float) {
-    return llvm::Type::getFloatTy(gen->context);
+    if (isPointer) {
+      return llvm::Type::getFloatPtrTy(gen->context);
+
+    } else {
+      return llvm::Type::getFloatTy(gen->context);
+    }
   }
+  if (isPointer) {
+
+  return llvm::Type::getInt32PtrTy(gen->context);
+  }
+
   return llvm::Type::getInt32Ty(gen->context);
 }
 } // namespace codegen

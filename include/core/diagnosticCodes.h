@@ -30,6 +30,7 @@ enum class IssueCode {
   UNDEFINED_VARIABLE = 2001,
   BRANCH_CODE_FAILURE = 2002,
   FOR_LOOP_CODE_FAILURE = 2003,
+  EXPECTED_POINTER= 2004,
 
 };
 
@@ -66,6 +67,7 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
     {IssueCode::FOR_LOOP_FAILURE, "FOR_LOOP_FAILURE"},
     {IssueCode::FOR_LOOP_CODE_FAILURE, "FOR_LOOP_CODE_FAILURE"},
     {IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION, "UNEXPECTED_TOKEN_IN_DECLARATION"},
+    {IssueCode::EXPECTED_POINTER, "EXPECTED_POINTER"},
 
 };
 

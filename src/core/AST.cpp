@@ -38,7 +38,11 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
   // first we try to see if the variable is already defined at scope
   // level
-  llvm::AllocaInst *v = gen->namedValues[name];
+  llvm::AllocaInst *v = nullptr;
+  auto found = gen->namedValues.find(name);
+  if (found != gen->namedValues.end()) {
+    v = found->second;
+  };
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
   // we got an error
@@ -95,11 +99,8 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   }
   // otherwise we just generate the load
   return gen->builder.CreateLoad(v, name.c_str());
-  // if we got here, it means the variable has a known datatype
-  // but has not been defined yet, this only happens for variable
-  // definitions, so we need to define it, we are gonna do that with
-  // alloca
 }
+
 llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   // generating code recursively for left and right end side
   Value *L = lhs->codegen(gen);
@@ -159,7 +160,7 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   // generating args with correct type
   for (uint32_t t = 0; t < argSize; ++t) {
     const auto &astArg = args[t];
-    funcArgs[t] = getType(astArg.type, gen);
+    funcArgs[t] = getType(astArg.type, gen, astArg.isPointer);
   }
 
   llvm::Type *returnType = getType(datatype, gen);
@@ -204,14 +205,17 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   int counter = 0;
   for (auto &arg : function->args()) {
     // Create an alloca for this variable.
+    // TODO(giordi) clean this to pass in the arg directly
     llvm::AllocaInst *alloca = gen->createEntryBlockAlloca(
-        function, arg.getName(), proto->args[counter++].type);
+        function, arg.getName(), proto->args[counter].type,
+        proto->args[counter].isPointer);
 
     // Store the initial value into the alloca.
     gen->builder.CreateStore(&arg, alloca);
 
     // Add arguments to variable symbol table.
     gen->namedValues[arg.getName()] = alloca;
+    counter += 1;
   }
 
   gen->currentScope = function;
@@ -443,6 +447,55 @@ llvm::Value *ForAST::codegen(Codegenerator *gen) {
 
   return conditionValue;
   // return nullptr;
+}
+llvm::Value *DereferenceAST::codegen(Codegenerator *gen) {
+
+  // first we try to see if the variable is already defined at scope
+  // level
+  llvm::AllocaInst *v = gen->namedValues[identifierName];
+  // here we extract the variable from the scope.
+  // if we get a nullptr and the variable is not a definition
+  // we got an error
+  if (v == nullptr && datatype == 0) {
+    logCodegenError("Error variable " + identifierName + "is not defined", gen,
+                    IssueCode::UNDEFINED_VARIABLE);
+    return nullptr;
+  }
+
+  if (flags.isDefinition) {
+
+    logCodegenError("Error variable " + identifierName +
+                        "is a definition cannot be dereferenced",
+                    gen, IssueCode::EXPECTED_POINTER);
+    return nullptr;
+  }
+
+  // if the datatype is not know, it means we need to be able to understand that
+  // from
+  // the variable that has be pre-generated, so we try to extract that
+  if (datatype == 0) {
+    if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
+      datatype = Token::tok_float;
+    } else {
+      datatype = Token::tok_int;
+    }
+  }
+
+  // now at this point ,we might have a simple variable for
+  // which we gen a load, or we might have an assignment
+  // if it is the case ,we have a value which is not nullptr
+  // if (value != nullptr) {
+  //  // storing the result of RHS into LHS
+  //  Value *valGen = value->codegen(gen);
+  //  return gen->builder.CreateStore(valGen, v);
+  //}
+  // otherwise we just generate the load
+  Value *ptrLoaded = gen->builder.CreateLoad(v, identifierName.c_str());
+  // now we loaded the pointer, what we are going to do is load from the pionter
+  return gen->builder.CreateLoad(ptrLoaded,
+                                 (identifierName + "Dereferenced").c_str());
+  std::cout << " CALLING DEREFERENCE" << std::endl;
+  return nullptr;
 }
 } // namespace codegen
 } // namespace babycpp

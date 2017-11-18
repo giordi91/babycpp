@@ -424,8 +424,10 @@ PrototypeAST *Parser::parseExtern() {
 
 bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
   int datatype;
+  bool isPointer = false;
   std::string argName;
   while (true) {
+    isPointer = false;
     if (lex->currtok == Token::tok_close_round) {
       // no args or done with args
       lex->gettok(); // eat )
@@ -441,6 +443,12 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
     // saving datatype
     datatype = lex->currtok;
     lex->gettok(); // eat datatype
+
+    if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+		//here we got a datatype and a * which means is a pointer
+      isPointer = true;
+	  lex->gettok();//eating *;
+    }
 
     if (lex->currtok != Token::tok_identifier) {
       logParserError("expected identifier name for argument got:" +
@@ -466,7 +474,7 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       }
     }
     // if we got here we have a sanitized argument
-    args->emplace_back(Argument(datatype, argName));
+    args->emplace_back(Argument(datatype, argName, isPointer));
   }
   return true;
 }
@@ -744,6 +752,11 @@ PrototypeAST *Parser::parsePrototype() {
   }
   int datatype = lex->currtok;
   lex->gettok(); // eating datatype
+  bool isPointer = false;
+  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+    isPointer = true;
+    lex->gettok(); // eating *
+  }
 
   if (lex->currtok != Token::tok_identifier) {
     logParserError("expected identifier name after function prototype return "
@@ -774,22 +787,22 @@ PrototypeAST *Parser::parsePrototype() {
   }
   // need to check semicolon at the end;
   // here we can generate the prototype node;
-  return factory->allocPrototypeAST(datatype, functionName, args, true);
+  auto *node = factory->allocPrototypeAST(datatype, functionName, args, true);
+  node->flags.isPointer = isPointer;
+  return node;
 }
 
 codegen::ExprAST *Parser::parseDereference() {
 
-  lex->gettok();//eating *
-  if(lex->currtok != Token::tok_identifier)
-  {
+  lex->gettok(); // eating *
+  if (lex->currtok != Token::tok_identifier) {
     logParserError("expected identifier after dereference operator, got:" +
-                   std::to_string(lex->currtok),
+                       std::to_string(lex->currtok),
                    this, IssueCode::EXPECTED_TOKEN);
     return nullptr;
-
   }
-  auto* node = factory->allocDereferenceAST(lex->identifierStr);
-  lex->gettok(); //eat identifier name
+  auto *node = factory->allocDereferenceAST(lex->identifierStr);
+  lex->gettok(); // eat identifier name
   return node;
 }
 

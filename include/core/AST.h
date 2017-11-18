@@ -25,11 +25,12 @@ struct ASTFlags {
  * declaration
  */
 struct Argument {
-  Argument(int datatype, std::string &argName)
-      : type(datatype), name(argName) {}
+  Argument(int datatype, std::string &argName, bool inIsPointer)
+      : type(datatype), name(argName), isPointer(inIsPointer) {}
   /**Token datatype , like tok_int etc*/
   int type;
   std::string name;
+  bool isPointer;
 };
 
 /**
@@ -225,7 +226,7 @@ struct DereferenceAST : public ExprAST {
     flags.isPointer = true;
   }
   virtual ~DereferenceAST() = default;
-  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
+  llvm::Value *codegen(Codegenerator *gen) override;
 };
 
 } // namespace codegen

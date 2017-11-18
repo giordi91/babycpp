@@ -7,6 +7,12 @@ using babycpp::lexer::Lexer;
 using babycpp::lexer::Token;
 using babycpp::parser::Parser;
 
+static void checkGenErrors(Codegenerator *gen) {
+  if (gen->diagnostic.hasErrors()) {
+    std::cout << gen->diagnostic.printAll() << std::endl;
+  }
+}
+
 inline std::string getFile(const ::std::string &path) {
 
   std::ifstream t(path);
@@ -407,8 +413,7 @@ TEST_CASE("Testing more complex if function with multi statement code gen",
   REQUIRE(outs == expected);
 }
 
-TEST_CASE("Testing for loop gen",
-          "[codegen]") {
+TEST_CASE("Testing for loop gen", "[codegen]") {
   Codegenerator gen;
   gen.initFromString(" int testFunc(int a){"
                      "int x = 0; "
@@ -421,8 +426,47 @@ TEST_CASE("Testing for loop gen",
   auto v = p->codegen(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/forLoop1.ll");
+  // gen.dumpLlvmData(v, "tests/core/forLoop1.ll");
   auto expected = getFile("tests/core/forLoop1.ll");
   REQUIRE(outs == expected);
+}
 
+TEST_CASE("Testing pointer value dereference code gen", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float testFunc(float* a){ float res = *a;return res;};");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/floatDereferenceFunction.ll");
+  auto expected = getFile("tests/core/floatDereferenceFunction.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing pointer value dereference int code gen", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int* a, int* b){ int res = 0; int aValue = "
+                     "*a; int bValue = *b; res = aValue + bValue; return "
+                     "res;};");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/intDereferenceFunction.ll");
+  auto expected = getFile("tests/core/intDereferenceFunction.ll");
+  REQUIRE(outs == expected);
 }
