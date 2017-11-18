@@ -76,7 +76,7 @@ void Lexer::gettok() {
     currtok = mov.token;
     identifierStr = mov.identifierStr;
     value = mov.value;
-	columnNumber += mov.columnOffset;
+    columnNumber += mov.columnOffset;
     lookAheadToken.pop_front();
     return;
   }
@@ -108,8 +108,8 @@ void Lexer::gettok() {
   // handling builtin word
   int tok = isBuiltInKeyword(extractedString);
   if (tok != tok_no_match) {
-    start += offset; // eating the token;
-	columnNumber += offset; //adding the offset to the column
+    start += offset;        // eating the token;
+    columnNumber += offset; // adding the offset to the column
     identifierStr = extractedString;
     currtok = tok;
     return;
@@ -118,14 +118,14 @@ void Lexer::gettok() {
   // if is not a built in word it must be an identifier or an ascii value
   if (isdigit(extractedString[0]) != 0) {
     // procerssing number since variables are not allowed to start with a number
-    start += offset; // eating the token;
-	columnNumber += offset; //adding the offset to the column
+    start += offset;        // eating the token;
+    columnNumber += offset; // adding the offset to the column
     currtok = processNumber(extractedString, this);
     return;
   }
   if (isalpha(extractedString[0]) != 0) {
-    start += offset; // eating the token;
-	columnNumber += offset; //adding the offset to the column
+    start += offset;        // eating the token;
+    columnNumber += offset; // adding the offset to the column
     identifierStr = extractedString;
     currtok = tok_identifier;
     return;
@@ -148,7 +148,10 @@ bool Lexer::lookAhead(int count) {
     if (currtok == tok_eof || currtok == tok_no_match) {
       return false;
     }
-    tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value});
+    //TODO(giordi): here we are passing 0 as column offset which is wrong and
+    //might be misleading need to find a nice way to get that offset, probably
+    //having gettok() returning the number of char read
+    tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value, 0});
   }
 
   for (int t = 0; t < count; ++t) {

@@ -45,7 +45,9 @@ enum NodeType {
   CallNode = 4,
   PrototypeNode = 5,
   FunctionNode = 6,
-  IfNode = 7
+  IfNode = 7,
+  ForNode = 8,
+  DereferenceNode = 9
 };
 
 struct Codegenerator;
@@ -209,10 +211,20 @@ struct ForAST : public ExprAST {
                   ExprAST *inIncrement, std::vector<ExprAST *> inBody)
       : ExprAST(), initialization(inInitialization), condition(inCondition),
         increment(inIncrement), body(inBody) {
-    nodetype = IfNode;
+    nodetype = ForNode;
   }
   virtual ~ForAST() = default;
   llvm::Value *codegen(Codegenerator *gen) override;
+};
+
+struct DereferenceAST : public ExprAST {
+  ExprAST *toDereference;
+  explicit DereferenceAST(ExprAST *inToDereference)
+      : ExprAST(), toDereference(inToDereference) {
+    nodetype = DereferenceNode;
+  }
+  virtual ~DereferenceAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override{ return nullptr;};
 };
 
 } // namespace codegen

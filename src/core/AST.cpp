@@ -1,5 +1,6 @@
 #include "AST.h"
 #include "codegen.h"
+
 #include <iostream>
 #include <llvm/IR/Verifier.h>
 
@@ -180,13 +181,6 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
   llvm::Function *function = gen->getFunction(proto->name);
 
   if (function == nullptr) {
-    Value *p = proto->codegen(gen);
-    // here we are forced to downcast to function from a value* we can't use
-    // dynamic cast either since we have to compile with -no-rtti due to llvm
-    // unless of course you re-compile llvm enabling rtti, there is no danger
-    // this to
-    // fail, because if that is not a function it should fail at parsing time.
-    function = static_cast<llvm::Function *>(p);
     gen->functionProtos[proto->name] = proto;
     function = gen->getFunction(proto->name);
   }
@@ -365,14 +359,11 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
   // now that we inserted the then block we need to jump to the merge
   gen->builder.CreateBr(mergeBlock);
 
-  // getting back up to date thenBlock
-  thenBlock = gen->builder.GetInsertBlock();
-
   // now working on the else branch
   theFunction->getBasicBlockList().push_back(elseBlock);
   gen->builder.SetInsertPoint(elseBlock);
 
-  if (elseExpr.size() != 0) {
+  if (!elseExpr.empty()) {
 
     Value *elseBranchValue = nullptr;
     for (auto elseE : elseExpr) {
@@ -385,10 +376,8 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
     }
     gen->builder.CreateBr(mergeBlock);
   }
-  // updating else block for phi node
-  elseBlock = gen->builder.GetInsertBlock();
 
-  // mergin the code
+  // merging the code
   theFunction->getBasicBlockList().push_back(mergeBlock);
   gen->builder.SetInsertPoint(mergeBlock);
   // we don't need a phi node since we handle everything with alloca
@@ -413,7 +402,7 @@ llvm::Value *ForAST::codegen(Codegenerator *gen) {
   // here we generate the condition and we evaluate
   Value *conditionValue = condition->codegen(gen);
   // Insert the conditional branch into the end of LoopEndBB.
-  // here we valuate the condition for the first time, if it valid we 
+  // here we valuate the condition for the first time, if it valid we
   // jump to the loop, otherwise we get out after the loop immediatly,
   // this handle gracefully the insertion from entry block to after
   // or loop block

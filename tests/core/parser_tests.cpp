@@ -1004,26 +1004,25 @@ TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
   auto p = parser.parseStatement();
   REQUIRE(p != nullptr);
 
-  auto *p_casted = dynamic_cast<VariableExprAST*>(p);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->datatype == Token::tok_int);
-  REQUIRE(p_casted->flags.isPointer== true);
+  REQUIRE(p_casted->flags.isPointer == true);
 
-  auto *v_casted = dynamic_cast<NumberExprAST*>(p_casted->value);
+  auto *v_casted = dynamic_cast<NumberExprAST *>(p_casted->value);
   REQUIRE(v_casted != nullptr);
   REQUIRE(v_casted->datatype == Token::tok_int);
-  REQUIRE(v_casted->flags.isPointer== true);
+  REQUIRE(v_casted->flags.isPointer == true);
   REQUIRE(v_casted->val.integerNumber == 0);
 
-  //TODO(giordi) what to do with the nullptr????
-
+  // TODO(giordi) what to do with the nullptr????
 }
 TEST_CASE("Testing pointer variable declaration wrong operator parsing ",
           "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  assigment in init
+  // here missing  assignment in init
   lex.initFromString("int- myPtr = nullptr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -1033,5 +1032,17 @@ TEST_CASE("Testing pointer variable declaration wrong operator parsing ",
   REQUIRE(parser.diagnostic->hasErrors() == 1);
 
   auto err1 = parser.diagnostic->getError();
-  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION);
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION);
+}
+TEST_CASE("Testing pointer value dereference", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString("int x = *myIntPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto res = parser.parseStatement();
 }

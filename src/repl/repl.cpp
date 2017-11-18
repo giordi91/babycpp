@@ -8,8 +8,8 @@ namespace babycpp {
 namespace repl {
 
 // hardcoded function names used in the jitting
-static const std::string ANONYMOUS_FUNCTION = "__anonymous__";
-static const std::string DUMMY_FUNCTION = "__dummy__";
+static const std::string ANONYMOUS_FUNCTION{ "__anonymous__"};
+static const std::string DUMMY_FUNCTION {"__dummy__"};
 
 using babycpp::codegen::Codegenerator;
 using babycpp::codegen::ExprAST;
@@ -149,10 +149,11 @@ void handleFunction(codegen::Codegenerator *gen, jit::BabycppJIT *jit,
   if (res == nullptr) {
     return;
   }
-  llvm::Value *val = res->codegen(gen);
+  //generating the code and is added to the module
+  res->codegen(gen);
 
   // adding function to the jit so it gets compiled
-  babycpp::jit::BabycppJIT::ModuleHandle handle = jit->addModule(gen->module);
+  jit->addModule(gen->module);
 }
 
 void loop(Codegenerator *gen, BabycppJIT *jit,

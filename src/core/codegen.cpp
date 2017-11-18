@@ -23,7 +23,7 @@ Codegenerator::createEntryBlockAlloca(llvm::Function *function,
 }
 
 Codegenerator::Codegenerator()
-    : diagnostic(), lexer(&diagnostic), parser(&lexer, &factory, &diagnostic),
+    : lexer(&diagnostic), parser(&lexer, &factory, &diagnostic),
       builder(context), module(new llvm::Module("", context)) {}
 
 void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
@@ -83,7 +83,7 @@ bool Codegenerator::compareASTArgWithLLVMArg(ExprAST *astArg,
 std::string Codegenerator::printDiagnostic() {
   std::string diagnosticMessage =
       "================== ERRORS ================= \n";
-  while (diagnostic.hasErrors()) {
+  while (diagnostic.hasErrors() != 0) {
     auto err = diagnostic.getError();
     diagnosticMessage += diagnostic.printErorr(err);
     diagnosticMessage += "\n";
@@ -91,14 +91,15 @@ std::string Codegenerator::printDiagnostic() {
   return diagnosticMessage;
 }
 
-llvm::Function *Codegenerator::getFunction(const std::string &Name) {
+llvm::Function *Codegenerator::getFunction(const std::string &name) {
   // First, see if the function has already been added to the current module.
-  if (auto *F = module->getFunction(Name))
+  if (auto *F = module->getFunction(name)) {
     return F;
+  }
 
   // If not, check whether we can codegen the declaration from some existing
   // prototype.
-  auto FI = functionProtos.find(Name);
+  auto FI = functionProtos.find(name);
   if (FI != functionProtos.end()) {
     auto *f = FI->second->codegen(this);
     if (f == nullptr) {
