@@ -41,16 +41,16 @@ enum Token {
   tok_number = -7,
   tok_nullptr = -8,
   // misc
-  tok_operator = -8,
-  tok_assigment_operator = -9,
+  tok_operator = -9,
+  tok_assigment_operator = -10,
   // punctuation
-  tok_open_curly = -10,
-  tok_close_curly = -11,
-  tok_open_round = -12,
-  tok_close_round = -13,
-  tok_end_statement = -14,
-  tok_comma = -15,
-  tok_return = -16,
+  tok_open_curly = -11,
+  tok_close_curly = -12,
+  tok_open_round = -13,
+  tok_close_round = -14,
+  tok_end_statement = -15,
+  tok_comma = -16,
+  tok_return = -17,
 
   // flow
   tok_if = -25,

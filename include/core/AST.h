@@ -218,13 +218,14 @@ struct ForAST : public ExprAST {
 };
 
 struct DereferenceAST : public ExprAST {
-  ExprAST *toDereference;
-  explicit DereferenceAST(ExprAST *inToDereference)
-      : ExprAST(), toDereference(inToDereference) {
+  std::string identifierName;
+  explicit DereferenceAST(const std::string &inIdentifierName)
+      : ExprAST(), identifierName(inIdentifierName) {
     nodetype = DereferenceNode;
+    flags.isPointer = true;
   }
   virtual ~DereferenceAST() = default;
-  llvm::Value *codegen(Codegenerator *gen) override{ return nullptr;};
+  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
 };
 
 } // namespace codegen

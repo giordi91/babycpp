@@ -70,6 +70,9 @@ struct FactoryAST {
   template <typename... Args> codegen::ForAST *allocForAST(Args &&... args) {
     return allocASTNode<codegen::ForAST>(args...);
   }
+    template <typename... Args> codegen::DereferenceAST* allocDereferenceAST(Args &&... args) {
+      return allocASTNode<codegen::DereferenceAST>(args...);
+    }
 
   std::vector<codegen::ExprAST *> ptrs;
   SlabAllocator allocator;

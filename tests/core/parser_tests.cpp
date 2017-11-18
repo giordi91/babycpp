@@ -20,10 +20,17 @@ using babycpp::codegen::IfAST;
 using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
 using babycpp::codegen::VariableExprAST;
+using babycpp::codegen::DereferenceAST;
 
 static babycpp::memory::FactoryAST factory;
 
 babycpp::diagnostic::Diagnostic diagnosticParserTests;
+
+void checkErrors() {
+  if (diagnosticParserTests.hasErrors()) {
+    std::cout << diagnosticParserTests.printAll() << std::endl;
+  }
+}
 
 TEST_CASE("Testing number parser", "[parser]") {
   diagnosticParserTests.clear();
@@ -996,7 +1003,7 @@ TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
 
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  assigment in init
+  // here missing  assignment in init
   lex.initFromString("int* myPtr = nullptr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -1007,15 +1014,13 @@ TEST_CASE("Testing pointer variable declaration parsing ", "[parser]") {
   auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->datatype == Token::tok_int);
-  REQUIRE(p_casted->flags.isPointer == true);
+  REQUIRE(p_casted->flags.isPointer);
 
   auto *v_casted = dynamic_cast<NumberExprAST *>(p_casted->value);
   REQUIRE(v_casted != nullptr);
   REQUIRE(v_casted->datatype == Token::tok_int);
-  REQUIRE(v_casted->flags.isPointer == true);
+  REQUIRE(v_casted->flags.isPointer);
   REQUIRE(v_casted->val.integerNumber == 0);
-
-  // TODO(giordi) what to do with the nullptr????
 }
 TEST_CASE("Testing pointer variable declaration wrong operator parsing ",
           "[parser]") {
@@ -1040,9 +1045,21 @@ TEST_CASE("Testing pointer value dereference", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   // here missing  assignment in init
-  lex.initFromString("int x = *myIntPtr;");
+  lex.initFromString("float x = *myIntPtr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
 
-  auto res = parser.parseStatement();
+  auto p = parser.parseStatement();
+  checkErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->datatype == Token::tok_float);
+  REQUIRE(!p_casted->flags.isPointer);
+
+  auto *v_casted = dynamic_cast<DereferenceAST *>(p_casted->value);
+  REQUIRE(v_casted != nullptr);
+  REQUIRE(v_casted->datatype == 0);
+  REQUIRE(v_casted->flags.isPointer);
+  REQUIRE(v_casted->identifierName == "myIntPtr");
 }

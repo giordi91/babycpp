@@ -9,11 +9,9 @@ namespace parser {
 using codegen::Argument;
 using codegen::ExprAST;
 using codegen::FunctionAST;
-using codegen::IfAST;
 using codegen::NumberExprAST;
 using codegen::PrototypeAST;
 using codegen::VariableExprAST;
-using diagnostic::Diagnostic;
 using diagnostic::IssueCode;
 using lexer::Token;
 
@@ -249,6 +247,23 @@ ExprAST *Parser::parsePrimary() {
   }
   case Token::tok_nullptr: {
     return parseNullptr();
+  }
+  case Token::tok_operator: {
+    // if we get here, there is only one possiblity, meaning that we have a
+    // pointer dereference, lets check for that otherwise is an error
+    if (lex->identifierStr != "*") {
+      logParserError("found operator in primary expression, only supported "
+                     "operator is * for pointer dereference, got:" +
+                         std::to_string(lex->currtok),
+                     lex, IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+
+      return nullptr;
+    }
+
+    // if we are here we have a pointer dereference, i don't think there are
+    // other cases in a primary to have a * operator and not being a pointer
+    // dereference
+    return parseDereference();
   }
   }
 }
@@ -760,6 +775,22 @@ PrototypeAST *Parser::parsePrototype() {
   // need to check semicolon at the end;
   // here we can generate the prototype node;
   return factory->allocPrototypeAST(datatype, functionName, args, true);
+}
+
+codegen::ExprAST *Parser::parseDereference() {
+
+  lex->gettok();//eating *
+  if(lex->currtok != Token::tok_identifier)
+  {
+    logParserError("expected identifier after dereference operator, got:" +
+                   std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+
+  }
+  auto* node = factory->allocDereferenceAST(lex->identifierStr);
+  lex->gettok(); //eat identifier name
+  return node;
 }
 
 } // namespace parser

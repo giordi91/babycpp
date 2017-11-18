@@ -106,6 +106,10 @@ struct Parser {
 
   /**@brief parses a statement which involves an assigment, both LHS anr RHS*/
   codegen::ExprAST *parseAssigment();
+
+    /**@brief parses a statement which involves a pointer dereference*/
+    codegen::ExprAST *parseDereference();
+
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */
