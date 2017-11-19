@@ -82,8 +82,8 @@ struct Codegenerator {
    * @return :return alloca pointer
    */
   llvm::AllocaInst *createEntryBlockAlloca(llvm::Function *function,
-                                           const std::string &varName,
-                                           int type, bool isPointer);
+                                           const std::string &varName, int type,
+                                           bool isPointer);
 
   /**This function takes in two datatpes and figures out the result of
    * the operation
@@ -157,10 +157,18 @@ inline llvm::Type *getType(int type, Codegenerator *gen,
   }
   if (isPointer) {
 
-  return llvm::Type::getInt32PtrTy(gen->context);
+    return llvm::Type::getInt32PtrTy(gen->context);
   }
 
   return llvm::Type::getInt32Ty(gen->context);
+}
+
+inline int fromLLVMtoParserType(llvm::AllocaInst *v) {
+  if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
+    return Token::tok_float;
+  } else {
+    return Token::tok_int;
+  }
 }
 } // namespace codegen
 } // namespace babycpp

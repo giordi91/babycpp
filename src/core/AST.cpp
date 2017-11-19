@@ -508,16 +508,31 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
   }
   // if we got here it means we have a pointer we can write to so we first
   // generate the value for the  RHS the we write to it using the pointer
-  Value* rhsValue = rhs->codegen(gen);
-  if(rhsValue == nullptr)
-  {
-    logCodegenError("error in generating rhs for pointer assigment",
-                    gen, IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
+  Value *rhsValue = rhs->codegen(gen);
+  if (rhsValue == nullptr) {
+    logCodegenError("error in generating rhs for pointer assigment", gen,
+                    IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
     return nullptr;
   }
-  //TODO(giordi) do data check here before proceeding?
-  //we can now proceed with the store
-  Value *ptrLoaded = gen->builder.CreateLoad(v, (identifierName + "Dereferenced").c_str());
+  // updating the datatype
+  if (datatype == 0) {
+    datatype = fromLLVMtoParserType(v);
+  }
+
+  // TODO(giordi) this won't work in the future for custom datatypes like
+  // structs, will need a fat  datatype a int won't cut anymore probably
+  // lets compare the datatype with what we want to assign
+  if (rhs->datatype != datatype) {
+    logCodegenError(
+        "mismatch datatype assigment got: " + std::to_string(datatype) +
+            " on LHS and got: " + std::to_string(rhs->datatype) + " on RHS",
+        gen, IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
+    return nullptr;
+  }
+
+  // we can now proceed with the store
+  Value *ptrLoaded =
+      gen->builder.CreateLoad(v, (identifierName + "Dereferenced").c_str());
   return gen->builder.CreateStore(rhsValue, ptrLoaded);
 }
 } // namespace codegen
