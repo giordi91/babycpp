@@ -263,6 +263,7 @@ TEST_CASE("Testing column advancement 2", "[lexer]") {
   REQUIRE(lex.columnNumber == 18);
 
   lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_else);
   REQUIRE(lex.columnNumber == 5);
   REQUIRE(lex.lineNumber == 3);
 
@@ -448,4 +449,37 @@ TEST_CASE("Testing lexing free", "[lexer]") {
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "myPtr");
+}
+
+TEST_CASE("Testing linefeed issue from maya", "[lexer]") {
+
+  const std::string str{"float testFunc(float a , float b)\n"
+  "{ float result = 0.0; result = result + a; return result; }"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_float);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_open_round);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_float);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_comma);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_float);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok != Token::tok_no_match);
+  REQUIRE(lex.currtok != Token::tok_open_curly);
 }

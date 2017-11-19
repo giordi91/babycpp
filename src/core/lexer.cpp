@@ -86,7 +86,7 @@ void Lexer::gettok() {
 
   // in the offset variable we are going to store how many char will be
   // eaten by the token
-  int offset;
+  int offset=0;
   std::string extractedString = extractStringFromMatch(matcher, &offset);
   // handling case of not match
   if (!gotMatch) {

@@ -14,7 +14,7 @@ static const std::regex MAIN_REGEX(
                                        // identifier either
     R"(|[ \t]*([\d.]+))"               // here we match digits
     R"(|[ \t]*([\(\)\{\}\+-/\*;,<=]))" // parsing supported ascii
-    R"(|[ \s]([\r\n|\r|\n]))"          // catching new line combinations
+    R"(|[ \t]*([\r\n|\r|\n]))"         // catching new line combinations
 
 );
 
@@ -35,14 +35,14 @@ enum Token {
   tok_int = -3,
   tok_float = -4,
   tok_string = -5,
-  tok_void_ptr= -6,
+  tok_void_ptr = -6,
 
   // data
   tok_identifier = -7,
   tok_number = -8,
   tok_nullptr = -9,
-  tok_malloc= -10,
-  tok_free= -11,
+  tok_malloc = -10,
+  tok_free = -11,
   // misc
   tok_operator = -12,
   tok_assigment_operator = -13,

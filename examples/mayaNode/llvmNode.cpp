@@ -1,5 +1,6 @@
 #include "llvmNode.h"
 #include <maya/MFnNumericAttribute.h>
+#include <maya/MGlobal.h>
 
 MTypeId LLVMNode::typeId(0x80011);
 
@@ -51,25 +52,46 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
   }
   if (codeDirty) {
 
-	  //std::cout<<"is handle empty? "<<handle
+    // std::cout<<"is handle empty? "<<handle
     std::cout << "code is dirty!!!!" << std::endl;
 
-    if (isHandle == true) {
-      jit.removeModule(handle);
-    }
     babycpp::codegen::Codegenerator gen;
 
     MString mayaCode = dataBlock.inputValue(code).asString();
     std::string codeData{mayaCode.asChar()};
+    if (codeData == "") {
+      return MS::kSuccess;
+    }
+
     gen.initFromString(codeData);
     auto p = gen.parser.parseFunction();
+    if (p == nullptr) {
+      auto error = gen.printDiagnostic();
+      std::cout << error << std::endl;
+      MGlobal::displayError(MString(error.c_str()));
+      return MS::kSuccess;
+    }
     // making sure the code is generated
-    p->codegen(&gen);
+    auto res = p->codegen(&gen);
+    if (res == nullptr) {
+      auto error = gen.printDiagnostic();
+      std::cout << error << std::endl;
+      MGlobal::displayError(MString(error.c_str()));
+      return MS::kSuccess;
+    }
+
+    if (isHandle == true) {
+      jit.removeModule(handle);
+    }
 
     handle = jit.addModule(gen.module);
     auto symbol = jit.findSymbol("testFunc");
     customFunction =
         (float (*)(float, float))(intptr_t)llvm::cantFail(symbol.getAddress());
+    if (customFunction == nullptr) {
+      return MS::kSuccess;
+    }
+
     codeDirty = false;
     isHandle = true;
   }
@@ -87,7 +109,7 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
   /*
           if (plug==output)
           {
-                  
+                  
 
 
 
@@ -115,7 +137,7 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
                   for (int unsigned
      i=0;i<inputMatrixH.elementCount();i++,inputMatrixH.next())
                   {
-                          
+                          
 
 
 
@@ -124,14 +146,14 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
 
                           MMatrix currentMatrix =
      inputMatrixH.inputValue(&stat).asMatrix() ;
-                          
+                          
 
 
 
 
 
                           //Compensate the locator matrix
-                          
+                          
 
 
 
@@ -141,14 +163,14 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
                           MPoint matrixP
      (fixedMatrix[3][0],fixedMatrix[3][1],fixedMatrix[3][2]);
                           pointArray.append(matrixP);
-                          
+                          
 
 
 
 
 
                   }
-                  
+                  
 
 
 
@@ -159,7 +181,7 @@ MStatus LLVMNode::compute(const MPlug &plug, MDataBlock &dataBlock) {
           MObject curveData= curveDataFn.create();
 
           curveFn.createWithEditPoints(pointArray,degreeValue,MFnNurbsCurve::kOpen,0,0,0,curveData,&stat);
-          
+          
 
 
 
