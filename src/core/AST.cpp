@@ -481,15 +481,8 @@ llvm::Value *DereferenceAST::codegen(Codegenerator *gen) {
     }
   }
 
-  // now at this point ,we might have a simple variable for
-  // which we gen a load, or we might have an assignment
-  // if it is the case ,we have a value which is not nullptr
-  // if (value != nullptr) {
-  //  // storing the result of RHS into LHS
-  //  Value *valGen = value->codegen(gen);
-  //  return gen->builder.CreateStore(valGen, v);
-  //}
-  // otherwise we just generate the load
+  // here we first load the pointer to a register and then we load from that
+  // pointer,  this hields a double load
   Value *ptrLoaded = gen->builder.CreateLoad(v, identifierName.c_str());
   // now we loaded the pointer, what we are going to do is load from the pionter
   return gen->builder.CreateLoad(ptrLoaded,
