@@ -469,4 +469,25 @@ TEST_CASE("Testing pointer value dereference int code gen", "[codegen]") {
   //gen.dumpLlvmData(v, "tests/core/intDereferenceFunction.ll");
   auto expected = getFile("tests/core/intDereferenceFunction.ll");
   REQUIRE(outs == expected);
+
 }
+
+TEST_CASE("Testing pointer value writing to code gen", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int* a){ *a = 10; int x  =0; return x;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/intDereferenceForWritingPointer.ll");
+  auto expected = getFile("tests/core/intDereferenceForWritingPointer.ll");
+  REQUIRE(outs == expected);
+}
+

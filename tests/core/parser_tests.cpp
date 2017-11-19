@@ -20,6 +20,7 @@ using babycpp::codegen::FunctionAST;
 using babycpp::codegen::IfAST;
 using babycpp::codegen::NumberExprAST;
 using babycpp::codegen::PrototypeAST;
+using babycpp::codegen::ToPointerAssigmentAST;
 using babycpp::codegen::VariableExprAST;
 
 static babycpp::memory::FactoryAST factory;
@@ -1091,29 +1092,53 @@ TEST_CASE("Testing pointer value in func arg", "[parser]") {
   REQUIRE(proto_casted->args[0].type == Token::tok_float);
 
   // lets now check the body
-  auto& body1 = p_casted->body[0];
-  auto* body1_casted = dynamic_cast<VariableExprAST*>(body1);
+  auto &body1 = p_casted->body[0];
+  auto *body1_casted = dynamic_cast<VariableExprAST *>(body1);
   REQUIRE(body1_casted != nullptr);
   REQUIRE(body1_casted->datatype == Token::tok_float);
   REQUIRE(body1_casted->name == "res");
   REQUIRE(body1_casted->value != nullptr);
 
-  //lets now investigate the value
-  auto* value_casted = dynamic_cast<DereferenceAST*>(body1_casted->value);
+  // lets now investigate the value
+  auto *value_casted = dynamic_cast<DereferenceAST *>(body1_casted->value);
   REQUIRE(value_casted != nullptr);
   REQUIRE(value_casted->datatype == 0);
   REQUIRE(value_casted->flags.isPointer);
   REQUIRE(value_casted->identifierName == "a");
 
-  
   // lets now check the body second line
-  auto& body2 = p_casted->body[1];
-  auto* body2_casted = dynamic_cast<VariableExprAST*>(body2);
+  auto &body2 = p_casted->body[1];
+  auto *body2_casted = dynamic_cast<VariableExprAST *>(body2);
   REQUIRE(body2_casted != nullptr);
   REQUIRE(body2_casted->datatype == 0);
   REQUIRE(body2_casted->name == "res");
   REQUIRE(body2_casted->value == nullptr);
   REQUIRE(body2_casted->flags.isReturn);
+}
+
+TEST_CASE("Testing writing to pointer value", "[parser]") {
+
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" *myPtr = 20;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<ToPointerAssigmentAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->identifierName == "myPtr");
+  REQUIRE(p_casted->rhs != nullptr);
+
+  auto *rhs_casted = dynamic_cast<NumberExprAST*>(p_casted->rhs);
+  REQUIRE(rhs_casted != nullptr);
+  REQUIRE(rhs_casted->val.integerNumber == 20);
+  REQUIRE(rhs_casted->datatype == Token::tok_int);
+
 }
 
 // TODO(giordi) check function which return pointers

@@ -35,22 +35,25 @@ enum Token {
   tok_int = -3,
   tok_float = -4,
   tok_string = -5,
+  tok_void_ptr= -6,
 
   // data
-  tok_identifier = -6,
-  tok_number = -7,
-  tok_nullptr = -8,
+  tok_identifier = -7,
+  tok_number = -8,
+  tok_nullptr = -9,
+  tok_malloc= -10,
+  tok_free= -11,
   // misc
-  tok_operator = -9,
-  tok_assigment_operator = -10,
+  tok_operator = -12,
+  tok_assigment_operator = -13,
   // punctuation
-  tok_open_curly = -11,
-  tok_close_curly = -12,
-  tok_open_round = -13,
-  tok_close_round = -14,
-  tok_end_statement = -15,
-  tok_comma = -16,
-  tok_return = -17,
+  tok_open_curly = -14,
+  tok_close_curly = -15,
+  tok_open_round = -16,
+  tok_close_round = -17,
+  tok_end_statement = -18,
+  tok_comma = -19,
+  tok_return = -20,
 
   // flow
   tok_if = -25,
@@ -97,17 +100,18 @@ struct Number {
  * their token representation
  */
 static const std::unordered_map<std::string, Token> KEYWORDS{
-    {"int", tok_int},       {"float", tok_float},
-    {"string", tok_string}, {"+", tok_operator},
-    {"-", tok_operator},    {"*", tok_operator},
-    {"<", tok_operator},    {"/", tok_operator},
-    {"{", tok_open_curly},  {"}", tok_close_curly},
-    {"(", tok_open_round},  {")", tok_close_round},
-    {"extern", tok_extern}, {";", tok_end_statement},
-    {",", tok_comma},       {"=", tok_assigment_operator},
-    {"return", tok_return}, {"if", tok_if},
-    {"else", tok_else},     {"for", tok_for},
-	{"nullptr", tok_nullptr}};
+    {"int", tok_int},         {"float", tok_float},
+    {"string", tok_string},   {"+", tok_operator},
+    {"-", tok_operator},      {"*", tok_operator},
+    {"<", tok_operator},      {"/", tok_operator},
+    {"{", tok_open_curly},    {"}", tok_close_curly},
+    {"(", tok_open_round},    {")", tok_close_round},
+    {"extern", tok_extern},   {";", tok_end_statement},
+    {",", tok_comma},         {"=", tok_assigment_operator},
+    {"return", tok_return},   {"if", tok_if},
+    {"else", tok_else},       {"for", tok_for},
+    {"nullptr", tok_nullptr}, {"malloc", tok_malloc},
+    {"free", tok_free}};
 
 // aliases
 using Charmatch = std::match_results<const char *>;

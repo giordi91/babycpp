@@ -397,3 +397,55 @@ TEST_CASE("Testing pointer correctly", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_operator);
   REQUIRE(lex.identifierStr == "*");
 }
+
+TEST_CASE("Testing writing to pointer", "[lexer]") {
+
+  const std::string str{" *myPtr = 20;"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+
+  // the key thing here is that we let the lexer not include * in the
+  // token after that we let the lexer figure based on the type what to do
+  REQUIRE(lex.currtok == Token::tok_operator);
+  REQUIRE(lex.identifierStr == "*");
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_assigment_operator);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.integerNumber == 20);
+}
+
+TEST_CASE("Testing lexing allocation", "[lexer]") {
+
+  const std::string str{"malloc(20)"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_malloc);
+  REQUIRE(lex.identifierStr == "malloc");
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_open_round);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_number);
+  REQUIRE(lex.value.integerNumber == 20);
+}
+
+TEST_CASE("Testing lexing free", "[lexer]") {
+
+  const std::string str{"free(myPtr)"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+
+  REQUIRE(lex.currtok == Token::tok_free);
+  REQUIRE(lex.identifierStr == "free");
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_open_round);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  REQUIRE(lex.identifierStr == "myPtr");
+}

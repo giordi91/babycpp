@@ -66,13 +66,17 @@ struct FactoryAST {
   template <typename... Args> codegen::IfAST *allocIfAST(Args &&... args) {
     return allocASTNode<codegen::IfAST>(args...);
   }
-
   template <typename... Args> codegen::ForAST *allocForAST(Args &&... args) {
     return allocASTNode<codegen::ForAST>(args...);
   }
-    template <typename... Args> codegen::DereferenceAST* allocDereferenceAST(Args &&... args) {
-      return allocASTNode<codegen::DereferenceAST>(args...);
-    }
+  template <typename... Args>
+  codegen::DereferenceAST *allocDereferenceAST(Args &&... args) {
+    return allocASTNode<codegen::DereferenceAST>(args...);
+  }
+  template <typename... Args>
+  codegen::ToPointerAssigmentAST *allocToPointerAssigmentAST(Args &&... args) {
+    return allocASTNode<codegen::ToPointerAssigmentAST>(args...);
+  }
 
   std::vector<codegen::ExprAST *> ptrs;
   SlabAllocator allocator;

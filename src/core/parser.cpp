@@ -389,6 +389,12 @@ ExprAST *Parser::parseStatement() {
   } else if (lex->currtok == Token::tok_for) {
     exp = parseForStatement();
     expectSemicolon = false;
+  } else if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+    // the only time this can happen is when we are dereferencing a pointer to
+    // write to it
+    // something like *myPtr = 20;
+    // to handle that we are gonna call parse pointer assigment;
+    exp = parseToPointerAssigment();
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -445,9 +451,9 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
     lex->gettok(); // eat datatype
 
     if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
-		//here we got a datatype and a * which means is a pointer
+      // here we got a datatype and a * which means is a pointer
       isPointer = true;
-	  lex->gettok();//eating *;
+      lex->gettok(); // eating *;
     }
 
     if (lex->currtok != Token::tok_identifier) {
@@ -564,8 +570,6 @@ codegen::ExprAST *Parser::parseIfStatement() {
 
   std::vector<ExprAST *> ifStatements;
   auto res = parseStatementsUntillCurly(&ifStatements, this, true);
-  // auto *ifBranch = parseStatement();
-  // if (ifBranch == nullptr) {
   if (!res) {
     // TODO(giordi), verify error should be handled in expression
     return nullptr;
@@ -806,5 +810,43 @@ codegen::ExprAST *Parser::parseDereference() {
   return node;
 }
 
+codegen::ExprAST *Parser::parseToPointerAssigment() {
+
+  lex->gettok(); // eating the pointer;
+  // now we do expect an identifier;
+
+  if (lex->currtok != Token::tok_identifier) {
+    logParserError("expected identifier after dereference operator, got:" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+
+  std::string identifier = lex->identifierStr;
+  lex->gettok(); // eat identifier;
+
+  // now we expect to see an assigment operator
+  // TODO(giordi) support expression that computes a new pointer before
+  // dereferncing like something  *(myPtr +3)
+  if (lex->currtok != Token::tok_assigment_operator) {
+    logParserError(
+        "expected assigment operator after pointer dereference, got:" +
+            std::to_string(lex->currtok),
+        this, IssueCode::EXPECTED_TOKEN);
+    return nullptr;
+  }
+
+  lex->gettok(); // eat =
+
+  auto *RHS = parseExpression();
+  if (RHS == nullptr) {
+    logParserError("error parsing RHS of pointer assigment", this,
+                   IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+    return nullptr;
+  }
+
+  return factory->allocToPointerAssigmentAST(identifier,RHS);
+
+}
 } // namespace parser
 } // namespace babycpp

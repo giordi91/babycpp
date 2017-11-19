@@ -494,8 +494,31 @@ llvm::Value *DereferenceAST::codegen(Codegenerator *gen) {
   // now we loaded the pointer, what we are going to do is load from the pionter
   return gen->builder.CreateLoad(ptrLoaded,
                                  (identifierName + "Dereferenced").c_str());
-  std::cout << " CALLING DEREFERENCE" << std::endl;
-  return nullptr;
+}
+
+llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
+
+  // to dereference a pointer it means it must be defined already
+  llvm::AllocaInst *v = gen->namedValues[identifierName];
+  if (v == nullptr) {
+    logCodegenError("Error pointer variable" + identifierName +
+                        "is not defined",
+                    gen, IssueCode::UNDEFINED_VARIABLE);
+    return nullptr;
+  }
+  // if we got here it means we have a pointer we can write to so we first
+  // generate the value for the  RHS the we write to it using the pointer
+  Value* rhsValue = rhs->codegen(gen);
+  if(rhsValue == nullptr)
+  {
+    logCodegenError("error in generating rhs for pointer assigment",
+                    gen, IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
+    return nullptr;
+  }
+  //TODO(giordi) do data check here before proceeding?
+  //we can now proceed with the store
+  Value *ptrLoaded = gen->builder.CreateLoad(v, (identifierName + "Dereferenced").c_str());
+  return gen->builder.CreateStore(rhsValue, ptrLoaded);
 }
 } // namespace codegen
 } // namespace babycpp

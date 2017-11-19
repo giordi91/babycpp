@@ -191,6 +191,7 @@ TEST_CASE("testing bind with c functions", "[jit]") {
   jit.addModule(gen.module);
   auto symbol = jit.findSymbol("testFunc");
   auto func = (float (*)(float))(intptr_t)llvm::cantFail(symbol.getAddress());
+  //TODO(giordi) check what happen, and prevent crash for cos(0.5f) case instead of cosf
   REQUIRE(func(0.5) == Approx(cos(0.5f)));
 }
 TEST_CASE("testing pointer derefenence float jit", "[jit]") {
@@ -237,4 +238,28 @@ TEST_CASE("testing pointer derefenence int jit", "[jit]") {
   b = 8;
 
   REQUIRE(func(&a, &b) ==  110);
+}
+
+TEST_CASE("testing pointer derefenence int for writing jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int* a){ *a = 10; int x  =0; return x;}");
+
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int (*)(int*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  int a = -99;
+  //the function returns 0, but it writes to a adress in memory aswell
+  REQUIRE(func(&a) == 0);
+  REQUIRE(a == 10);
+  a = 102;
+  REQUIRE(func(&a) ==  0);
+  REQUIRE(a == 10);
 }

@@ -101,14 +101,18 @@ struct Parser {
   /**@brief parses a for loop statement and corresponding body*/
   codegen::ExprAST *parseForStatement();
 
-  /**@brief parses a null pointer return a NumberExpression as 0 and ptr which identifies nullptr */
+  /**@brief parses a null pointer return a NumberExpression as 0 and ptr which
+   * identifies nullptr */
   codegen::NumberExprAST *parseNullptr();
 
   /**@brief parses a statement which involves an assigment, both LHS anr RHS*/
   codegen::ExprAST *parseAssigment();
 
-    /**@brief parses a statement which involves a pointer dereference*/
-    codegen::ExprAST *parseDereference();
+  /**@brief parses a statement which involves a pointer dereference*/
+  codegen::ExprAST *parseDereference();
+
+  /**@brief parses an assiment to wherver the pointer is pointing to*/
+  codegen::ExprAST *parseToPointerAssigment();
 
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
