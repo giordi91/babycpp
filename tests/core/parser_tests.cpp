@@ -1134,11 +1134,36 @@ TEST_CASE("Testing writing to pointer value", "[parser]") {
   REQUIRE(p_casted->identifierName == "myPtr");
   REQUIRE(p_casted->rhs != nullptr);
 
-  auto *rhs_casted = dynamic_cast<NumberExprAST*>(p_casted->rhs);
+  auto *rhs_casted = dynamic_cast<NumberExprAST *>(p_casted->rhs);
   REQUIRE(rhs_casted != nullptr);
   REQUIRE(rhs_casted->val.integerNumber == 20);
   REQUIRE(rhs_casted->datatype == Token::tok_int);
-
 }
 
-// TODO(giordi) check function which return pointers
+//TODO(giordi) re enable when supporting casting and start to work on malloc
+//TEST_CASE("Testing malloc", "[parser]") {
+//  diagnosticParserTests.clear();
+//  Lexer lex(&diagnosticParserTests);
+//  // here missing  assignment in init
+//  lex.initFromString(" int* ptr = (int*) malloc(20);");
+//  Parser parser(&lex, &factory, &diagnosticParserTests);
+//  lex.gettok();
+//	  
+
+
+//  }
+TEST_CASE("Testing parsing of casts", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" int* ptr = (int*) floatPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+	  
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+
+
+  }
+  // TODO(giordi) check function which return pointers

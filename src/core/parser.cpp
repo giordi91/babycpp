@@ -83,6 +83,24 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> *statements,
   }
   return true;
 }
+inline bool isPointerCast(Lexer *lex) {
+
+  return (isDatatype(lex->currtok) &
+          (lex->lookAheadToken[0].token == Token::tok_operator) &
+          (lex->lookAheadToken[0].identifierStr == "*") &
+          (lex->lookAheadToken[1].token == Token::tok_close_round));
+}
+inline bool isDataCast(Lexer *lex) {
+  return (isDatatype(lex->currtok) &
+          (lex->lookAheadToken[0].token == Token::tok_close_round));
+}
+
+// this call assumes the lookahead to be already done
+inline bool isCastOperation(Lexer *lex) {
+
+  return (isPointerCast(lex) | isDataCast(lex));
+}
+
 // this function defines whether or not a token is a declaration
 // token or not, meaning defining an external function or datatype.
 // interesting to think of casting as "anonymous declaration maybe?"
@@ -526,6 +544,15 @@ FunctionAST *Parser::parseFunction() {
 
 ExprAST *Parser::parseParen() {
   lex->gettok(); // eating paren
+  // here we need to figure out if we have a generic expression or a type cast
+  lex->lookAhead(2);
+  // now if the next 3 tokens are datatype , operator * and ) we have a cast
+  if (isCastOperation(lex)) {
+    // if we are here we have a cast
+    std::cout << "damm sooooooooooooon we got a cast" << std::endl;
+    return parse_cast();
+  }
+
   auto *exp = parseExpression();
   if (lex->currtok != Token::tok_close_round) {
     logParserError("expected close paren after expression got:" +
@@ -845,8 +872,9 @@ codegen::ExprAST *Parser::parseToPointerAssigment() {
     return nullptr;
   }
 
-  return factory->allocToPointerAssigmentAST(identifier,RHS);
-
+  return factory->allocToPointerAssigmentAST(identifier, RHS);
 }
+
+codegen::ExprAST *Parser::parseCast() { return nullptr; }
 } // namespace parser
 } // namespace babycpp

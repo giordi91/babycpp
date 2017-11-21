@@ -243,5 +243,18 @@ struct ToPointerAssigmentAST : public ExprAST {
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
+struct CastAST : public ExprAST {
+
+  std::string identifierName;
+  ExprAST *rhs;
+  explicit CastAST(std::string inIdentifierName, ExprAST *inRhs)
+      : ExprAST(), identifierName(inIdentifierName), rhs(inRhs) {
+    nodetype = ToPointerAssigmentNode;
+    flags.isPointer = true;
+  }
+  virtual ~CastAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override;
+};
+
 } // namespace codegen
 } // namespace babycpp

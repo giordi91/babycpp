@@ -114,6 +114,9 @@ struct Parser {
   /**@brief parses an assiment to wherver the pointer is pointing to*/
   codegen::ExprAST *parseToPointerAssigment();
 
+  /**@brief this function parses a casts which can be either datatype or pointer cast*/
+  codegen::ExprAST *parseCast();
+
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */

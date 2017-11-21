@@ -530,5 +530,10 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
       gen->builder.CreateLoad(v, (identifierName + "Dereferenced").c_str());
   return gen->builder.CreateStore(rhsValue, ptrLoaded);
 }
+
+	llvm::Value* CastAST::codegen(Codegenerator* gen)
+	{
+		return nullptr;
+	}
 } // namespace codegen
 } // namespace babycpp
