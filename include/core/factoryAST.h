@@ -77,6 +77,10 @@ struct FactoryAST {
   codegen::ToPointerAssigmentAST *allocToPointerAssigmentAST(Args &&... args) {
     return allocASTNode<codegen::ToPointerAssigmentAST>(args...);
   }
+  template <typename... Args>
+  codegen::CastAST*allocCastAST(Args &&... args) {
+    return allocASTNode<codegen::CastAST>(args...);
+  }
 
   std::vector<codegen::ExprAST *> ptrs;
   SlabAllocator allocator;

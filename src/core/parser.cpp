@@ -550,7 +550,7 @@ ExprAST *Parser::parseParen() {
   if (isCastOperation(lex)) {
     // if we are here we have a cast
     std::cout << "damm sooooooooooooon we got a cast" << std::endl;
-    return parse_cast();
+    return parseCast();
   }
 
   auto *exp = parseExpression();
@@ -875,6 +875,46 @@ codegen::ExprAST *Parser::parseToPointerAssigment() {
   return factory->allocToPointerAssigmentAST(identifier, RHS);
 }
 
-codegen::ExprAST *Parser::parseCast() { return nullptr; }
+codegen::ExprAST *Parser::parseCast() {
+  lex->gettok(); // eat (
+
+  if (!isDatatype(lex->currtok)) {
+    // should never get to this error since we checked outside but better safe
+    // than sorry
+    logParserError("expected datatype after ( in cast operation", this,
+                   IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+    return nullptr;
+  }
+
+  int datatype = lex->currtok;
+  lex->gettok(); // parse datatype
+
+  bool isPointer = false;
+  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+    isPointer = true;
+    lex->gettok(); // eating *
+  }
+
+  if (lex->currtok != Token::tok_close_round) {
+    logParserError("expected ) at end of cast operation", this,
+                   IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+    return nullptr;
+  }
+
+  lex->gettok();//eat )
+  //now we do expect and expression which actually yields a pointer
+  ExprAST* RHS = parseExpression();
+  if (RHS == nullptr)
+  {
+    logParserError("error generating RHS of cast operation", this,
+                   IssueCode::CAST_ERROR);
+    return nullptr;
+  }
+  return factory->allocCastAST(datatype, isPointer, RHS);
+
+
+
+  return nullptr;
+}
 } // namespace parser
 } // namespace babycpp

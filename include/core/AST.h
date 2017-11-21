@@ -49,7 +49,8 @@ enum NodeType {
   IfNode = 7,
   ForNode = 8,
   DereferenceNode = 9,
-  ToPointerAssigmentNode = 10
+  ToPointerAssigmentNode = 10,
+  CastASTNode= 11,
 };
 
 struct Codegenerator;
@@ -245,12 +246,12 @@ struct ToPointerAssigmentAST : public ExprAST {
 
 struct CastAST : public ExprAST {
 
-  std::string identifierName;
   ExprAST *rhs;
-  explicit CastAST(std::string inIdentifierName, ExprAST *inRhs)
-      : ExprAST(), identifierName(inIdentifierName), rhs(inRhs) {
-    nodetype = ToPointerAssigmentNode;
-    flags.isPointer = true;
+  explicit CastAST(int inDatatype, bool isPointer, ExprAST *inRhs)
+      : ExprAST(), rhs(inRhs) {
+    nodetype = CastASTNode;
+    flags.isPointer = isPointer;
+	datatype = inDatatype;
   }
   virtual ~CastAST() = default;
   llvm::Value *codegen(Codegenerator *gen) override;

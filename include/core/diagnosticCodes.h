@@ -24,6 +24,7 @@ enum class IssueCode {
   EXPECTED_RETURN_DATATYPE = 1009,
   FOR_LOOP_FAILURE =1010, 
   UNEXPECTED_TOKEN_IN_DECLARATION= 1011,
+  CAST_ERROR= 2004,
 
   // 2000-2999 code gen codes
   ERROR_RHS_VARIABLE_ASSIGMENT = 2000,
@@ -68,6 +69,7 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
     {IssueCode::FOR_LOOP_CODE_FAILURE, "FOR_LOOP_CODE_FAILURE"},
     {IssueCode::UNEXPECTED_TOKEN_IN_DECLARATION, "UNEXPECTED_TOKEN_IN_DECLARATION"},
     {IssueCode::EXPECTED_POINTER, "EXPECTED_POINTER"},
+    {IssueCode::CAST_ERROR, "CAST_ERROR"},
 
 };
 
