@@ -328,8 +328,10 @@ llvm::Value *IfAST::codegen(Codegenerator *gen) {
         gen->builder.CreateFCmpONE(condValue, zeroConst, "ifcond");
   } else if (condValue->getType()->isIntegerTy()) {
 
+    // extracting the type size to make the comparison correct
+    int typeSize = condValue->getType()->getPrimitiveSizeInBits();
     auto zeroConst =
-        llvm::ConstantInt::get(gen->context, llvm::APInt(32, 0, true));
+        llvm::ConstantInt::get(gen->context, llvm::APInt(typeSize, 0, true));
 
     comparisonValue = gen->builder.CreateICmpNE(condValue, zeroConst, "ifcond");
     // resolving to int

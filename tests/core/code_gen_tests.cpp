@@ -445,7 +445,7 @@ TEST_CASE("Testing pointer value dereference code gen", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/floatDereferenceFunction.ll");
+  // gen.dumpLlvmData(v, "tests/core/floatDereferenceFunction.ll");
   auto expected = getFile("tests/core/floatDereferenceFunction.ll");
   REQUIRE(outs == expected);
 }
@@ -466,10 +466,9 @@ TEST_CASE("Testing pointer value dereference int code gen", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/intDereferenceFunction.ll");
+  // gen.dumpLlvmData(v, "tests/core/intDereferenceFunction.ll");
   auto expected = getFile("tests/core/intDereferenceFunction.ll");
   REQUIRE(outs == expected);
-
 }
 
 TEST_CASE("Testing pointer value writing to code gen", "[codegen]") {
@@ -486,8 +485,27 @@ TEST_CASE("Testing pointer value writing to code gen", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/intDereferenceForWritingPointer.ll");
+  // gen.dumpLlvmData(v, "tests/core/intDereferenceForWritingPointer.ll");
   auto expected = getFile("tests/core/intDereferenceForWritingPointer.ll");
   REQUIRE(outs == expected);
 }
 
+TEST_CASE("Testing less operator codegen", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int a, int b){ int res = 0; if(a < b){res = "
+                     "1;}else{res =2;}return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/implicitBoolSupportInComparison.ll");
+  auto expected = getFile("tests/core/implicitBoolSupportInComparison.ll");
+  REQUIRE(outs == expected);
+}
