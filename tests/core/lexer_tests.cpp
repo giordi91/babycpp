@@ -451,10 +451,11 @@ TEST_CASE("Testing lexing free", "[lexer]") {
   REQUIRE(lex.identifierStr == "myPtr");
 }
 
-TEST_CASE("Testing linefeed issue from maya", "[lexer]") {
+TEST_CASE("Testing linefeed with no space", "[lexer]") {
 
-  const std::string str{"float testFunc(float a , float b)\n"
-  "{ float result = 0.0; result = result + a; return result; }"};
+  const std::string str{
+      "float testFunc(float a , float b)\n"
+      "{ float result = 0.0; result = result + a; return result; }"};
   Lexer lex(&diagnostic);
   lex.initFromString(str);
   lex.gettok();
@@ -482,4 +483,22 @@ TEST_CASE("Testing linefeed issue from maya", "[lexer]") {
   lex.gettok();
   REQUIRE(lex.currtok != Token::tok_no_match);
   REQUIRE(lex.currtok != Token::tok_open_curly);
+}
+TEST_CASE("Testing void ptr", "[lexer]") {
+
+  const std::string str{"void* ptr  voidvoid*"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_void_ptr);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_operator);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  //the voidvoid gets parsed as identifier since the alg match the whole word
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_operator);
+  lex.gettok();
 }

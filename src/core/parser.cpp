@@ -18,10 +18,6 @@ using lexer::Token;
 const std::unordered_map<char, int> Parser::BIN_OP_PRECEDENCE = {
     {'<', 10}, {'+', 20}, {'-', 20}, {'*', 40}, {'/', 50}};
 
-// UTILITY
-inline bool isDatatype(int tok) {
-  return (tok == Token::tok_float || tok == Token::tok_int);
-}
 // ERROR LOGGING
 inline void logParserError(const std::string &msg, Lexer *lexer,
                            IssueCode code) {
@@ -85,14 +81,16 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> *statements,
 }
 inline bool isPointerCast(Lexer *lex) {
 
-  return (isDatatype(lex->currtok) &
-          (lex->lookAheadToken[0].token == Token::tok_operator) &
-          (lex->lookAheadToken[0].identifierStr == "*") &
-          (lex->lookAheadToken[1].token == Token::tok_close_round));
+  // this function expects 3 look ahead tokens
+  return (Parser::isDatatype(lex->lookAheadToken[0].token) &
+          (lex->lookAheadToken[1].token == Token::tok_operator) &
+          (lex->lookAheadToken[1].identifierStr == "*") &
+          (lex->lookAheadToken[2].token == Token::tok_close_round));
 }
 inline bool isDataCast(Lexer *lex) {
-  return (isDatatype(lex->currtok) &
-          (lex->lookAheadToken[0].token == Token::tok_close_round));
+  // this function expects 2 look ahead tokens
+  return (Parser::isDatatype(lex->lookAheadToken[0].token) &
+          (lex->lookAheadToken[1].token == Token::tok_close_round));
 }
 
 // this call assumes the lookahead to be already done
@@ -311,6 +309,13 @@ ExprAST *Parser::parseAssigment() {
 
   lex->gettok(); // eat = operator
   auto *RHS = parseExpression();
+  if(RHS == nullptr)
+  {
+    logParserError(
+        "error in generating RHS of assigment",
+        this, IssueCode::CANNOT_GENERATE_RHS);
+    return nullptr;
+  }
   ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
   node->flags.isDefinition = true;
   node->flags.isPointer = isPtr;
@@ -324,9 +329,20 @@ ExprAST *Parser::parseDeclaration() {
   // a function definition etc, this require a bit of look ahead!
 
   lex->lookAhead(3);
-  // lex->gettok(); // eating datatype
   // looking ahead 2 tokens, which should give us the identifier
   // and the next token
+
+  // first we need to check if the tok is pointer and wheter or not we got a *
+  // operator after
+  if ((lex->currtok == Token::tok_void_ptr) &&
+      !(lex->lookAheadToken[0].token == Token::tok_operator &&
+        lex->lookAheadToken[0].identifierStr == "*")) {
+    logParserError(
+        "expected * after void, cannot use void as not pointer type, got :" +
+            std::to_string(lex->currtok),
+        this, IssueCode::ERROR_IN_VOID_DATATYPE);
+    return nullptr;
+  }
 
   // const lexer::MovableToken& nextTok= lex->lookAheadToken[0];
   if (lex->lookAheadToken[0].token == Token::tok_identifier) {
@@ -458,7 +474,7 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       return true;
     }
     // we expect to see seqence of data_type identifier comma
-    if (!isDatatype(lex->currtok)) {
+    if (!Parser::isDatatype(lex->currtok)) {
       logParserError("expected data type identifier for argument got:" +
                          std::to_string(lex->currtok),
                      lex, IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
@@ -543,16 +559,16 @@ FunctionAST *Parser::parseFunction() {
 }
 
 ExprAST *Parser::parseParen() {
-  lex->gettok(); // eating paren
+
   // here we need to figure out if we have a generic expression or a type cast
-  lex->lookAhead(2);
+  lex->lookAhead(3);
   // now if the next 3 tokens are datatype , operator * and ) we have a cast
   if (isCastOperation(lex)) {
     // if we are here we have a cast
-    std::cout << "damm sooooooooooooon we got a cast" << std::endl;
     return parseCast();
   }
 
+  lex->gettok(); // eating paren
   auto *exp = parseExpression();
   if (lex->currtok != Token::tok_close_round) {
     logParserError("expected close paren after expression got:" +
@@ -613,8 +629,8 @@ codegen::ExprAST *Parser::parseIfStatement() {
   std::vector<ExprAST *> elseStatements;
   if (lex->currtok == Token::tok_else) {
     lex->gettok(); // esting else
-    // now at this point we can have two possiblities, either directly the else
-    // body or the if for the next  contidion
+    // now at this point we can have two possiblities, either directly the
+    // else body or the if for the next  contidion
     if (lex->currtok == Token::tok_if) {
       // TODO(giordi) support if else statement to make life easier
       // for the programmer
@@ -668,6 +684,7 @@ codegen::ExprAST *Parser::parseForStatement() {
   ExprAST *initialisationExp = nullptr;
   if (isDatatype(lex->currtok)) {
     // if is a datatype we then expect an identifier and an assigment
+
     if (lex->lookAheadToken[0].token != Token::tok_identifier) {
 
       logParserError("expected identifier after datatype in for loop variable "
@@ -686,7 +703,7 @@ codegen::ExprAST *Parser::parseForStatement() {
     }
 
     initialisationExp = parseStatement();
-  } else if (lex->currtok == Token::tok_identifier) {
+  } else {
     if (lex->lookAheadToken[0].token != Token::tok_assigment_operator) {
 
       logParserError("expected assigment operator after varible declaration in "
@@ -787,6 +804,13 @@ PrototypeAST *Parser::parsePrototype() {
   if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
     isPointer = true;
     lex->gettok(); // eating *
+  }
+  if ((datatype == Token::tok_void_ptr) & !isPointer) {
+    logParserError(
+        "expected * after void, cannot use void as not pointer type, got :" +
+            std::to_string(lex->currtok),
+        this, IssueCode::ERROR_IN_VOID_DATATYPE);
+    return nullptr;
   }
 
   if (lex->currtok != Token::tok_identifier) {
@@ -894,6 +918,13 @@ codegen::ExprAST *Parser::parseCast() {
     isPointer = true;
     lex->gettok(); // eating *
   }
+  if ((datatype == Token::tok_void_ptr) & !isPointer) {
+    logParserError(
+        "expected * after void, cannot use void as not pointer type, got :" +
+            std::to_string(lex->currtok),
+        this, IssueCode::ERROR_IN_VOID_DATATYPE);
+    return nullptr;
+  }
 
   if (lex->currtok != Token::tok_close_round) {
     logParserError("expected ) at end of cast operation", this,
@@ -901,18 +932,15 @@ codegen::ExprAST *Parser::parseCast() {
     return nullptr;
   }
 
-  lex->gettok();//eat )
-  //now we do expect and expression which actually yields a pointer
-  ExprAST* RHS = parseExpression();
-  if (RHS == nullptr)
-  {
+  lex->gettok(); // eat )
+  // now we do expect and expression which actually yields a pointer
+  ExprAST *RHS = parseExpression();
+  if (RHS == nullptr) {
     logParserError("error generating RHS of cast operation", this,
                    IssueCode::CAST_ERROR);
     return nullptr;
   }
   return factory->allocCastAST(datatype, isPointer, RHS);
-
-
 
   return nullptr;
 }

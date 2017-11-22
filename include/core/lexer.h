@@ -111,7 +111,7 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
     {"return", tok_return},   {"if", tok_if},
     {"else", tok_else},       {"for", tok_for},
     {"nullptr", tok_nullptr}, {"malloc", tok_malloc},
-    {"free", tok_free}};
+    {"free", tok_free}, {"void",tok_void_ptr}};
 
 // aliases
 using Charmatch = std::match_results<const char *>;

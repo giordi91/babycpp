@@ -114,13 +114,20 @@ struct Parser {
   /**@brief parses an assiment to wherver the pointer is pointing to*/
   codegen::ExprAST *parseToPointerAssigment();
 
-  /**@brief this function parses a casts which can be either datatype or pointer cast*/
+  /**@brief this function parses a casts which can be either datatype or pointer
+   * cast*/
   codegen::ExprAST *parseCast();
 
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
+
+  // UTILITY
+  static inline bool isDatatype(int tok) {
+    return ((tok == Token::tok_float) | (tok == Token::tok_int) |
+            (tok == Token::tok_void_ptr));
+  }
 
   /**@brief utiltiy function telling us if the given token is part
    * of a declaration.
@@ -130,9 +137,9 @@ struct Parser {
    * @return: whether or not the token represents a declaration
    */
   static inline bool isDeclarationToken(int tok) {
-    bool isDatatype = (tok == Token::tok_float) || (tok == Token::tok_int);
+    bool isDatatype = Parser::isDatatype(tok);
     bool isExtern = tok == Token::tok_extern;
-    return isDatatype || isExtern;
+    return isDatatype | isExtern;
   }
   // data
   Lexer *lex;

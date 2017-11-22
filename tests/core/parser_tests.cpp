@@ -14,6 +14,7 @@ using babycpp::parser::Parser;
 using babycpp::codegen::Argument;
 using babycpp::codegen::BinaryExprAST;
 using babycpp::codegen::CallExprAST;
+using babycpp::codegen::CastAST;
 using babycpp::codegen::DereferenceAST;
 using babycpp::codegen::ExprAST;
 using babycpp::codegen::FunctionAST;
@@ -1140,16 +1141,15 @@ TEST_CASE("Testing writing to pointer value", "[parser]") {
   REQUIRE(rhs_casted->datatype == Token::tok_int);
 }
 
-//TODO(giordi) re enable when supporting casting and start to work on malloc
-//TEST_CASE("Testing malloc", "[parser]") {
+// TODO(giordi) re enable when supporting casting and start to work on malloc
+// TEST_CASE("Testing malloc", "[parser]") {
 //  diagnosticParserTests.clear();
 //  Lexer lex(&diagnosticParserTests);
 //  // here missing  assignment in init
 //  lex.initFromString(" int* ptr = (int*) malloc(20);");
 //  Parser parser(&lex, &factory, &diagnosticParserTests);
 //  lex.gettok();
-//	  
-
+//
 
 //  }
 TEST_CASE("Testing parsing of casts", "[parser]") {
@@ -1159,11 +1159,102 @@ TEST_CASE("Testing parsing of casts", "[parser]") {
   lex.initFromString(" int* ptr = (int*) floatPtr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
-	  
+
   auto p = parser.parseStatement();
   checkParserErrors();
   REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->datatype == Token::tok_int);
+  REQUIRE(p_casted->flags.isPointer == true);
 
+  auto *rhs_casted = dynamic_cast<CastAST *>(p_casted->value);
+  REQUIRE(rhs_casted != nullptr);
+  REQUIRE(rhs_casted->datatype == Token::tok_int);
+  REQUIRE(rhs_casted->flags.isPointer == true);
+  REQUIRE(rhs_casted->rhs != nullptr);
 
-  }
-  // TODO(giordi) check function which return pointers
+  auto data_casted = dynamic_cast<VariableExprAST *>(rhs_casted->rhs);
+  REQUIRE(data_casted != nullptr);
+  REQUIRE(data_casted->datatype == 0);
+  REQUIRE(data_casted->value == nullptr);
+  REQUIRE(data_casted->name == "floatPtr");
+}
+TEST_CASE("Testing parsing of casts missing )", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" int* ptr = (int* floatPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 3);
+
+  auto err1 = parser.diagnostic->getError();
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+}
+
+TEST_CASE("Testing parsing of casts with void", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" void* ptr = (void*)floatPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->datatype == Token::tok_void_ptr);
+  REQUIRE(p_casted->flags.isPointer == true);
+
+  auto *rhs_casted = dynamic_cast<CastAST *>(p_casted->value);
+  REQUIRE(rhs_casted != nullptr);
+  REQUIRE(rhs_casted->datatype == Token::tok_void_ptr);
+  REQUIRE(rhs_casted->flags.isPointer == true);
+  REQUIRE(rhs_casted->rhs != nullptr);
+
+  auto data_casted = dynamic_cast<VariableExprAST *>(rhs_casted->rhs);
+  REQUIRE(data_casted != nullptr);
+  REQUIRE(data_casted->datatype == 0);
+  REQUIRE(data_casted->value == nullptr);
+  REQUIRE(data_casted->name == "floatPtr");
+}
+
+TEST_CASE("Testing  void can't be used as not pointer in assigment type", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" void ptr = (void*)floatPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 1);
+
+  auto err1 = parser.diagnostic->getError();
+  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::ERROR_IN_VOID_DATATYPE);
+}
+
+TEST_CASE("Testing  void can't be used as not pointer in cast ", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" void* ptr = (void)floatPtr;");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  REQUIRE(p == nullptr);
+  REQUIRE(parser.diagnostic->hasErrors() == 2);
+
+  auto err1 = parser.diagnostic->getError();
+  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::ERROR_IN_VOID_DATATYPE);
+}
+// TODO(giordi) check function which return pointers
