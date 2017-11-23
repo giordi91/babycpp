@@ -100,6 +100,8 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
       datatype = Token::tok_int;
     } else if (v->getType()->isPointerTy()) {
 
+		//TODO(giordi) I really don't like that, I need to start having a proper
+		//datatype around I can use and rely on FIX THIS WHEN POSSIBLE
       if (gen->variableTypes.find(name) != gen->variableTypes.end()) {
         auto currPtrType = gen->variableTypes[name];
         datatype = currPtrType.datatype;
