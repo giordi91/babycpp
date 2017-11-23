@@ -505,7 +505,47 @@ TEST_CASE("Testing less operator codegen", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/implicitBoolSupportInComparison.ll");
+  // gen.dumpLlvmData(v, "tests/core/implicitBoolSupportInComparison.ll");
   auto expected = getFile("tests/core/implicitBoolSupportInComparison.ll");
   REQUIRE(outs == expected);
 }
+
+TEST_CASE("Testing float pointer as return in protoype is correct codegen ", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/floatPointerReturnTypeCorrect.ll");
+  auto expected = getFile("tests/core/floatPointerReturnTypeCorrect.ll");
+  REQUIRE(outs == expected);
+}
+
+// TEST_CASE("Testing pointer cast ", "[codegen]") {
+
+//  Codegenerator gen;
+//  gen.initFromString("float* testFunc(int *, int b){ float* res = 0; if(a <
+//  b){res = "
+//                     "1;}else{res =2;}return res;}");
+
+//  auto p = gen.parser.parseStatement();
+//  checkGenErrors(&gen);
+//  REQUIRE(p != nullptr);
+
+//  auto v = p->codegen(&gen);
+//  checkGenErrors(&gen);
+//  REQUIRE(v != nullptr);
+
+//  std::string outs = gen.printLlvmData(v);
+//  //gen.dumpLlvmData(v, "tests/core/implicitBoolSupportInComparison.ll");
+//  auto expected = getFile("tests/core/implicitBoolSupportInComparison.ll");
+//  REQUIRE(outs == expected);
+//}

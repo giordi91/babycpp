@@ -941,8 +941,6 @@ codegen::ExprAST *Parser::parseCast() {
     return nullptr;
   }
   return factory->allocCastAST(datatype, isPointer, RHS);
-
-  return nullptr;
 }
 } // namespace parser
 } // namespace babycpp

@@ -56,7 +56,7 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
 
     llvm::IRBuilder<> tempBuilder(&gen->currentScope->getEntryBlock(),
                                   gen->currentScope->getEntryBlock().begin());
-    llvm::Type *varType = getType(datatype, gen);
+    llvm::Type *varType = getType(datatype, gen, flags.isPointer);
     v = tempBuilder.CreateAlloca(varType, nullptr, name);
     gen->namedValues[name] = v;
 
@@ -75,6 +75,11 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
                       IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
       return nullptr;
     }
+	//if (flags.isPointer)
+	//{
+	//	auto loadedV = gen->builder.CreateLoad(v, name+"Dereference");
+    //    return gen->builder.CreateStore(valGen, loadedV);
+	//}
     return gen->builder.CreateStore(valGen, v);
   }
 
@@ -163,7 +168,7 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
     funcArgs[t] = getType(astArg.type, gen, astArg.isPointer);
   }
 
-  llvm::Type *returnType = getType(datatype, gen);
+  llvm::Type *returnType = getType(datatype, gen, flags.isPointer);
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
 
   auto *function = llvm::Function::Create(
@@ -531,9 +536,16 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
   return gen->builder.CreateStore(rhsValue, ptrLoaded);
 }
 
-	llvm::Value* CastAST::codegen(Codegenerator* gen)
+llvm::Value *CastAST::codegen(Codegenerator *gen) {
+	//here we need to use a bitcast operation
+	Value* rhsValue = rhs->codegen(gen);
+	if (rhs->flags.isPointer == false)
 	{
-		return nullptr;
+		//lets do a datacast
 	}
+
+
+	return nullptr; 
+}
 } // namespace codegen
 } // namespace babycpp

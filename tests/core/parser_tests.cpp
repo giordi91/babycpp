@@ -1257,4 +1257,23 @@ TEST_CASE("Testing  void can't be used as not pointer in cast ", "[parser]") {
   auto err1 = parser.diagnostic->getError();
   REQUIRE(err1.code == babycpp::diagnostic::IssueCode::ERROR_IN_VOID_DATATYPE);
 }
+
+TEST_CASE("Testing  return type is parsed correctly in protype ", "[parser]") {
+	diagnosticParserTests.clear();
+	Lexer lex(&diagnosticParserTests);
+	// here missing  assignment in init
+	lex.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
+	Parser parser(&lex, &factory, &diagnosticParserTests);
+	lex.gettok();
+
+	auto p = parser.parseStatement();
+	REQUIRE(p != nullptr);
+	auto *p_casted = dynamic_cast<FunctionAST*>(p);
+	REQUIRE(p_casted != nullptr);
+	REQUIRE(p_casted->proto != nullptr);
+	auto *proto_casted = dynamic_cast<PrototypeAST*>(p_casted->proto);
+	REQUIRE(proto_casted != nullptr);
+	REQUIRE(proto_casted->datatype == Token::tok_float);
+	REQUIRE(proto_casted->flags.isPointer== true);
+}
 // TODO(giordi) check function which return pointers
