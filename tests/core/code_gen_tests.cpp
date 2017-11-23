@@ -524,8 +524,85 @@ TEST_CASE("Testing float pointer as return in protoype is correct codegen ", "[c
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/floatPointerReturnTypeCorrect.ll");
+  gen.dumpLlvmData(v, "tests/core/floatPointerReturnTypeCorrect.ll");
   auto expected = getFile("tests/core/floatPointerReturnTypeCorrect.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing float pointer assigment null codegen ", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float* testFunc(){ float* res = nullptr; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  gen.dumpLlvmData(v, "tests/core/floatPointerAssignNull.ll");
+  auto expected = getFile("tests/core/floatPointerAssignNull.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing int pointer assigment null codegen ", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("int* testFunc(){ int* res = nullptr; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/intPointerAssignNull.ll");
+  auto expected = getFile("tests/core/intPointerAssignNull.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing int pointer assigment null to var not declaration codegen ", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("int* testFunc(int* b){ int* res = b;res = nullptr; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/intPointerAssignNullInNotDeclaration.ll");
+  auto expected = getFile("tests/core/intPointerAssignNullInNotDeclaration.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing float pointer assigment null to var not declaration codegen ", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString("float* testFunc(float* b){ float* res = b;res = nullptr; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  std::cout << outs << std::endl;
+  //gen.dumpLlvmData(v, "tests/core/floatPointerAssignNullInNotDeclaration.ll");
+  auto expected = getFile("tests/core/floatPointerAssignNullInNotDeclaration.ll");
   REQUIRE(outs == expected);
 }
 

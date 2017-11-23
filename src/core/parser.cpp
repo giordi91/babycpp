@@ -380,6 +380,7 @@ ExprAST *Parser::parseDeclaration() {
     case Token::tok_assigment_operator: {
       return parseAssigment();
     }
+    //TODO(giordi) should have a default case that logs error
     }
   }
 
@@ -785,6 +786,7 @@ codegen::NumberExprAST *Parser::parseNullptr() {
   auto *node = factory->allocNuberAST(zero);
   node->datatype = Token::tok_int;
   node->flags.isPointer = true;
+  node->flags.isNull = true;
   lex->gettok(); // eat nullptr;
   return node;
 }

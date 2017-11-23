@@ -123,8 +123,15 @@ struct Codegenerator {
   llvm::IRBuilder<> builder;
   std::shared_ptr<llvm::Module> module;
 
+  struct Datatype
+  {
+	  int datatype;
+	  int isPointer;
+	  int isNull;
+  };
   /// map holding variable names defined in the scope
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
+  std::unordered_map<std::string, Datatype> variableTypes;
   /**mapping from lexer types to LLCM types*/
   static const std::unordered_map<int, int> AST_LLVM_MAP;
   /** if we are in a scope that is the fucntion representing the

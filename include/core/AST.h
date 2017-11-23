@@ -19,6 +19,7 @@ struct ASTFlags {
   /** define wheter or not the AST defines a type or a function*/
   bool isDefinition : 1;
   bool isPointer : 1;
+  bool isNull: 1;
 };
 
 /**Simple structure defining an argument type for function

@@ -59,13 +59,25 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
     llvm::Type *varType = getType(datatype, gen, flags.isPointer);
     v = tempBuilder.CreateAlloca(varType, nullptr, name);
     gen->namedValues[name] = v;
+    gen->variableTypes[name] = {datatype, flags.isPointer, flags.isNull};
 
     if (value == nullptr) {
       std::cout << "error: expected value for value definition" << std::endl;
       return nullptr;
     }
 
-    Value *valGen = value->codegen(gen);
+    Value *valGen;
+    if (value->flags.isPointer && value->flags.isNull) {
+      // in the case that the RHS is a nullpointer we are going to generate the
+      // instruction directly
+      // TODO(giordi) this is not that pretty we are bypassing a node, what I
+      // think might be better is to  have the assigment operator feed the
+      // datatype if known
+      valGen = llvm::ConstantPointerNull::get(
+          llvm::PointerType::get(getType(datatype, gen, false), 0));
+    } else {
+      valGen = value->codegen(gen);
+    }
     // return gen->builder.CreateLoad(v, name.c_str());
     if (valGen == nullptr) {
       // we were not able to generate the error for this, the error should be
@@ -75,22 +87,31 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
                       IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
       return nullptr;
     }
-	//if (flags.isPointer)
-	//{
-	//	auto loadedV = gen->builder.CreateLoad(v, name+"Dereference");
-    //    return gen->builder.CreateStore(valGen, loadedV);
-	//}
     return gen->builder.CreateStore(valGen, v);
   }
 
   // if the datatype is not know, it means we need to be able to understand that
-  // from
-  // the variable that has be pre-generated, so we try to extract that
+  // from the variable that has be pre-generated, so we try to extract that
   if (datatype == 0) {
-    if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
+    auto currType = v->getAllocatedType()->getTypeID();
+    if (currType == llvm::Type::FloatTyID) {
       datatype = Token::tok_float;
-    } else {
+    } else if (currType == llvm::Type::IntegerTyID) {
       datatype = Token::tok_int;
+    } else if (v->getType()->isPointerTy()) {
+
+      if (gen->variableTypes.find(name) != gen->variableTypes.end()) {
+        auto currPtrType = gen->variableTypes[name];
+        datatype = currPtrType.datatype;
+        flags.isPointer = currPtrType.isPointer;
+        flags.isNull = currPtrType.isNull;
+      }
+      // TODO(giordi) investigate what happens when adding else branch with
+      // error, couple of tests fails else {
+      //  logCodegenError("cannot deduce variable datatype", gen,
+      //                  IssueCode::ERROR_RHS_VARIABLE_ASSIGMENT);
+      //  return nullptr;
+      //}
     }
   }
 
@@ -98,8 +119,19 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   // which we gen a load, or we might have an assignment
   // if it is the case ,we have a value which is not nullptr
   if (value != nullptr) {
-    // storing the result of RHS into LHS
-    Value *valGen = value->codegen(gen);
+    Value *valGen;
+    if (value->flags.isPointer && value->flags.isNull) {
+      // in the case that the RHS is a nullpointer we are going to generate
+      // the instruction directly
+      // TODO(giordi) this is not that pretty we are bypassing a node, what I
+      // think might be better is to  have the assigment operator feed the
+      // datatype if known
+      valGen = llvm::ConstantPointerNull::get(
+          llvm::PointerType::get(getType(datatype, gen, false), 0));
+    } else {
+      // storing the result of RHS into LHS
+      valGen = value->codegen(gen);
+    }
     return gen->builder.CreateStore(valGen, v);
   }
   // otherwise we just generate the load
@@ -207,6 +239,7 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
   // Record the function arguments in the NamedValues map.
   gen->namedValues.clear();
+  gen->variableTypes.clear();
   int counter = 0;
   for (auto &arg : function->args()) {
     // Create an alloca for this variable.
@@ -220,6 +253,8 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
     // Add arguments to variable symbol table.
     gen->namedValues[arg.getName()] = alloca;
+    gen->variableTypes[arg.getName()] = {datatype, flags.isPointer,
+                                         flags.isNull};
     counter += 1;
   }
 
@@ -477,9 +512,9 @@ llvm::Value *DereferenceAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  // if the datatype is not know, it means we need to be able to understand that
-  // from
-  // the variable that has be pre-generated, so we try to extract that
+  // if the datatype is not know, it means we need to be able to understand
+  // that from the variable that has be pre-generated, so we try to extract
+  // that
   if (datatype == 0) {
     if (v->getAllocatedType()->getTypeID() == llvm::Type::FloatTyID) {
       datatype = Token::tok_float;
@@ -491,7 +526,8 @@ llvm::Value *DereferenceAST::codegen(Codegenerator *gen) {
   // here we first load the pointer to a register and then we load from that
   // pointer,  this hields a double load
   Value *ptrLoaded = gen->builder.CreateLoad(v, identifierName.c_str());
-  // now we loaded the pointer, what we are going to do is load from the pionter
+  // now we loaded the pointer, what we are going to do is load from the
+  // pionter
   return gen->builder.CreateLoad(ptrLoaded,
                                  (identifierName + "Dereferenced").c_str());
 }
@@ -537,15 +573,13 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
 }
 
 llvm::Value *CastAST::codegen(Codegenerator *gen) {
-	//here we need to use a bitcast operation
-	Value* rhsValue = rhs->codegen(gen);
-	if (rhs->flags.isPointer == false)
-	{
-		//lets do a datacast
-	}
+  // here we need to use a bitcast operation
+  Value *rhsValue = rhs->codegen(gen);
+  if (rhs->flags.isPointer == false) {
+    // lets do a datacast
+  }
 
-
-	return nullptr; 
+  return nullptr;
 }
 } // namespace codegen
 } // namespace babycpp
