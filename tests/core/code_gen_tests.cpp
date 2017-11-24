@@ -510,7 +510,8 @@ TEST_CASE("Testing less operator codegen", "[codegen]") {
   REQUIRE(outs == expected);
 }
 
-TEST_CASE("Testing float pointer as return in protoype is correct codegen ", "[codegen]") {
+TEST_CASE("Testing float pointer as return in protoype is correct codegen ",
+          "[codegen]") {
 
   Codegenerator gen;
   gen.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
@@ -562,15 +563,17 @@ TEST_CASE("Testing int pointer assigment null codegen ", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/intPointerAssignNull.ll");
+  // gen.dumpLlvmData(v, "tests/core/intPointerAssignNull.ll");
   auto expected = getFile("tests/core/intPointerAssignNull.ll");
   REQUIRE(outs == expected);
 }
 
-TEST_CASE("Testing int pointer assigment null to var not declaration codegen ", "[codegen]") {
+TEST_CASE("Testing int pointer assigment null to var not declaration codegen ",
+          "[codegen]") {
 
   Codegenerator gen;
-  gen.initFromString("int* testFunc(int* b){ int* res = b;res = nullptr; return res;}");
+  gen.initFromString(
+      "int* testFunc(int* b){ int* res = b;res = nullptr; return res;}");
 
   auto p = gen.parser.parseStatement();
   checkGenErrors(&gen);
@@ -581,15 +584,18 @@ TEST_CASE("Testing int pointer assigment null to var not declaration codegen ", 
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/intPointerAssignNullInNotDeclaration.ll");
+  // gen.dumpLlvmData(v, "tests/core/intPointerAssignNullInNotDeclaration.ll");
   auto expected = getFile("tests/core/intPointerAssignNullInNotDeclaration.ll");
   REQUIRE(outs == expected);
 }
 
-TEST_CASE("Testing float pointer assigment null to var not declaration codegen ", "[codegen]") {
+TEST_CASE(
+    "Testing float pointer assigment null to var not declaration codegen ",
+    "[codegen]") {
 
   Codegenerator gen;
-  gen.initFromString("float* testFunc(float* b){ float* res = b;res = nullptr; return res;}");
+  gen.initFromString(
+      "float* testFunc(float* b){ float* res = b;res = nullptr; return res;}");
 
   auto p = gen.parser.parseStatement();
   checkGenErrors(&gen);
@@ -600,29 +606,94 @@ TEST_CASE("Testing float pointer assigment null to var not declaration codegen "
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  std::cout << outs << std::endl;
-  //gen.dumpLlvmData(v, "tests/core/floatPointerAssignNullInNotDeclaration.ll");
-  auto expected = getFile("tests/core/floatPointerAssignNullInNotDeclaration.ll");
+  // gen.dumpLlvmData(v,
+  // "tests/core/floatPointerAssignNullInNotDeclaration.ll");
+  auto expected =
+      getFile("tests/core/floatPointerAssignNullInNotDeclaration.ll");
   REQUIRE(outs == expected);
 }
 
-// TEST_CASE("Testing pointer cast ", "[codegen]") {
+TEST_CASE("Testing pointer cast int to float", "[codegen]") {
 
-//  Codegenerator gen;
-//  gen.initFromString("float* testFunc(int *, int b){ float* res = 0; if(a <
-//  b){res = "
-//                     "1;}else{res =2;}return res;}");
+  Codegenerator gen;
+  gen.initFromString(
+      "float* testFunc(int *b){ float* res = (float*)b; return res;}");
 
-//  auto p = gen.parser.parseStatement();
-//  checkGenErrors(&gen);
-//  REQUIRE(p != nullptr);
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
 
-//  auto v = p->codegen(&gen);
-//  checkGenErrors(&gen);
-//  REQUIRE(v != nullptr);
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
 
-//  std::string outs = gen.printLlvmData(v);
-//  //gen.dumpLlvmData(v, "tests/core/implicitBoolSupportInComparison.ll");
-//  auto expected = getFile("tests/core/implicitBoolSupportInComparison.ll");
-//  REQUIRE(outs == expected);
-//}
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/intToFloatPointerCast.ll");
+  auto expected = getFile("tests/core/intToFloatPointerCast.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing pointer cast float to int", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString(
+      "int* testFunc(float *b){ int* res = (int*)b; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/floatToIntPointerCast.ll");
+  auto expected = getFile("tests/core/floatToIntPointerCast.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing pointer cast float to void", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString(
+      "void* testFunc(float *b){ void* res = (void*)b; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/floatToVoidPointerCast.ll");
+  auto expected = getFile("tests/core/floatToVoidPointerCast.ll");
+  REQUIRE(outs == expected);
+}
+
+
+TEST_CASE("Testing pointer cast void* to int", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString(
+      "int* testFunc(void* b){ int* res = (int*)b; return res;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  //gen.dumpLlvmData(v, "tests/core/voidToIntPointerCast.ll");
+  auto expected = getFile("tests/core/voidToIntPointerCast.ll");
+  REQUIRE(outs == expected);
+}
+
+//TODO(giordi) test concatenated casts, not really useful but let see what happen should 
+//hold, something like (float*)(void*)myPyt;
+//not sure if double parent is working back to back

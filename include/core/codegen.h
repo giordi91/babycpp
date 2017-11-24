@@ -123,11 +123,10 @@ struct Codegenerator {
   llvm::IRBuilder<> builder;
   std::shared_ptr<llvm::Module> module;
 
-  struct Datatype
-  {
-	  int datatype;
-	  int isPointer;
-	  int isNull;
+  struct Datatype {
+    int datatype;
+    int isPointer;
+    int isNull;
   };
   /// map holding variable names defined in the scope
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
@@ -163,7 +162,10 @@ inline llvm::Type *getType(int type, Codegenerator *gen,
     }
   }
   if (isPointer) {
+    if (type == Token::tok_void_ptr) {
+      return llvm::Type::getInt8PtrTy(gen->context);
 
+    }
     return llvm::Type::getInt32PtrTy(gen->context);
   }
 

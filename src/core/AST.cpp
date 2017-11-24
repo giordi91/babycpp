@@ -42,6 +42,10 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   auto found = gen->namedValues.find(name);
   if (found != gen->namedValues.end()) {
     v = found->second;
+	auto& storeDatatype = gen->variableTypes[name];
+	datatype = storeDatatype.datatype;
+	flags.isPointer = storeDatatype.isPointer;
+	flags.isNull = storeDatatype.isNull;
   };
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
@@ -100,8 +104,8 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
       datatype = Token::tok_int;
     } else if (v->getType()->isPointerTy()) {
 
-		//TODO(giordi) I really don't like that, I need to start having a proper
-		//datatype around I can use and rely on FIX THIS WHEN POSSIBLE
+      // TODO(giordi) I really don't like that, I need to start having a proper
+      // datatype around I can use and rely on FIX THIS WHEN POSSIBLE
       if (gen->variableTypes.find(name) != gen->variableTypes.end()) {
         auto currPtrType = gen->variableTypes[name];
         datatype = currPtrType.datatype;
@@ -255,8 +259,9 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
     // Add arguments to variable symbol table.
     gen->namedValues[arg.getName()] = alloca;
-    gen->variableTypes[arg.getName()] = {datatype, flags.isPointer,
-                                         flags.isNull};
+    gen->variableTypes[arg.getName()] = {proto->args[counter].type, proto->args[counter].isPointer,
+                                         false}; //TODO(giordi) should pass argumetn as not null? we don't supprot 
+	                                             //default values so can't be nullptr 
     counter += 1;
   }
 
@@ -554,6 +559,7 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
   }
   // updating the datatype
   if (datatype == 0) {
+    // TODO(giordi) update to proper datatype
     datatype = fromLLVMtoParserType(v);
   }
 
@@ -577,11 +583,18 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
 llvm::Value *CastAST::codegen(Codegenerator *gen) {
   // here we need to use a bitcast operation
   Value *rhsValue = rhs->codegen(gen);
-  if (rhs->flags.isPointer == false) {
-    // lets do a datacast
+  if (rhs->flags.isPointer == false && flags.isPointer) {
+    logCodegenError("mismatch datatype for casting, rhs is not a pointer", gen,
+                    IssueCode::CAST_ERROR);
   }
 
-  return nullptr;
+  Value* cast = nullptr;
+  // we can do the cast
+  if (flags.isPointer) {
+    cast = gen->builder.CreateBitCast(rhsValue, getType(datatype, gen, true),"pointerCast");
+  }
+
+  return cast;
 }
 } // namespace codegen
 } // namespace babycpp

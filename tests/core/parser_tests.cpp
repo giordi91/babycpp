@@ -1229,7 +1229,6 @@ TEST_CASE("Testing parsing of casts with void", "[parser]") {
 TEST_CASE("Testing  void can't be used as not pointer in assigment type", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  assignment in init
   lex.initFromString(" void ptr = (void*)floatPtr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -1245,7 +1244,6 @@ TEST_CASE("Testing  void can't be used as not pointer in assigment type", "[pars
 TEST_CASE("Testing  void can't be used as not pointer in cast ", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  assignment in init
   lex.initFromString(" void* ptr = (void)floatPtr;");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -1261,7 +1259,6 @@ TEST_CASE("Testing  void can't be used as not pointer in cast ", "[parser]") {
 TEST_CASE("Testing  return type is parsed correctly in protype ", "[parser]") {
 	diagnosticParserTests.clear();
 	Lexer lex(&diagnosticParserTests);
-	// here missing  assignment in init
 	lex.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
 	Parser parser(&lex, &factory, &diagnosticParserTests);
 	lex.gettok();
@@ -1275,5 +1272,24 @@ TEST_CASE("Testing  return type is parsed correctly in protype ", "[parser]") {
 	REQUIRE(proto_casted != nullptr);
 	REQUIRE(proto_casted->datatype == Token::tok_float);
 	REQUIRE(proto_casted->flags.isPointer== true);
+}
+
+TEST_CASE("Testing  parsing void* as argument ", "[parser]") {
+	diagnosticParserTests.clear();
+	Lexer lex(&diagnosticParserTests);
+
+	lex.initFromString( "int* testFunc(void* b){ int* res = (int*)b; return res;}");
+
+	Parser parser(&lex, &factory, &diagnosticParserTests);
+	lex.gettok();
+
+	auto p = parser.parseStatement();
+	REQUIRE(p != nullptr);
+	auto *p_casted = dynamic_cast<FunctionAST*>(p);
+	REQUIRE(p_casted != nullptr);
+	auto *proto_casted = dynamic_cast<PrototypeAST* > (p_casted->proto);
+	REQUIRE(proto_casted != nullptr);
+	REQUIRE(proto_casted->args[0].isPointer == true);
+	REQUIRE(proto_casted->args[0].type== Token::tok_void_ptr);
 }
 // TODO(giordi) check function which return pointers

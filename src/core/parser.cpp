@@ -489,6 +489,7 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       // here we got a datatype and a * which means is a pointer
       isPointer = true;
       lex->gettok(); // eating *;
+
     }
 
     if (lex->currtok != Token::tok_identifier) {
