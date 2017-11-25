@@ -707,5 +707,67 @@ llvm::Value *CastAST::codegen(Codegenerator *gen) {
 
   return cast;
 }
+
+llvm::Value *StructMemberAST::codegen(Codegenerator *gen) {
+  logCodegenError("error struct member should not use codgen but codgenType",
+                  gen, IssueCode::STRUCT_MEMBER_ERROR);
+  return nullptr;
+}
+
+llvm::Type *StructMemberAST::codegenType(Codegenerator *gen) {
+  return getType(datatype, gen, flags.isPointer);
+}
+
+llvm::Value *StructAST::codegen(Codegenerator *gen) {
+  logCodegenError("error struct member should not use codgen but codgenType",
+                  gen, IssueCode::STRUCT_MEMBER_ERROR);
+  return nullptr;
+}
+
+int StructMemberAST::getTypeSize()
+{
+	if(flags.isPointer)
+	{ 
+		return 8;
+	}
+	//TODO(giordi) handle having a struct as member type
+	return 4;
+
+}
+llvm::Type *StructAST::codegenType(Codegenerator *gen) {
+
+  // lets loop all the members to get the type
+  std::vector<llvm::Type *> memberValues;
+  int globalOffset = 0;
+  for (auto &member : members) {
+    llvm::Type *currV = member->codegenType(gen);
+    if (currV == nullptr) {
+      logCodegenError("error in generating struct member", gen,
+                      IssueCode::STRUCT_MEMBER_ERROR);
+      return nullptr;
+    }
+    memberValues.push_back(currV);
+	member->biteOffset = globalOffset;
+    int currOffset = member->getTypeSize();
+    if (currOffset == -1) {
+      logCodegenError("error in computing member type size", gen,
+                      IssueCode::STRUCT_MEMBER_ERROR);
+      return nullptr;
+    }
+    globalOffset += currOffset;
+  }
+  //setting the struct size, which should now be the global offset
+  byteSize = globalOffset;
+  // if we got here we have all the members to create our struct
+
+  llvm::StructType *structDefinition = llvm::StructType::create(
+      gen->context,
+      llvm::ArrayRef<llvm::Type *>(memberValues.data(), memberValues.size()),
+      identifierName, false);
+
+  StructDefinition def{this, structDefinition};
+  gen->addCustomStruct(identifierName, def);
+  return structDefinition;
+}
 } // namespace codegen
 } // namespace babycpp

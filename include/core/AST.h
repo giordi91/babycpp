@@ -52,8 +52,8 @@ enum NodeType {
   DereferenceNode = 9,
   ToPointerAssigmentNode = 10,
   CastASTNode = 11,
-  StructMemberNode= 12,
-  StructNode= 13,
+  StructMemberNode = 12,
+  StructNode = 13,
 };
 
 struct Codegenerator;
@@ -263,6 +263,7 @@ struct CastAST : public ExprAST {
 struct StructMemberAST : public ExprAST {
 
   std::string identifierName;
+  int biteOffset = -1;
   explicit StructMemberAST(int inDatatype, bool isPointer,
                            std::string inIdentifierName)
       : ExprAST(), identifierName(inIdentifierName) {
@@ -271,41 +272,25 @@ struct StructMemberAST : public ExprAST {
     datatype = inDatatype;
   }
   virtual ~StructMemberAST() = default;
-  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
+  llvm::Value *codegen(Codegenerator *gen) override;
+  llvm::Type *codegenType(Codegenerator *gen);
+  int getTypeSize();
 };
 
 struct StructAST : public ExprAST {
 
   std::string identifierName;
-  std::vector<StructMemberAST*> members;
-  explicit StructAST( std::string inIdentifierName, std::vector<StructMemberAST*>& inMembers)
+  int byteSize= -1;
+  std::vector<StructMemberAST *> members;
+  explicit StructAST(std::string inIdentifierName,
+                     std::vector<StructMemberAST *> &inMembers)
       : ExprAST(), identifierName(inIdentifierName), members(inMembers) {
     nodetype = StructNode;
   }
   virtual ~StructAST() = default;
-  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
+  llvm::Value *codegen(Codegenerator *gen) override;
+  llvm::Type *codegenType(Codegenerator *gen);
 };
 
 } // namespace codegen
 } // namespace babycpp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

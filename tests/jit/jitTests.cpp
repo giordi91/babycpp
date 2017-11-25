@@ -458,7 +458,7 @@ TEST_CASE("Testing free jit", "[jit]") {
 
   float *a = static_cast<float *>(malloc(4));
   *a = -1.9999998;
-  int returned = func(a);
+  func(a);
   // here we can't really test that memory has been released that has to be done
   // visually  where you look at the memory window and check whether the header
   // is being modified or not

@@ -30,6 +30,14 @@ using lexer::Number;
  * coordinate the job from getting the source code to emitting
  * final IR
  */
+
+struct StructDefinition
+{
+	StructAST* astNode = nullptr;
+	llvm::StructType* type= nullptr;
+};
+
+
 struct Codegenerator {
   explicit Codegenerator(bool loadBuiltinFunctions = false);
   /**This function sets the current llvm module into wich
@@ -49,13 +57,21 @@ struct Codegenerator {
     lexer.initFromString(str);
     // getting first token so the parser is ready to go
     lexer.gettok();
-  };
+  }
+
   /**@brief utility function convert llvm values to
    * a the string representation
    * @param v: the value to be printed
    * @return the resulting string
    */
   static std::string printLlvmData(llvm::Value *v) {
+    std::string outs;
+    llvm::raw_string_ostream os(outs);
+    v->print(os, false);
+    os.flush();
+    return outs;
+  }
+  static std::string printLlvmData(llvm::Type *v) {
     std::string outs;
     llvm::raw_string_ostream os(outs);
     v->print(os, false);
@@ -70,6 +86,12 @@ struct Codegenerator {
    *              into
    */
   static void dumpLlvmData(llvm::Value *v, const std::string &path) {
+    const std::string outs = printLlvmData(v);
+    std::ofstream out(path);
+    out << outs;
+    out.close();
+  }
+  static void dumpLlvmData(llvm::Type *v, const std::string &path) {
     const std::string outs = printLlvmData(v);
     std::ofstream out(path);
     out << outs;
@@ -109,6 +131,16 @@ struct Codegenerator {
   static bool compareASTArgWithLLVMArg(ExprAST *astArg,
                                        llvm::Argument *llvmArg);
 
+  bool addCustomStruct(std::string identifierName,
+                       StructDefinition& definition) {
+    auto found = customStructs.find(identifierName);
+    if (found != customStructs.end()) {
+      customStructs[identifierName] = definition;
+      return true;
+    }
+    return false;
+  }
+
   std::string printDiagnostic();
 
   /**Factory in charge to allocate the factory nodes, it owns the
@@ -132,6 +164,7 @@ struct Codegenerator {
   /// map holding variable names defined in the scope
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
   std::unordered_map<std::string, Datatype> variableTypes;
+  std::unordered_map<std::string, StructDefinition> customStructs;
   /**mapping from lexer types to LLCM types*/
   static const std::unordered_map<int, int> AST_LLVM_MAP;
   /** if we are in a scope that is the fucntion representing the
@@ -145,7 +178,8 @@ struct Codegenerator {
    * @param name : function we need to get a handle to
    * @return , pointer to Function, null if not found
    */
-  llvm::Function *getFunction(const std::string &name, PrototypeAST** returnProto = nullptr);
+  llvm::Function *getFunction(const std::string &name,
+                              PrototypeAST **returnProto = nullptr);
 
   /** This function keeps tracks of the proto crated, so we can
    * generate the corresponding function on the fly */

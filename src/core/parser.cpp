@@ -80,7 +80,7 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> *statements,
   return true;
 }
 
-codegen::StructMemberAST*parseStructMemberDeclaration(Parser *parser) {
+codegen::StructMemberAST *parseStructMemberDeclaration(Parser *parser) {
   Lexer *lex = parser->lex;
   if (!Parser::isDatatype(lex->currtok)) {
     logParserError("expected datatype in struct memebr got:" +
@@ -113,13 +113,14 @@ codegen::StructMemberAST*parseStructMemberDeclaration(Parser *parser) {
                    parser, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
     return nullptr;
   }
-  lex->gettok();//eat ;
+  lex->gettok(); // eat ;
 
-  return parser->factory->allocStructMemberAST(datatype, isPointer, identifierName);
+  return parser->factory->allocStructMemberAST(datatype, isPointer,
+                                               identifierName);
 }
 
-bool parseDeclarationsUntilClosedCurly(std::vector<codegen::StructMemberAST*> *statements,
-                                       Parser *parser) {
+bool parseDeclarationsUntilClosedCurly(
+    std::vector<codegen::StructMemberAST *> *statements, Parser *parser) {
 
   Lexer *lex = parser->lex;
   const int SECURITY = 2000;
@@ -488,9 +489,7 @@ ExprAST *Parser::parseStatement() {
     if (exp->nodetype == codegen::FunctionNode) {
       expectSemicolon = false;
     }
-  }
-
-  else if (lex->currtok == Token::tok_identifier) {
+  } else if (lex->currtok == Token::tok_identifier) {
     exp = parseExpression();
   } else if (lex->currtok == Token::tok_if) {
     exp = parseIfStatement();
@@ -500,15 +499,12 @@ ExprAST *Parser::parseStatement() {
     expectSemicolon = false;
   } else if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
     // the only time this can happen is when we are dereferencing a pointer to
-    // write to it
-    // something like *myPtr = 20;
+    // write to it  something like *myPtr = 20;
     // to handle that we are gonna call parse pointer assigment;
     exp = parseToPointerAssigment();
-  }
-  else if(lex->currtok == Token::tok_struct)
-  {
-	  exp = parseStruct();
-	  expectSemicolon = false;
+  } else if (lex->currtok == Token::tok_struct) {
+    exp = parseStruct();
+    expectSemicolon = false;
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -1030,7 +1026,7 @@ codegen::ExprAST *Parser::parseCast() {
   return factory->allocCastAST(datatype, isPointer, RHS);
 }
 
-codegen::ExprAST *Parser::parseStruct() {
+codegen::StructAST *Parser::parseStruct() {
 
   lex->gettok(); // eating struct token
 
@@ -1052,23 +1048,20 @@ codegen::ExprAST *Parser::parseStruct() {
   }
   lex->gettok(); // eat {
 
-  std::vector<codegen::StructMemberAST*> statements;
+  std::vector<codegen::StructMemberAST *> statements;
   auto res = parseDeclarationsUntilClosedCurly(&statements, this);
-  if (!res)
-  {
-	  logParserError("error in parsing members of struct",
-		  this, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
-	  return nullptr;
-
+  if (!res) {
+    logParserError("error in parsing members of struct", this,
+                   IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
   }
-  if(statements.size() == 0)
-  {
-	  logParserError("error, empty structs are not supported", 
-		  this, IssueCode::EMPTY_STRUCT);
-	  return nullptr;
+  if (statements.size() == 0) {
+    logParserError("error, empty structs are not supported", this,
+                   IssueCode::EMPTY_STRUCT);
+    return nullptr;
   }
 
-  lex->gettok();//eat curly
+  lex->gettok(); // eat curly
 
   return factory->allocStructAST(identifierName, statements);
 }

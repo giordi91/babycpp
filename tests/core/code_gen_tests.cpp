@@ -936,6 +936,8 @@ TEST_CASE("Testing pointer arithm float with wrong operator * code gen", "[codeg
   REQUIRE(err1.code ==
           babycpp::diagnostic::IssueCode::POINTER_ARITHMETIC_ERROR);
 }
+
+
 // TODO(giordi) test concatenated casts, not really useful but let see what
 // happen should  hold, something like (float*)(void*)myPyt;  not sure if double
 // parent is working back to back

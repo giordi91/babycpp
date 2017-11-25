@@ -11,6 +11,7 @@ struct ExprAST;
 struct NumberExprAST;
 struct PrototypeAST;
 struct FunctionAST;
+struct StructAST;
 } // namespace codegen
 
 namespace memory {
@@ -122,7 +123,7 @@ struct Parser {
   codegen::ExprAST *parseCast();
 
   //TODO(giordi) change this to return StructAST
-  codegen::ExprAST* parseStruct();
+  codegen::StructAST* parseStruct();
 
 
 
