@@ -41,8 +41,8 @@ enum Token {
   tok_identifier = -7,
   tok_number = -8,
   tok_nullptr = -9,
-  tok_malloc = -10,
-  tok_free = -11,
+  // tok_malloc = -10,
+  // tok_free = -11,
   // misc
   tok_operator = -12,
   tok_assigment_operator = -13,
@@ -110,8 +110,7 @@ static const std::unordered_map<std::string, Token> KEYWORDS{
     {",", tok_comma},         {"=", tok_assigment_operator},
     {"return", tok_return},   {"if", tok_if},
     {"else", tok_else},       {"for", tok_for},
-    {"nullptr", tok_nullptr}, {"malloc", tok_malloc},
-    {"free", tok_free}, {"void",tok_void_ptr}};
+    {"nullptr", tok_nullptr}, {"void", tok_void_ptr}};
 
 // aliases
 using Charmatch = std::match_results<const char *>;

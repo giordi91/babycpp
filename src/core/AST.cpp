@@ -42,10 +42,10 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   auto found = gen->namedValues.find(name);
   if (found != gen->namedValues.end()) {
     v = found->second;
-	auto& storeDatatype = gen->variableTypes[name];
-	datatype = storeDatatype.datatype;
-	flags.isPointer = storeDatatype.isPointer;
-	flags.isNull = storeDatatype.isNull;
+    auto &storeDatatype = gen->variableTypes[name];
+    datatype = storeDatatype.datatype;
+    flags.isPointer = storeDatatype.isPointer;
+    flags.isNull = storeDatatype.isNull;
   };
   // here we extract the variable from the scope.
   // if we get a nullptr and the variable is not a definition
@@ -259,9 +259,10 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 
     // Add arguments to variable symbol table.
     gen->namedValues[arg.getName()] = alloca;
-    gen->variableTypes[arg.getName()] = {proto->args[counter].type, proto->args[counter].isPointer,
-                                         false}; //TODO(giordi) should pass argumetn as not null? we don't supprot 
-	                                             //default values so can't be nullptr 
+    gen->variableTypes[arg.getName()] = {
+        proto->args[counter].type, proto->args[counter].isPointer,
+        false}; // TODO(giordi) should pass argumetn as not null? we don't
+                // supprot  default values so can't be nullptr
     counter += 1;
   }
 
@@ -271,6 +272,10 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
       if (b->flags.isReturn) {
         gen->builder.CreateRet(RetVal);
       }
+    } else {
+      logCodegenError("error generating body statement for function", gen,
+                      IssueCode::ERROR_IN_FUNCTION_BODY);
+      return nullptr;
     }
   }
   gen->currentScope = nullptr;
@@ -294,13 +299,22 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // lets try to get the function
   llvm::Function *calleeF = gen->getFunction(callee);
   if (calleeF == nullptr) {
-    std::cout << "error function not defined" << std::endl;
+    logCodegenError("error getting function, either is not defined or builtin "
+                    "functions have not been loaded",
+                    gen, IssueCode::UNDEFINED_FUNCTION);
     return nullptr;
+  }
+
+  // if the function returns a pointer we mark teh call expression as a pointer
+  // type
+  if (calleeF->getReturnType()->isPointerTy()) {
+    flags.isPointer = true;
   }
 
   // checking function signature
   if (calleeF->arg_size() != args.size()) {
-    std::cout << "error function call with wrong number of args" << std::endl;
+    logCodegenError("error function called with wrong number of arguments", gen,
+                    IssueCode::WRONG_ARGUMENTS_COUNT_IN_FUNC_CALL);
     return nullptr;
   }
   uint32_t argSize = args.size();
@@ -583,15 +597,22 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
 llvm::Value *CastAST::codegen(Codegenerator *gen) {
   // here we need to use a bitcast operation
   Value *rhsValue = rhs->codegen(gen);
+  if (rhsValue == nullptr) {
+    logCodegenError("error in pointer cast RHS code generation", gen,
+                    IssueCode::CAST_ERROR);
+
+    return nullptr;
+  }
   if (rhs->flags.isPointer == false && flags.isPointer) {
     logCodegenError("mismatch datatype for casting, rhs is not a pointer", gen,
                     IssueCode::CAST_ERROR);
   }
 
-  Value* cast = nullptr;
+  Value *cast = nullptr;
   // we can do the cast
   if (flags.isPointer) {
-    cast = gen->builder.CreateBitCast(rhsValue, getType(datatype, gen, true),"pointerCast");
+    cast = gen->builder.CreateBitCast(rhsValue, getType(datatype, gen, true),
+                                      "pointerCast");
   }
 
   return cast;

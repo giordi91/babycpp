@@ -15,16 +15,39 @@ const std::unordered_map<int, int> Codegenerator::AST_LLVM_MAP{
 
 llvm::AllocaInst *
 Codegenerator::createEntryBlockAlloca(llvm::Function *function,
-                                      const std::string &varName, int type, bool isPointer) {
+                                      const std::string &varName, int type,
+                                      bool isPointer) {
   llvm::IRBuilder<> tempBuilder(&function->getEntryBlock(),
                                 function->getEntryBlock().begin());
   llvm::Type *varType = getType(type, this, isPointer);
   return tempBuilder.CreateAlloca(varType, nullptr, varName);
 }
 
-Codegenerator::Codegenerator()
+Codegenerator::Codegenerator(bool loadBuiltinFunctions)
     : lexer(&diagnostic), parser(&lexer, &factory, &diagnostic),
-      builder(context), module(new llvm::Module("", context)) {}
+      builder(context), module(new llvm::Module("", context)) {
+  if (loadBuiltinFunctions) {
+    doLoadBuiltinFunctions();
+  }
+}
+
+void Codegenerator::doLoadBuiltinFunctions() {
+  ;
+  std::string sizeArgument("size");
+  std::string pointerArgument("ptr");
+  auto *mallocFunc = factory.allocPrototypeAST(
+      Token::tok_void_ptr, "malloc",
+      std::vector<Argument>{Argument(Token::tok_int, sizeArgument, false)},
+      true);
+
+  mallocFunc->flags.isPointer = true;
+  builtInFunctions["malloc"] = mallocFunc;
+  builtInFunctions["free"] = factory.allocPrototypeAST(
+      Token::tok_void_ptr, "free",
+      std::vector<Argument>{
+          Argument(Token::tok_void_ptr, pointerArgument, true)},
+      true);
+}
 
 void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
   module = mod;
@@ -101,6 +124,15 @@ llvm::Function *Codegenerator::getFunction(const std::string &name) {
   // prototype.
   auto FI = functionProtos.find(name);
   if (FI != functionProtos.end()) {
+    auto *f = FI->second->codegen(this);
+    if (f == nullptr) {
+      return nullptr;
+    }
+    return static_cast<llvm::Function *>(f);
+  }
+  // lets check the built in functions
+  FI = builtInFunctions.find(name);
+  if (FI != builtInFunctions.end()) {
     auto *f = FI->second->codegen(this);
     if (f == nullptr) {
       return nullptr;

@@ -309,11 +309,9 @@ ExprAST *Parser::parseAssigment() {
 
   lex->gettok(); // eat = operator
   auto *RHS = parseExpression();
-  if(RHS == nullptr)
-  {
-    logParserError(
-        "error in generating RHS of assigment",
-        this, IssueCode::CANNOT_GENERATE_RHS);
+  if (RHS == nullptr) {
+    logParserError("error in generating RHS of assigment", this,
+                   IssueCode::CANNOT_GENERATE_RHS);
     return nullptr;
   }
   ExprAST *node = factory->allocVariableAST(identifier, RHS, datatype);
@@ -380,7 +378,7 @@ ExprAST *Parser::parseDeclaration() {
     case Token::tok_assigment_operator: {
       return parseAssigment();
     }
-    //TODO(giordi) should have a default case that logs error
+      // TODO(giordi) should have a default case that logs error
     }
   }
 
@@ -489,7 +487,6 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       // here we got a datatype and a * which means is a pointer
       isPointer = true;
       lex->gettok(); // eating *;
-
     }
 
     if (lex->currtok != Token::tok_identifier) {

@@ -426,7 +426,7 @@ TEST_CASE("Testing lexing allocation", "[lexer]") {
   lex.initFromString(str);
   lex.gettok();
 
-  REQUIRE(lex.currtok == Token::tok_malloc);
+  REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "malloc");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_open_round);
@@ -442,7 +442,7 @@ TEST_CASE("Testing lexing free", "[lexer]") {
   lex.initFromString(str);
   lex.gettok();
 
-  REQUIRE(lex.currtok == Token::tok_free);
+  REQUIRE(lex.currtok == Token::tok_identifier);
   REQUIRE(lex.identifierStr == "free");
   lex.gettok();
   REQUIRE(lex.currtok == Token::tok_open_round);

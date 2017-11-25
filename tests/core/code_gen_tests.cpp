@@ -628,7 +628,7 @@ TEST_CASE("Testing pointer cast int to float", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/intToFloatPointerCast.ll");
+  // gen.dumpLlvmData(v, "tests/core/intToFloatPointerCast.ll");
   auto expected = getFile("tests/core/intToFloatPointerCast.ll");
   REQUIRE(outs == expected);
 }
@@ -648,7 +648,7 @@ TEST_CASE("Testing pointer cast float to int", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/floatToIntPointerCast.ll");
+  // gen.dumpLlvmData(v, "tests/core/floatToIntPointerCast.ll");
   auto expected = getFile("tests/core/floatToIntPointerCast.ll");
   REQUIRE(outs == expected);
 }
@@ -668,11 +668,10 @@ TEST_CASE("Testing pointer cast float to void", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/floatToVoidPointerCast.ll");
+  // gen.dumpLlvmData(v, "tests/core/floatToVoidPointerCast.ll");
   auto expected = getFile("tests/core/floatToVoidPointerCast.ll");
   REQUIRE(outs == expected);
 }
-
 
 TEST_CASE("Testing pointer cast void* to int", "[codegen]") {
 
@@ -689,11 +688,65 @@ TEST_CASE("Testing pointer cast void* to int", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/voidToIntPointerCast.ll");
+  // gen.dumpLlvmData(v, "tests/core/voidToIntPointerCast.ll");
   auto expected = getFile("tests/core/voidToIntPointerCast.ll");
   REQUIRE(outs == expected);
 }
 
-//TODO(giordi) test concatenated casts, not really useful but let see what happen should 
-//hold, something like (float*)(void*)myPyt;
-//not sure if double parent is working back to back
+TEST_CASE("Testing malloc call with no loaded builtins", "[codegen]") {
+
+  Codegenerator gen;
+  gen.initFromString(
+      "int* testFunc(){ int* ptr = (int*) malloc(20); return ptr;}");
+
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+  REQUIRE(gen.diagnostic.hasErrors() == 4);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::UNDEFINED_FUNCTION);
+}
+
+TEST_CASE("Testing malloc with wrong arguments", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "int* testFunc(){ int* ptr = (int*) malloc(20,20); return ptr;}");
+
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+  REQUIRE(gen.diagnostic.hasErrors() == 4);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code == babycpp::diagnostic::IssueCode::WRONG_ARGUMENTS_COUNT_IN_FUNC_CALL);
+}
+
+TEST_CASE("Testing malloc call", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "int* testFunc(){ int* ptr = (int*) malloc(20); return ptr;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+  // gen.dumpLlvmData(v, "tests/core/mallocTest.ll");
+  auto expected = getFile("tests/core/mallocTest.ll");
+  REQUIRE(outs == expected);
+}
+
+// TODO(giordi) test concatenated casts, not really useful but let see what
+// happen should  hold, something like (float*)(void*)myPyt;  not sure if double
+// parent is working back to back

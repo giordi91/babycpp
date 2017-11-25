@@ -1141,17 +1141,6 @@ TEST_CASE("Testing writing to pointer value", "[parser]") {
   REQUIRE(rhs_casted->datatype == Token::tok_int);
 }
 
-// TODO(giordi) re enable when supporting casting and start to work on malloc
-// TEST_CASE("Testing malloc", "[parser]") {
-//  diagnosticParserTests.clear();
-//  Lexer lex(&diagnosticParserTests);
-//  // here missing  assignment in init
-//  lex.initFromString(" int* ptr = (int*) malloc(20);");
-//  Parser parser(&lex, &factory, &diagnosticParserTests);
-//  lex.gettok();
-//
-
-//  }
 TEST_CASE("Testing parsing of casts", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
@@ -1226,7 +1215,8 @@ TEST_CASE("Testing parsing of casts with void", "[parser]") {
   REQUIRE(data_casted->name == "floatPtr");
 }
 
-TEST_CASE("Testing  void can't be used as not pointer in assigment type", "[parser]") {
+TEST_CASE("Testing  void can't be used as not pointer in assigment type",
+          "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
   lex.initFromString(" void ptr = (void*)floatPtr;");
@@ -1257,39 +1247,70 @@ TEST_CASE("Testing  void can't be used as not pointer in cast ", "[parser]") {
 }
 
 TEST_CASE("Testing  return type is parsed correctly in protype ", "[parser]") {
-	diagnosticParserTests.clear();
-	Lexer lex(&diagnosticParserTests);
-	lex.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
-	Parser parser(&lex, &factory, &diagnosticParserTests);
-	lex.gettok();
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromString("float* testFunc(float* a){ float* res = a; return res;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
 
-	auto p = parser.parseStatement();
-	REQUIRE(p != nullptr);
-	auto *p_casted = dynamic_cast<FunctionAST*>(p);
-	REQUIRE(p_casted != nullptr);
-	REQUIRE(p_casted->proto != nullptr);
-	auto *proto_casted = dynamic_cast<PrototypeAST*>(p_casted->proto);
-	REQUIRE(proto_casted != nullptr);
-	REQUIRE(proto_casted->datatype == Token::tok_float);
-	REQUIRE(proto_casted->flags.isPointer== true);
+  auto p = parser.parseStatement();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->proto != nullptr);
+  auto *proto_casted = dynamic_cast<PrototypeAST *>(p_casted->proto);
+  REQUIRE(proto_casted != nullptr);
+  REQUIRE(proto_casted->datatype == Token::tok_float);
+  REQUIRE(proto_casted->flags.isPointer == true);
 }
 
 TEST_CASE("Testing  parsing void* as argument ", "[parser]") {
-	diagnosticParserTests.clear();
-	Lexer lex(&diagnosticParserTests);
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
 
-	lex.initFromString( "int* testFunc(void* b){ int* res = (int*)b; return res;}");
+  lex.initFromString(
+      "int* testFunc(void* b){ int* res = (int*)b; return res;}");
 
-	Parser parser(&lex, &factory, &diagnosticParserTests);
-	lex.gettok();
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
 
-	auto p = parser.parseStatement();
-	REQUIRE(p != nullptr);
-	auto *p_casted = dynamic_cast<FunctionAST*>(p);
-	REQUIRE(p_casted != nullptr);
-	auto *proto_casted = dynamic_cast<PrototypeAST* > (p_casted->proto);
-	REQUIRE(proto_casted != nullptr);
-	REQUIRE(proto_casted->args[0].isPointer == true);
-	REQUIRE(proto_casted->args[0].type== Token::tok_void_ptr);
+  auto p = parser.parseStatement();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  auto *proto_casted = dynamic_cast<PrototypeAST *>(p_casted->proto);
+  REQUIRE(proto_casted != nullptr);
+  REQUIRE(proto_casted->args[0].isPointer == true);
+  REQUIRE(proto_casted->args[0].type == Token::tok_void_ptr);
 }
+
+TEST_CASE("Testing malloc", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  // here missing  assignment in init
+  lex.initFromString(" int* ptr = (int*) malloc(20);");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<VariableExprAST*>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->name == "ptr");
+  REQUIRE(p_casted->flags.isPointer== true);
+  REQUIRE(p_casted->value!= nullptr);
+
+  //checking that the rhs is a cast with the expected data
+  auto *value_casted = dynamic_cast<CastAST*>(p_casted->value);
+  REQUIRE(value_casted != nullptr);
+  REQUIRE(value_casted->datatype == Token::tok_int);
+  REQUIRE(value_casted->flags.isPointer == true);
+  REQUIRE(value_casted->rhs != nullptr);
+
+  auto *malloc_casted = dynamic_cast<CallExprAST*>(value_casted->rhs);
+  REQUIRE(malloc_casted!= nullptr);
+
+}
+
 // TODO(giordi) check function which return pointers

@@ -31,13 +31,14 @@ using lexer::Number;
  * final IR
  */
 struct Codegenerator {
-
-  explicit Codegenerator();
+  explicit Codegenerator(bool loadBuiltinFunctions = false);
   /**This function sets the current llvm module into wich
    * we will be generating code, this allow the flexibility
    * to have repl with discardable module
    * @param mod : the module we want to work on
    */
+
+  void doLoadBuiltinFunctions();
   void setCurrentModule(std::shared_ptr<llvm::Module> mod);
   /**
    * @brief initializes the lexer with the given string
@@ -149,6 +150,7 @@ struct Codegenerator {
   /** This function keeps tracks of the proto crated, so we can
    * generate the corresponding function on the fly */
   std::unordered_map<std::string, PrototypeAST *> functionProtos;
+  std::unordered_map<std::string, PrototypeAST *> builtInFunctions;
 };
 
 inline llvm::Type *getType(int type, Codegenerator *gen,
@@ -164,7 +166,6 @@ inline llvm::Type *getType(int type, Codegenerator *gen,
   if (isPointer) {
     if (type == Token::tok_void_ptr) {
       return llvm::Type::getInt8PtrTy(gen->context);
-
     }
     return llvm::Type::getInt32PtrTy(gen->context);
   }
