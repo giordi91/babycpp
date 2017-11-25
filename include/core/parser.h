@@ -111,12 +111,20 @@ struct Parser {
   /**@brief parses a statement which involves a pointer dereference*/
   codegen::ExprAST *parseDereference();
 
+  //TODO(giordi) change this to return PointerDerefernceAST 
   /**@brief parses an assiment to wherver the pointer is pointing to*/
   codegen::ExprAST *parseToPointerAssigment();
 
+
+  //TODO(giordi) change this to return CastAST
   /**@brief this function parses a casts which can be either datatype or pointer
    * cast*/
   codegen::ExprAST *parseCast();
+
+  //TODO(giordi) change this to return StructAST
+  codegen::ExprAST* parseStruct();
+
+
 
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence

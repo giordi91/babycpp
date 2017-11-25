@@ -19,7 +19,7 @@ struct ASTFlags {
   /** define wheter or not the AST defines a type or a function*/
   bool isDefinition : 1;
   bool isPointer : 1;
-  bool isNull: 1;
+  bool isNull : 1;
 };
 
 /**Simple structure defining an argument type for function
@@ -51,7 +51,9 @@ enum NodeType {
   ForNode = 8,
   DereferenceNode = 9,
   ToPointerAssigmentNode = 10,
-  CastASTNode= 11,
+  CastASTNode = 11,
+  StructMemberNode= 12,
+  StructNode= 13,
 };
 
 struct Codegenerator;
@@ -252,11 +254,58 @@ struct CastAST : public ExprAST {
       : ExprAST(), rhs(inRhs) {
     nodetype = CastASTNode;
     flags.isPointer = isPointer;
-	datatype = inDatatype;
+    datatype = inDatatype;
   }
   virtual ~CastAST() = default;
   llvm::Value *codegen(Codegenerator *gen) override;
 };
 
+struct StructMemberAST : public ExprAST {
+
+  std::string identifierName;
+  explicit StructMemberAST(int inDatatype, bool isPointer,
+                           std::string inIdentifierName)
+      : ExprAST(), identifierName(inIdentifierName) {
+    nodetype = StructMemberNode;
+    flags.isPointer = isPointer;
+    datatype = inDatatype;
+  }
+  virtual ~StructMemberAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
+};
+
+struct StructAST : public ExprAST {
+
+  std::string identifierName;
+  std::vector<StructMemberAST*> members;
+  explicit StructAST( std::string inIdentifierName, std::vector<StructMemberAST*>& inMembers)
+      : ExprAST(), identifierName(inIdentifierName), members(inMembers) {
+    nodetype = StructNode;
+  }
+  virtual ~StructAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override { return nullptr; };
+};
+
 } // namespace codegen
 } // namespace babycpp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

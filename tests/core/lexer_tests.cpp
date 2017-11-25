@@ -502,3 +502,17 @@ TEST_CASE("Testing void ptr", "[lexer]") {
   REQUIRE(lex.currtok == Token::tok_operator);
   lex.gettok();
 }
+TEST_CASE("Testing struct", "[lexer]") {
+
+  const std::string str{"struct myStructType {}"};
+  Lexer lex(&diagnostic);
+  lex.initFromString(str);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_struct);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_identifier);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_open_curly);
+  lex.gettok();
+  REQUIRE(lex.currtok == Token::tok_close_curly);
+}

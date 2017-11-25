@@ -27,6 +27,8 @@ enum class IssueCode {
   CAST_ERROR = 1012,
   ERROR_IN_VOID_DATATYPE = 1013,
   CANNOT_GENERATE_RHS = 1014,
+  UNEXPECTED_TOKEN_IN_STRUCT= 1015,
+  EMPTY_STRUCT= 1016,
 
   // 2000-2999 code gen codes
   ERROR_RHS_VARIABLE_ASSIGMENT = 2000,
@@ -89,6 +91,10 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
      "UNKNOWN_BIN_OPERATOR"},
     {IssueCode::POINTER_ARITHMETIC_ERROR,
      "POINTER_ARITHMETIC_ERROR"},
+    {IssueCode::UNEXPECTED_TOKEN_IN_STRUCT,
+     "UNEXPECTED_TOKEN_IN_STRUCT"},
+    {IssueCode::EMPTY_STRUCT,
+     "EMPTY_STRUCT"},
 
 };
 

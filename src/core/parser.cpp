@@ -79,6 +79,81 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> *statements,
   }
   return true;
 }
+
+codegen::StructMemberAST*parseStructMemberDeclaration(Parser *parser) {
+  Lexer *lex = parser->lex;
+  if (!Parser::isDatatype(lex->currtok)) {
+    logParserError("expected datatype in struct memebr got:" +
+                       std::to_string(lex->currtok),
+                   parser, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+
+  int datatype = lex->currtok;
+  bool isPointer = false;
+
+  lex->gettok(); // eating datatype
+  if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
+    isPointer = true;
+    lex->gettok(); // eating *
+  }
+
+  if (lex->currtok != Token::tok_identifier) {
+    logParserError("expected identifier in struct memebr got:" +
+                       std::to_string(lex->currtok),
+                   parser, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+  std::string identifierName = lex->identifierStr;
+  lex->gettok(); // eating identifier;
+
+  if (lex->currtok != Token::tok_end_statement) {
+    logParserError("expected end of statment ; at end of struct memeber got:" +
+                       std::to_string(lex->currtok),
+                   parser, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+  lex->gettok();//eat ;
+
+  return parser->factory->allocStructMemberAST(datatype, isPointer, identifierName);
+}
+
+bool parseDeclarationsUntilClosedCurly(std::vector<codegen::StructMemberAST*> *statements,
+                                       Parser *parser) {
+
+  Lexer *lex = parser->lex;
+  const int SECURITY = 2000;
+  int counter = 0;
+  while ((static_cast<int>(lex->currtok != Token::tok_close_curly) &
+          static_cast<int>(counter < SECURITY)) != 0) {
+
+    auto *curr_statement = parseStructMemberDeclaration(parser);
+    if (curr_statement == nullptr) {
+      // error should be handled by parse statement;
+      return false;
+    }
+    statements->push_back(curr_statement);
+
+    // check if we are at end of file
+    if (lex->currtok == Token::tok_eof) {
+      logParserError("error, expected } got EOF", parser,
+                     IssueCode::EXPECTED_TOKEN);
+      return false;
+    }
+  }
+
+  // here we should have all the statements, expected }
+  // if not it means something went wrong or we hit the
+  // security limit
+  if (lex->currtok != Token::tok_close_curly) {
+    logParserError("expected } at end of function bodygot:" +
+                       std::to_string(lex->currtok),
+                   parser, IssueCode::EXPECTED_TOKEN);
+    return false;
+  }
+  return true;
+}
+
 inline bool isPointerCast(Lexer *lex) {
 
   // this function expects 3 look ahead tokens
@@ -429,6 +504,11 @@ ExprAST *Parser::parseStatement() {
     // something like *myPtr = 20;
     // to handle that we are gonna call parse pointer assigment;
     exp = parseToPointerAssigment();
+  }
+  else if(lex->currtok == Token::tok_struct)
+  {
+	  exp = parseStruct();
+	  expectSemicolon = false;
   }
   // TODO(giordi) support statement starting with parenthesis
   // if (lex->currtok == Token::tok_open_paren){}
@@ -850,7 +930,7 @@ PrototypeAST *Parser::parsePrototype() {
   // here we can generate the prototype node;
   auto *node = factory->allocPrototypeAST(datatype, functionName, args, true);
   node->flags.isPointer = isPointer;
-  node->flags.isNull= isNull;
+  node->flags.isNull = isNull;
   return node;
 }
 
@@ -948,6 +1028,49 @@ codegen::ExprAST *Parser::parseCast() {
     return nullptr;
   }
   return factory->allocCastAST(datatype, isPointer, RHS);
+}
+
+codegen::ExprAST *Parser::parseStruct() {
+
+  lex->gettok(); // eating struct token
+
+  if (lex->currtok != Token::tok_identifier) {
+    logParserError("error expected identifier name after struct token, got:" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+
+  std::string identifierName = lex->identifierStr;
+  lex->gettok(); // eating identifier;
+
+  if (lex->currtok != Token::tok_open_curly) {
+    logParserError("error expected { after identifier name for struct, got:" +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+  lex->gettok(); // eat {
+
+  std::vector<codegen::StructMemberAST*> statements;
+  auto res = parseDeclarationsUntilClosedCurly(&statements, this);
+  if (!res)
+  {
+	  logParserError("error in parsing members of struct",
+		  this, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+	  return nullptr;
+
+  }
+  if(statements.size() == 0)
+  {
+	  logParserError("error, empty structs are not supported", 
+		  this, IssueCode::EMPTY_STRUCT);
+	  return nullptr;
+  }
+
+  lex->gettok();//eat curly
+
+  return factory->allocStructAST(identifierName, statements);
 }
 } // namespace parser
 } // namespace babycpp

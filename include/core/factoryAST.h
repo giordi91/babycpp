@@ -15,6 +15,11 @@ struct CallExprAST;
 struct PrototypeAST;
 struct FunctionAST;
 struct IfAST;
+struct ForAST;
+struct DereferenceAST;
+struct ToPointerAssigmentAST;
+struct StructMemberAST;
+struct StructAST;
 } // namespace codegen
 
 namespace memory {
@@ -80,6 +85,14 @@ struct FactoryAST {
   template <typename... Args>
   codegen::CastAST*allocCastAST(Args &&... args) {
     return allocASTNode<codegen::CastAST>(args...);
+  }
+  template <typename... Args>
+  codegen::StructMemberAST*allocStructMemberAST(Args &&... args) {
+    return allocASTNode<codegen::StructMemberAST>(args...);
+  }
+  template <typename... Args>
+  codegen::StructAST*allocStructAST(Args &&... args) {
+    return allocASTNode<codegen::StructAST>(args...);
   }
 
   std::vector<codegen::ExprAST *> ptrs;
