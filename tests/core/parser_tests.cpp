@@ -1294,32 +1294,51 @@ TEST_CASE("Testing malloc", "[parser]") {
   auto p = parser.parseStatement();
   checkParserErrors();
   REQUIRE(p != nullptr);
-  auto *p_casted = dynamic_cast<VariableExprAST*>(p);
+  auto *p_casted = dynamic_cast<VariableExprAST *>(p);
   REQUIRE(p_casted != nullptr);
   REQUIRE(p_casted->name == "ptr");
-  REQUIRE(p_casted->flags.isPointer== true);
-  REQUIRE(p_casted->value!= nullptr);
+  REQUIRE(p_casted->flags.isPointer == true);
+  REQUIRE(p_casted->value != nullptr);
 
-  //checking that the rhs is a cast with the expected data
-  auto *value_casted = dynamic_cast<CastAST*>(p_casted->value);
+  // checking that the rhs is a cast with the expected data
+  auto *value_casted = dynamic_cast<CastAST *>(p_casted->value);
   REQUIRE(value_casted != nullptr);
   REQUIRE(value_casted->datatype == Token::tok_int);
   REQUIRE(value_casted->flags.isPointer == true);
   REQUIRE(value_casted->rhs != nullptr);
 
-  auto *malloc_casted = dynamic_cast<CallExprAST*>(value_casted->rhs);
-  REQUIRE(malloc_casted!= nullptr);
-
+  auto *malloc_casted = dynamic_cast<CallExprAST *>(value_casted->rhs);
+  REQUIRE(malloc_casted != nullptr);
 }
 
 TEST_CASE("Testing malloc and assigment", "[parser]") {
-	diagnosticParserTests.clear();
-	Lexer lex(&diagnosticParserTests);
-	lex.initFromString("int* testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15; return ptr;}");
-	Parser parser(&lex, &factory, &diagnosticParserTests);
-	lex.gettok();
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromString(
+      "int* testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15; return ptr;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
 
-	auto p = parser.parseStatement();
-	REQUIRE(p != nullptr);
+  auto p = parser.parseStatement();
+  REQUIRE(p != nullptr);
 }
-// TODO(giordi) check function which return pointers
+
+TEST_CASE("Testing void fucntion", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromString(
+      "void testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->proto != nullptr);
+  auto *proto_casted = dynamic_cast<PrototypeAST *>(p_casted->proto);
+  REQUIRE(proto_casted != nullptr);
+  REQUIRE(proto_casted->flags.isPointer == false);
+  REQUIRE(proto_casted->flags.isNull == true);
+}

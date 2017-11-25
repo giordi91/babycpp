@@ -330,27 +330,28 @@ ExprAST *Parser::parseDeclaration() {
   // looking ahead 2 tokens, which should give us the identifier
   // and the next token
 
-  // first we need to check if the tok is pointer and wheter or not we got a *
-  // operator after
-  if ((lex->currtok == Token::tok_void_ptr) &&
-      !(lex->lookAheadToken[0].token == Token::tok_operator &&
-        lex->lookAheadToken[0].identifierStr == "*")) {
-    logParserError(
-        "expected * after void, cannot use void as not pointer type, got :" +
-            std::to_string(lex->currtok),
-        this, IssueCode::ERROR_IN_VOID_DATATYPE);
-    return nullptr;
-  }
-
   // const lexer::MovableToken& nextTok= lex->lookAheadToken[0];
   if (lex->lookAheadToken[0].token == Token::tok_identifier) {
     // we got an identifier great, now the next token will
     // tell us whether is a function prototype or a variable
     switch (lex->lookAheadToken[1].token) {
     case Token::tok_open_round: {
+
       return parseFunction();
     }
     case Token::tok_assigment_operator: {
+
+      // first we need to check if the tok is pointer and wheter or not we got a
+      // * operator after
+      if ((lex->currtok == Token::tok_void_ptr) &&
+          !(lex->lookAheadToken[0].token == Token::tok_operator &&
+            lex->lookAheadToken[0].identifierStr == "*")) {
+        logParserError("expected * after void, cannot use void as not pointer "
+                       "type, got :" +
+                           std::to_string(lex->currtok),
+                       this, IssueCode::ERROR_IN_VOID_DATATYPE);
+        return nullptr;
+      }
       return parseAssigment();
     }
     default: {
@@ -801,17 +802,22 @@ PrototypeAST *Parser::parsePrototype() {
   int datatype = lex->currtok;
   lex->gettok(); // eating datatype
   bool isPointer = false;
+  bool isNull = false;
   if (lex->currtok == Token::tok_operator && lex->identifierStr == "*") {
     isPointer = true;
     lex->gettok(); // eating *
   }
-  if ((datatype == Token::tok_void_ptr) & !isPointer) {
-    logParserError(
-        "expected * after void, cannot use void as not pointer type, got :" +
-            std::to_string(lex->currtok),
-        this, IssueCode::ERROR_IN_VOID_DATATYPE);
-    return nullptr;
+  if (datatype == Token::tok_void_ptr) {
+    isNull = true;
   }
+  // suppressing this for letting void datatype return
+  // if ((datatype == Token::tok_void_ptr) & !isPointer) {
+  //  logParserError(
+  //      "expected * after void, cannot use void as not pointer type, got :" +
+  //          std::to_string(lex->currtok),
+  //      this, IssueCode::ERROR_IN_VOID_DATATYPE);
+  //  return nullptr;
+  //}
 
   if (lex->currtok != Token::tok_identifier) {
     logParserError("expected identifier name after function prototype return "
@@ -844,6 +850,7 @@ PrototypeAST *Parser::parsePrototype() {
   // here we can generate the prototype node;
   auto *node = factory->allocPrototypeAST(datatype, functionName, args, true);
   node->flags.isPointer = isPointer;
+  node->flags.isNull= isNull;
   return node;
 }
 

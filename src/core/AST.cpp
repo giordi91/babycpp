@@ -206,7 +206,12 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
     funcArgs[t] = getType(astArg.type, gen, astArg.isPointer);
   }
 
-  llvm::Type *returnType = getType(datatype, gen, flags.isPointer);
+  llvm::Type *returnType = nullptr;
+  if (flags.isNull && !flags.isPointer) {
+    returnType = gen->builder.getVoidTy();
+  } else {
+    returnType = getType(datatype, gen, flags.isPointer);
+  }
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
 
   auto *function = llvm::Function::Create(
@@ -275,11 +280,13 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
     counter += 1;
   }
 
+  bool hasTerminator = false;
   gen->currentScope = function;
   for (auto &b : body) {
     if (Value *RetVal = b->codegen(gen)) {
       if (b->flags.isReturn) {
         gen->builder.CreateRet(RetVal);
+        hasTerminator = true;
       }
     } else {
       logCodegenError("error generating body statement for function", gen,
@@ -287,6 +294,15 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
       return nullptr;
     }
   }
+  flags.isNull = proto->flags.isNull;
+  flags.isPointer = proto->flags.isPointer;
+  datatype = proto->datatype;
+
+  // if the function has return void then we can create it
+  if (!hasTerminator && flags.isNull && !flags.isPointer) {
+    gen->builder.CreateRetVoid();
+  }
+
   gen->currentScope = nullptr;
 
   std::string outs;
@@ -362,10 +378,6 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
         std::cout << "mismatch type for function call argument" << std::endl;
       }
     }
-    // if (!Codegenerator::compareASTArgWithLLVMArg(args[t], currFunctionArg)) {
-    //  std::cout << "mismatch type for function call argument" << std::endl;
-    //  return nullptr;
-    //}
 
     // if we got here the type is correct, so we can push the argument
     Value *argValuePtr = args[t]->codegen(gen);
@@ -378,12 +390,26 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   }
 
   // setting datatype
-  datatype = Token::tok_int;
-  if (calleeF->getType()->isFloatTy()) {
-    datatype = Token::tok_float;
+
+  if (proto == nullptr) {
+        std::cout << "cannot get return type properly" << std::endl;
+		return nullptr;
   }
 
-  return gen->builder.CreateCall(calleeF, argValues, "calltmp");
+  //copy datatype from proto to function call
+  datatype = proto->datatype;
+  flags.isPointer = proto->flags.isPointer;
+  flags.isNull= proto->flags.isNull;
+
+  //if we are a void call we don't pass a name so we don't store to a register
+  if(flags.isNull && !flags.isPointer)
+  {
+	  return gen->builder.CreateCall(calleeF, argValues);
+  }
+  else
+  {
+	  return gen->builder.CreateCall(calleeF, argValues, "calltmp");
+  }
 }
 
 llvm::Value *IfAST::codegen(Codegenerator *gen) {
@@ -597,10 +623,10 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
   }
   // updating the datatype
   if (datatype == 0) {
-    auto& currDatatype =gen->variableTypes[identifierName];
-	datatype = currDatatype.datatype;
-	flags.isPointer= currDatatype.isPointer;
-	flags.isNull= currDatatype.isNull;
+    auto &currDatatype = gen->variableTypes[identifierName];
+    datatype = currDatatype.datatype;
+    flags.isPointer = currDatatype.isPointer;
+    flags.isNull = currDatatype.isNull;
   }
 
   // TODO(giordi) this won't work in the future for custom datatypes like

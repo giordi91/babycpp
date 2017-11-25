@@ -40,13 +40,16 @@ void Codegenerator::doLoadBuiltinFunctions() {
       std::vector<Argument>{Argument(Token::tok_int, sizeArgument, false)},
       true);
 
+  auto *freeFunc = factory.allocPrototypeAST(
+	  Token::tok_void_ptr, "free",
+	  std::vector<Argument>{
+	  Argument(Token::tok_void_ptr, pointerArgument, true)},
+	  true);
   mallocFunc->flags.isPointer = true;
+  freeFunc->flags.isPointer = false;
+  freeFunc->flags.isNull= true;
   builtInFunctions["malloc"] = mallocFunc;
-  builtInFunctions["free"] = factory.allocPrototypeAST(
-      Token::tok_void_ptr, "free",
-      std::vector<Argument>{
-          Argument(Token::tok_void_ptr, pointerArgument, true)},
-      true);
+  builtInFunctions["free"] = freeFunc;
 }
 
 void Codegenerator::setCurrentModule(std::shared_ptr<llvm::Module> mod) {
