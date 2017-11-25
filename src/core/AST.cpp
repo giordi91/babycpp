@@ -217,6 +217,15 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
     arg.setName(args[Idx++].name);
   }
 
+  // if the function is an extern is going to be stand alone in the body of a
+  // function  or somewhere, noramlly is the function itself that takes care of
+  // adding it to the function protos but in this case we need to do it manually
+  if (isExtern) {
+    if (function != nullptr) {
+      gen->functionProtos[name] = this;
+    }
+  }
+
   return function;
 }
 llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
@@ -297,7 +306,8 @@ llvm::Value *FunctionAST::codegen(Codegenerator *gen) {
 }
 llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // lets try to get the function
-  llvm::Function *calleeF = gen->getFunction(callee);
+  PrototypeAST *proto = nullptr;
+  llvm::Function *calleeF = gen->getFunction(callee, &proto);
   if (calleeF == nullptr) {
     logCodegenError("error getting function, either is not defined or builtin "
                     "functions have not been loaded",
@@ -331,18 +341,32 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
         bool found =
             gen->namedValues.find(temp->name) != gen->namedValues.end();
         if (found) {
-          datatype = Token::tok_int;
-          auto type = gen->namedValues[temp->name]->getAllocatedType();
-          if (type->isFloatTy()) {
-            args[t]->datatype = Token::tok_float;
-          }
+          auto &currDatatype = gen->variableTypes[temp->name];
+          temp->datatype = currDatatype.datatype;
+          temp->flags.isPointer = currDatatype.isPointer;
+          temp->flags.isNull = currDatatype.isNull;
+          // datatype = Token::tok_int;
+          // auto type = gen->namedValues[temp->name]->getAllocatedType();
+          // if (type->isFloatTy()) {
+          //  args[t]->datatype = Token::tok_float;
+          //}
         }
       }
     }
-    if (!Codegenerator::compareASTArgWithLLVMArg(args[t], currFunctionArg)) {
-      std::cout << "mismatch type for function call argument" << std::endl;
-      return nullptr;
+    if (proto == nullptr) {
+
+      std::cout << "cannot check function arguments " << callee << std::endl;
+    } else {
+      if (proto->args[t].type != args[t]->datatype ||
+          proto->args[t].isPointer != args[t]->flags.isPointer) {
+        std::cout << "mismatch type for function call argument" << std::endl;
+      }
     }
+    // if (!Codegenerator::compareASTArgWithLLVMArg(args[t], currFunctionArg)) {
+    //  std::cout << "mismatch type for function call argument" << std::endl;
+    //  return nullptr;
+    //}
+
     // if we got here the type is correct, so we can push the argument
     Value *argValuePtr = args[t]->codegen(gen);
     if (argValuePtr == nullptr) {

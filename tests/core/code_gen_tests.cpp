@@ -747,6 +747,26 @@ TEST_CASE("Testing malloc call", "[codegen]") {
   REQUIRE(outs == expected);
 }
 
+TEST_CASE("Testing free call", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "int freeWrap(float* ptr){ void* toFree = (void*)ptr; free(toFree);int ret = 0; return ret;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+
+  std::string outs = gen.printLlvmData(v);
+   gen.dumpLlvmData(v, "tests/core/freeTest.ll");
+  auto expected = getFile("tests/core/freeTest.ll");
+  REQUIRE(outs == expected);
+}
+
 // TODO(giordi) test concatenated casts, not really useful but let see what
 // happen should  hold, something like (float*)(void*)myPyt;  not sure if double
 // parent is working back to back

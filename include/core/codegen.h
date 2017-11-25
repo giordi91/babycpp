@@ -145,7 +145,7 @@ struct Codegenerator {
    * @param name : function we need to get a handle to
    * @return , pointer to Function, null if not found
    */
-  llvm::Function *getFunction(const std::string &name);
+  llvm::Function *getFunction(const std::string &name, PrototypeAST** returnProto = nullptr);
 
   /** This function keeps tracks of the proto crated, so we can
    * generate the corresponding function on the fly */

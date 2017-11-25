@@ -114,45 +114,67 @@ std::string Codegenerator::printDiagnostic() {
   return diagnosticMessage;
 }
 
-llvm::Function *Codegenerator::getFunction(const std::string &name) {
+llvm::Function *Codegenerator::getFunction(const std::string &name,
+                                           PrototypeAST **returnProto) {
   // First, see if the function has already been added to the current module.
   if (auto *F = module->getFunction(name)) {
-    return F;
-  }
 
-  // If not, check whether we can codegen the declaration from some existing
-  // prototype.
-  auto FI = functionProtos.find(name);
-  if (FI != functionProtos.end()) {
-    auto *f = FI->second->codegen(this);
-    if (f == nullptr) {
-      return nullptr;
+    if (returnProto != nullptr) {
+      // trying to find the prototype
+      auto FI = functionProtos.find(name);
+      if (FI != functionProtos.end()) {
+        *returnProto = FI->second;
+      } else {
+        FI = builtInFunctions.find(name);
+        if (FI != builtInFunctions.end()) {
+            *returnProto = FI->second;
+          }
+        }
+      }
+	else
+	{
+		std::cout << "cannot return proto pointer is null" << std::endl;
+	}
+      return F;
     }
-    return static_cast<llvm::Function *>(f);
-  }
-  // lets check the built in functions
-  FI = builtInFunctions.find(name);
-  if (FI != builtInFunctions.end()) {
-    auto *f = FI->second->codegen(this);
-    if (f == nullptr) {
-      return nullptr;
+
+    // If not, check whether we can codegen the declaration from some existing
+    // prototype.
+    auto FI = functionProtos.find(name);
+    if (FI != functionProtos.end()) {
+      auto *f = FI->second->codegen(this);
+      if (returnProto != nullptr)
+        *returnProto = FI->second;
+      if (f == nullptr) {
+        return nullptr;
+      }
+      return static_cast<llvm::Function *>(f);
     }
-    return static_cast<llvm::Function *>(f);
+    // lets check the built in functions
+    FI = builtInFunctions.find(name);
+    if (FI != builtInFunctions.end()) {
+      auto *f = FI->second->codegen(this);
+      if (returnProto != nullptr)
+        *returnProto = FI->second;
+      if (f == nullptr) {
+        return nullptr;
+      }
+      return static_cast<llvm::Function *>(f);
+    }
+
+    // If no existing prototype exists, return null.
+    return nullptr;
   }
 
-  // If no existing prototype exists, return null.
-  return nullptr;
-}
+  void Codegenerator::generateModuleContent() {
 
-void Codegenerator::generateModuleContent() {
-
-  while (lexer.currtok != Token::tok_eof) {
-    ExprAST *res = parser.parseStatement();
-    if (res != nullptr) {
-      res->codegen(this);
+    while (lexer.currtok != Token::tok_eof) {
+      ExprAST *res = parser.parseStatement();
+      if (res != nullptr) {
+        res->codegen(this);
+      }
     }
   }
-}
 
 } // namespace codegen
-} // namespace babycpp
+} // namespace codegen
