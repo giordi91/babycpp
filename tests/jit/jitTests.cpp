@@ -460,6 +460,34 @@ TEST_CASE("Testing free jit", "[jit]") {
   *a = -1.9999998;
   int returned = func(a);
   // here we can't really test that memory has been released that has to be done
-  // visually  where you look at the memory window and check whether the header is
-  // being modified or not
+  // visually  where you look at the memory window and check whether the header
+  // is being modified or not
+}
+
+TEST_CASE("Testing pointer indexing", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen(true);
+  gen.initFromString("int testFunc(int* data, int index){ int* newPtr = data + "
+                     "index; int value = *newPtr;return value;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func =
+      (int (*)(int *, int))(intptr_t)llvm::cantFail(symbol.getAddress());
+  REQUIRE(func != nullptr);
+
+  std::vector<int> data;
+  data.resize(30);
+  for (int i = 0; i < 30; ++i) {
+    data[i] = i;
+  }
+  for (int i = 0; i < 30; ++i) {
+    REQUIRE(func(data.data(), i) == data[i]);
+  }
 }

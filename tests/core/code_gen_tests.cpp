@@ -748,7 +748,6 @@ TEST_CASE("Testing malloc call", "[codegen]") {
   REQUIRE(outs == expected);
 }
 
-
 TEST_CASE("Testing assigment to dereference pointer in function float codegen",
           "[codegen]") {
   Codegenerator gen{true};
@@ -778,20 +777,19 @@ TEST_CASE("Testing assign to malloc ptr codegen", "[codegen]") {
   REQUIRE(v != nullptr);
 }
 
-
 TEST_CASE("Testing void function codegen", "[codegen]") {
-	Codegenerator gen{ true };
-	gen.initFromString(
-		"void testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15;}");
+  Codegenerator gen{true};
+  gen.initFromString(
+      "void testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15;}");
 
-	auto p = gen.parser.parseStatement();
-	REQUIRE(p != nullptr);
+  auto p = gen.parser.parseStatement();
+  REQUIRE(p != nullptr);
 
-	auto v = p->codegen(&gen);
-	REQUIRE(v != nullptr);
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/testVoidFunction.ll");
+  // gen.dumpLlvmData(v, "tests/core/testVoidFunction.ll");
   auto expected = getFile("tests/core/testVoidFunction.ll");
   REQUIRE(outs == expected);
 }
@@ -811,11 +809,133 @@ TEST_CASE("Testing free call", "[codegen]") {
   REQUIRE(v != nullptr);
 
   std::string outs = gen.printLlvmData(v);
-  //gen.dumpLlvmData(v, "tests/core/freeTest.ll");
+  // gen.dumpLlvmData(v, "tests/core/freeTest.ll");
   auto expected = getFile("tests/core/freeTest.ll");
   REQUIRE(outs == expected);
 }
 
+TEST_CASE("Testing pointer arithm int code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString("int testFunc(int* data, int index){ int* newPtr = data + "
+                     "index; int value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  // gen.dumpLlvmData(v, "tests/core/pointerIntAddition.ll");
+  auto expected = getFile("tests/core/pointerIntAddition.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing pointer arithm float code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "float testFunc(float* data, int index){ float* newPtr = data + "
+      "index; float value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  checkGenErrors(&gen);
+  REQUIRE(v != nullptr);
+  std::string outs = gen.printLlvmData(v);
+  // gen.dumpLlvmData(v, "tests/core/pointerFloatAddition.ll");
+  auto expected = getFile("tests/core/pointerFloatAddition.ll");
+  REQUIRE(outs == expected);
+}
+
+TEST_CASE("Testing pointer arithm int plus float error code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "int testFunc(int* data, float index){ int* newPtr = data + "
+      "index; int value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+
+  REQUIRE(gen.diagnostic.hasErrors() == 3);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::POINTER_ARITHMETIC_ERROR);
+}
+
+TEST_CASE("Testing pointer arithm int with wrong operator * code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "int testFunc(int* data, int index){ int* newPtr = data * "
+      "index; int value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+
+  REQUIRE(gen.diagnostic.hasErrors() == 3);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::POINTER_ARITHMETIC_ERROR);
+}
+
+TEST_CASE("Testing pointer arithm float plus float error code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "float testFunc(float* data, float index){ float* newPtr = data + "
+      "index; float value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+
+  REQUIRE(gen.diagnostic.hasErrors() == 3);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::POINTER_ARITHMETIC_ERROR);
+}
+
+TEST_CASE("Testing pointer arithm float with wrong operator * code gen", "[codegen]") {
+
+  Codegenerator gen{true};
+  gen.initFromString(
+      "float testFunc(float* data, int index){ float* newPtr = data * "
+      "index; float value = *newPtr;return value;}");
+
+  auto p = gen.parser.parseStatement();
+  checkGenErrors(&gen);
+  REQUIRE(p != nullptr);
+
+  auto v = p->codegen(&gen);
+  REQUIRE(v == nullptr);
+
+  REQUIRE(gen.diagnostic.hasErrors() == 3);
+
+  auto err1 = gen.diagnostic.getError();
+  REQUIRE(err1.code ==
+          babycpp::diagnostic::IssueCode::POINTER_ARITHMETIC_ERROR);
+}
 // TODO(giordi) test concatenated casts, not really useful but let see what
 // happen should  hold, something like (float*)(void*)myPyt;  not sure if double
 // parent is working back to back

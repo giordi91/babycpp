@@ -1342,3 +1342,25 @@ TEST_CASE("Testing void fucntion", "[parser]") {
   REQUIRE(proto_casted->flags.isPointer == false);
   REQUIRE(proto_casted->flags.isNull == true);
 }
+
+TEST_CASE("Testing pointers arithmetic", "[parser]") {
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  lex.initFromString("int testFunc(int* data, int index){ int* newPtr = data + "
+                     "index; int value = *newPtr;return value;}");
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.gettok();
+
+  // here we want to make sure that the pointer arithm is handled properly
+  auto p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  auto *ptrAritm = p_casted->body[0];
+  auto *ptrAritmCasted = dynamic_cast<VariableExprAST *>(ptrAritm);
+  REQUIRE(ptrAritmCasted != nullptr);
+  REQUIRE(ptrAritmCasted->value != nullptr);
+  auto *valueCasted = dynamic_cast<BinaryExprAST*>(ptrAritmCasted->value);
+  REQUIRE(valueCasted != nullptr);
+}

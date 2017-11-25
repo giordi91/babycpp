@@ -144,6 +144,52 @@ llvm::Value *VariableExprAST::codegen(Codegenerator *gen) {
   return gen->builder.CreateLoad(v, name.c_str());
 }
 
+Value *handleBinOpSimpleDatatype(BinaryExprAST *bin, Codegenerator *gen,
+                                 llvm::Value *L, llvm::Value *R) {
+  bin->datatype = gen->omogenizeOperation(bin->lhs, bin->rhs, &L, &R);
+
+  if (bin->datatype == Token::tok_float) {
+    // checking the operator to generate the correct operation
+    if (bin->op == "+") {
+      return gen->builder.CreateFAdd(L, R, "addtmp");
+    }
+    if (bin->op == "-") {
+      return gen->builder.CreateFSub(L, R, "subtmp");
+    }
+    if (bin->op == "*") {
+      return gen->builder.CreateFMul(L, R, "multmp");
+    }
+    if (bin->op == "/") {
+      return gen->builder.CreateFDiv(L, R, "divtmp");
+    }
+    if (bin->op == "<") {
+      // TODO(giordi) fix this, to return int?
+      L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
+      return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
+                                       "booltmp");
+    }
+  } else {
+    // checking the operator to generate the correct operation
+    if (bin->op == "+") {
+      return gen->builder.CreateAdd(L, R, "addtmp");
+    }
+    if (bin->op == "-") {
+      return gen->builder.CreateSub(L, R, "subtmp");
+    }
+    if (bin->op == "*") {
+      return gen->builder.CreateMul(L, R, "multmp");
+    }
+    if (bin->op == "/") {
+      return gen->builder.CreateSDiv(L, R, "divtmp");
+    }
+    if (bin->op == "<") {
+      L = gen->builder.CreateICmpULT(L, R, "cmptmp");
+      return L;
+    }
+  }
+  return nullptr;
+}
+
 llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
   // generating code recursively for left and right end side
   Value *L = lhs->codegen(gen);
@@ -153,50 +199,44 @@ llvm::Value *BinaryExprAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  datatype = gen->omogenizeOperation(lhs, rhs, &L, &R);
+  if (lhs->flags.isPointer || rhs->flags.isPointer) {
 
-  if (datatype == Token::tok_float) {
-    // checking the operator to generate the correct operation
-    if (op == "+") {
-      return gen->builder.CreateFAdd(L, R, "addtmp");
+    // TODO(giordi) add support for < > in pointer comparison?
+    if (rhs->flags.isPointer) {
+      logCodegenError("unsupporter pointer at rhs in bin operation", gen,
+                      IssueCode::POINTER_ARITHMETIC_ERROR);
+      return nullptr;
     }
-    if (op == "-") {
-      return gen->builder.CreateFSub(L, R, "subtmp");
+    if (rhs->datatype != Token::tok_int) {
+      logCodegenError("unsupporter datatype at RHS of pointer arithmetic", gen,
+                      IssueCode::POINTER_ARITHMETIC_ERROR);
+      return nullptr;
     }
-    if (op == "*") {
-      return gen->builder.CreateFMul(L, R, "multmp");
+    if (op != "+") {
+      logCodegenError(
+          "unsupporter operator for pointer arithmetic only valid is +, got: " +
+              op,
+          gen, IssueCode::POINTER_ARITHMETIC_ERROR);
+      return nullptr;
     }
-    if (op == "/") {
-      return gen->builder.CreateFDiv(L, R, "divtmp");
-    }
-    if (op == "<") {
-      // TODO(giordi) fix this, to return int?
-      L = gen->builder.CreateFCmpULT(L, R, "cmptmp");
-      return gen->builder.CreateUIToFP(L, llvm::Type::getDoubleTy(gen->context),
-                                       "booltmp");
-    }
-  } else {
-    // checking the operator to generate the correct operation
-    if (op == "+") {
-      return gen->builder.CreateAdd(L, R, "addtmp");
-    }
-    if (op == "-") {
-      return gen->builder.CreateSub(L, R, "subtmp");
-    }
-    if (op == "*") {
-      return gen->builder.CreateMul(L, R, "multmp");
-    }
-    if (op == "/") {
-      return gen->builder.CreateSDiv(L, R, "divtmp");
-    }
-    if (op == "<") {
-      L = gen->builder.CreateICmpULT(L, R, "cmptmp");
-      return L;
-    }
+
+    // at this point we should have a pointer at lhs and an int rhs  we should
+    // be able to perform  math with it, only operator supported is + the time
+    // being
+    Value *indexList[1] = {R};
+    return gen->builder.CreateGEP(L, llvm::ArrayRef<Value *>(indexList, 1),
+                                  "pointerShift");
   }
-  std::cout << "error unrecognized operator" << std::endl;
-  return nullptr;
+
+  Value *result = handleBinOpSimpleDatatype(this, gen, L, R);
+  if (!result) {
+    logCodegenError("error unrecognized operator", gen,
+                    IssueCode::UNKNOWN_BIN_OPERATOR);
+    return nullptr;
+  }
+  return result;
 }
+
 llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   uint32_t argSize = args.size();
   std::vector<llvm::Type *> funcArgs(argSize);
@@ -223,8 +263,9 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   }
 
   // if the function is an extern is going to be stand alone in the body of a
-  // function  or somewhere, noramlly is the function itself that takes care of
-  // adding it to the function protos but in this case we need to do it manually
+  // function  or somewhere, noramlly is the function itself that takes care
+  // of adding it to the function protos but in this case we need to do it
+  // manually
   if (isExtern) {
     if (function != nullptr) {
       gen->functionProtos[name] = this;
@@ -331,8 +372,8 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
     return nullptr;
   }
 
-  // if the function returns a pointer we mark teh call expression as a pointer
-  // type
+  // if the function returns a pointer we mark teh call expression as a
+  // pointer type
   if (calleeF->getReturnType()->isPointerTy()) {
     flags.isPointer = true;
   }
@@ -348,7 +389,6 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   argValues.reserve(argSize);
   for (uint32_t t = 0; t < argSize; ++t) {
     // check type
-    llvm::Argument *currFunctionArg = calleeF->args().begin() + t;
     if (args[t]->datatype == 0) {
       // if the variable has no datatype it means we don't know what it is
       // the only option here is that is actually a variable is scope
@@ -392,23 +432,21 @@ llvm::Value *CallExprAST::codegen(Codegenerator *gen) {
   // setting datatype
 
   if (proto == nullptr) {
-        std::cout << "cannot get return type properly" << std::endl;
-		return nullptr;
+    std::cout << "cannot get return type properly" << std::endl;
+    return nullptr;
   }
 
-  //copy datatype from proto to function call
+  // copy datatype from proto to function call
   datatype = proto->datatype;
   flags.isPointer = proto->flags.isPointer;
-  flags.isNull= proto->flags.isNull;
+  flags.isNull = proto->flags.isNull;
 
-  //if we are a void call we don't pass a name so we don't store to a register
-  if(flags.isNull && !flags.isPointer)
-  {
-	  return gen->builder.CreateCall(calleeF, argValues);
-  }
-  else
-  {
-	  return gen->builder.CreateCall(calleeF, argValues, "calltmp");
+  // if we are a void call we don't pass a name so we don't store to a
+  // register
+  if (flags.isNull && !flags.isPointer) {
+    return gen->builder.CreateCall(calleeF, argValues);
+  } else {
+    return gen->builder.CreateCall(calleeF, argValues, "calltmp");
   }
 }
 
