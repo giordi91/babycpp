@@ -267,23 +267,197 @@ TEST_CASE("testing pointer derefenence int for writing jit", "[jit]") {
 }
 
 TEST_CASE("testing proper integer comparison jit", "[jit]") {
-	babycpp::jit::BabycppJIT jit;
-	Codegenerator gen;
-	gen.initFromString("int testFunc(int a, int b){ int res = 0; if(a < b){res = "
-		"1;}else{res =2;}return res;}");
-	auto p = gen.parser.parseFunction();
-	REQUIRE(p != nullptr);
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString("int testFunc(int a, int b){ int res = 0; if(a < b){res = "
+                     "1;}else{res =2;}return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
 
-	// making sure the code is generated
-	auto v = p->codegen(&gen);
-	REQUIRE(v != nullptr);
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
 
-	jit.addModule(gen.module);
-	auto symbol = jit.findSymbol("testFunc");
-	auto func = (int(*)(int,int))(intptr_t)llvm::cantFail(symbol.getAddress());
-	int a = -99;
-	// the function returns 0, but it writes to a adress in memory aswell
-	REQUIRE(func(1,2) ==1);
-	REQUIRE(func(5,2) == 2);
-
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int (*)(int, int))(intptr_t)llvm::cantFail(symbol.getAddress());
+  // the function returns 0, but it writes to a adress in memory aswell
+  REQUIRE(func(1, 2) == 1);
+  REQUIRE(func(5, 2) == 2);
 }
+
+TEST_CASE("testing set int pointer to null jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "int* testFunc(int* b){ int* res = b;res = nullptr; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int* (*)(int*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  // the function returns 0, but it writes to a adress in memory aswell
+  int whatever;
+  REQUIRE(func(&whatever) == nullptr);
+}
+
+TEST_CASE("Testing float pointer assigment null to var not declaration jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "float* testFunc(float* b){ float* res = b;res = nullptr; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (float* (*)(float*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  float whatever;
+  REQUIRE(func(&whatever) == nullptr);
+}
+
+TEST_CASE("Testing pointer cast int to float jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "float* testFunc(int *b){ float* res = (float*)b; *res = 1.0; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (float* (*)(int*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  int a = -99;
+  float* returnedA = func(&a);
+  float* reinterpededA = reinterpret_cast<float*>(&a);
+  REQUIRE( returnedA == reinterpededA);
+  REQUIRE( *reinterpededA == 1.0f);
+  REQUIRE( *returnedA== 1.0f);
+}
+
+
+TEST_CASE("Testing pointer cast float to int jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "int* testFunc(float *b){ int* res = (int*)b; *res = 16; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int* (*)(float*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  float a= -1.0f;
+  int* returnedA = func(&a);
+  int* reinterpededA = reinterpret_cast<int*>(&a);
+  REQUIRE( returnedA == reinterpededA);
+  REQUIRE( *reinterpededA == 16);
+  REQUIRE( *returnedA== 16);
+}
+
+
+TEST_CASE("Testing pointer cast float to void jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "void* testFunc(float *b){ void* res = (void*)b; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (void* (*)(float*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  float a= -1.0f;
+  void* returnedA = func(&a);
+  float* reinterpededA = reinterpret_cast<float*>(returnedA);
+  REQUIRE( returnedA == reinterpededA);
+}
+
+TEST_CASE("Testing pointer cast int to void jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen;
+  gen.initFromString(
+      "void* testFunc(int *b){ void* res = (void*)b; return res;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (void* (*)(int*))(intptr_t)llvm::cantFail(symbol.getAddress());
+  int a= -1.0f;
+  void* returnedA = func(&a);
+  int* reinterpededA = reinterpret_cast<int*>(returnedA);
+  REQUIRE( returnedA == reinterpededA);
+}
+
+TEST_CASE("Testing malloc jit", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen(true);
+  gen.initFromString(
+      "int* testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15; return ptr;}");
+  auto p = gen.parser.parseFunction();
+  REQUIRE(p != nullptr);
+
+  //making sure the code is generated
+  auto v = p->codegen(&gen);
+  REQUIRE(v != nullptr);
+
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (int* (*)())(intptr_t)llvm::cantFail(symbol.getAddress());
+  int* returnedPtr = func();
+  REQUIRE( returnedPtr != nullptr);
+  REQUIRE( *returnedPtr == 15);
+  //freeing the malloc pointer
+  free(returnedPtr);
+}
+
+//TODO(giordi) I cannot free yet, since I don't support function that return void
+//re-enable when this is supported
+//TEST_CASE("Testing free jit", "[jit]") {
+//  babycpp::jit::BabycppJIT jit;
+//  Codegenerator gen(true);
+//  gen.initFromString(
+//      "int freeWrap(float* ptr){ void* toFree = (void*)ptr; free(toFree);int ret = 0; return ret;}");
+//  auto p = gen.parser.parseFunction();
+//  REQUIRE(p != nullptr);
+
+//  //making sure the code is generated
+//  auto v = p->codegen(&gen);
+//  REQUIRE(v != nullptr);
+
+//  jit.addModule(gen.module);
+//  auto symbol = jit.findSymbol("testFunc");
+//  auto func = (int (*)(float*))(intptr_t)llvm::cantFail(symbol.getAddress());
+//  REQUIRE(func != nullptr);
+
+//  float *a = static_cast<float*>(malloc(4));
+//  *a = -1.9999998;
+//  int returned = func(a);
+//  int test= 0;
+//}

@@ -597,8 +597,10 @@ llvm::Value *ToPointerAssigmentAST::codegen(Codegenerator *gen) {
   }
   // updating the datatype
   if (datatype == 0) {
-    // TODO(giordi) update to proper datatype
-    datatype = fromLLVMtoParserType(v);
+    auto& currDatatype =gen->variableTypes[identifierName];
+	datatype = currDatatype.datatype;
+	flags.isPointer= currDatatype.isPointer;
+	flags.isNull= currDatatype.isNull;
   }
 
   // TODO(giordi) this won't work in the future for custom datatypes like

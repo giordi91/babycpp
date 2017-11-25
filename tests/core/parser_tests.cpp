@@ -1287,7 +1287,6 @@ TEST_CASE("Testing  parsing void* as argument ", "[parser]") {
 TEST_CASE("Testing malloc", "[parser]") {
   diagnosticParserTests.clear();
   Lexer lex(&diagnosticParserTests);
-  // here missing  assignment in init
   lex.initFromString(" int* ptr = (int*) malloc(20);");
   Parser parser(&lex, &factory, &diagnosticParserTests);
   lex.gettok();
@@ -1313,4 +1312,14 @@ TEST_CASE("Testing malloc", "[parser]") {
 
 }
 
+TEST_CASE("Testing malloc and assigment", "[parser]") {
+	diagnosticParserTests.clear();
+	Lexer lex(&diagnosticParserTests);
+	lex.initFromString("int* testFunc(){ int* ptr = (int*) malloc(4); *ptr = 15; return ptr;}");
+	Parser parser(&lex, &factory, &diagnosticParserTests);
+	lex.gettok();
+
+	auto p = parser.parseStatement();
+	REQUIRE(p != nullptr);
+}
 // TODO(giordi) check function which return pointers
