@@ -90,3 +90,31 @@ TEST_CASE("Testing struct instancing", "[codegen]") {
   auto expected = getFileStruct("tests/core/vectorStructAlloc.ll");
   REQUIRE(outs == expected);
 }
+
+TEST_CASE("Testing struct as return type codegen", "[codegen]") {
+
+
+	Codegenerator gen{ true };
+	gen.initFromString(
+		"struct Vector{ float x; int* y; float*z;float w;}"
+		"Vector testFunc(int i) { Vector myStruct;  return myStruct;}");
+
+	auto p = gen.parser.parseStruct();
+	checkGenStructErrors(&gen);
+	REQUIRE(p != nullptr);
+
+	auto v = p->codegenType(&gen);
+	checkGenStructErrors(&gen);
+	REQUIRE(v != nullptr);
+
+	auto func = gen.parser.parseFunction();
+	checkGenStructErrors(&gen);
+	REQUIRE(func != nullptr);
+
+	auto funcv = func->codegen(&gen);
+	checkGenStructErrors(&gen);
+	REQUIRE(funcv != nullptr);
+
+  std::string outs = gen.printLlvmData(funcv);
+  std::cout << outs << std::endl;
+}

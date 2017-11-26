@@ -3,6 +3,10 @@
 
 #include <unordered_map>
 
+namespace llvm {
+class StructType;
+}
+
 namespace babycpp {
 
 // forward declare from codegen
@@ -28,6 +32,11 @@ using lexer::Token;
 /** @brief set of flags representing the status of the parser */
 struct ParserFlags {
   bool processed_assigment : 1;
+};
+
+struct StructDefinition {
+  codegen::StructAST *astNode = nullptr;
+  llvm::StructType *type = nullptr;
 };
 
 /**
@@ -124,17 +133,36 @@ struct Parser {
 
   codegen::StructAST *parseStruct();
 
-  codegen::StructInstanceAST* parseStructInstantiation();
+  codegen::StructInstanceAST *parseStructInstantiation();
+
+  bool addCustomStruct(std::string identifierName,
+                       StructDefinition &definition) {
+    auto found = customStructs.find(identifierName);
+    if (found == customStructs.end()) {
+      customStructs[identifierName] = definition;
+      return true;
+    }
+    return false;
+  }
 
   /** @brief constant map representing the different operators precedences
    *  a higher positive number represents an higher precedence
    */
   const static std::unordered_map<char, int> BIN_OP_PRECEDENCE;
+  std::unordered_map<std::string, StructDefinition> customStructs;
 
   // UTILITY
-  static inline bool isDatatype(int tok) {
-    return ((tok == Token::tok_float) | (tok == Token::tok_int) |
-            (tok == Token::tok_void_ptr));
+
+  inline bool isCustomDatatype(std::string identifier) {
+    auto found = customStructs.find(identifier);
+    return (found != customStructs.end());
+  }
+
+  inline bool isDatatype(int tok, std::string &identifier) {
+    bool isBuiltin = ((tok == Token::tok_float) | (tok == Token::tok_int) |
+                      (tok == Token::tok_void_ptr));
+    bool isCustom = isCustomDatatype(identifier);
+    return isBuiltin | isCustom;
   }
 
   /**@brief utiltiy function telling us if the given token is part
@@ -144,10 +172,10 @@ struct Parser {
    * @param tok: token to be processed
    * @return: whether or not the token represents a declaration
    */
-  static inline bool isDeclarationToken(int tok) {
-    bool isDatatype = Parser::isDatatype(tok);
+  inline bool isDeclarationToken(int tok, std::string identifier) {
+    bool isDatatypeValue = isDatatype(tok, identifier);
     bool isExtern = tok == Token::tok_extern;
-    return isDatatype | isExtern;
+    return isDatatypeValue | isExtern;
   }
   // data
   Lexer *lex;

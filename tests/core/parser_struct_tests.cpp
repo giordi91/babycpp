@@ -117,3 +117,29 @@ TEST_CASE("Testing struct and struct instantiation", "[parser]") {
   REQUIRE(body0->identifierName == "myStruct");
   REQUIRE(body0->structType== "Vector");
 }
+
+TEST_CASE("Testing struct and struct return type", "[parser]") {
+	diagnosticParserTests.clear();
+	Lexer lex(&diagnosticParserTests);
+	Parser parser(&lex, &factory, &diagnosticParserTests);
+	lex.initFromString(
+		"struct Vector{ float x; int* y; float*z;float w;}"
+		"Vector testFunc(int i) { Vector myStruct;  return myStruct;}");
+
+  lex.gettok();
+  auto *p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->body.size() ==2);
+  //now lests check first if the prototype is correct
+  REQUIRE(p_casted->proto != nullptr);
+  auto *proto_casted = dynamic_cast<PrototypeAST*>(p_casted->proto	);
+  REQUIRE(p_casted->proto != nullptr);
+  REQUIRE(proto_casted->datatype == Token::tok_struct);
+}

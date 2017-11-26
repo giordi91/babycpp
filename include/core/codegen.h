@@ -31,13 +31,6 @@ using lexer::Number;
  * final IR
  */
 
-struct StructDefinition
-{
-	StructAST* astNode = nullptr;
-	llvm::StructType* type= nullptr;
-};
-
-
 struct Codegenerator {
   explicit Codegenerator(bool loadBuiltinFunctions = false);
   /**This function sets the current llvm module into wich
@@ -131,16 +124,6 @@ struct Codegenerator {
   static bool compareASTArgWithLLVMArg(ExprAST *astArg,
                                        llvm::Argument *llvmArg);
 
-  bool addCustomStruct(std::string identifierName,
-                       StructDefinition& definition) {
-    auto found = customStructs.find(identifierName);
-    if (found == customStructs.end()) {
-      customStructs[identifierName] = definition;
-      return true;
-    }
-    return false;
-  }
-
   std::string printDiagnostic();
 
   /**Factory in charge to allocate the factory nodes, it owns the
@@ -160,11 +143,11 @@ struct Codegenerator {
     int datatype;
     int isPointer;
     int isNull;
+	parser::StructDefinition* customDefinition = nullptr;
   };
   /// map holding variable names defined in the scope
   std::unordered_map<std::string, llvm::AllocaInst *> namedValues;
   std::unordered_map<std::string, Datatype> variableTypes;
-  std::unordered_map<std::string, StructDefinition> customStructs;
   /**mapping from lexer types to LLCM types*/
   static const std::unordered_map<int, int> AST_LLVM_MAP;
   /** if we are in a scope that is the fucntion representing the
@@ -187,8 +170,8 @@ struct Codegenerator {
   std::unordered_map<std::string, PrototypeAST *> builtInFunctions;
 };
 
-inline llvm::Type *getType(int type, Codegenerator *gen,
-                           bool isPointer = false) {
+inline llvm::Type *getType(int type, Codegenerator *gen, bool isPointer = false
+                           ) {
   if (type == Token::tok_float) {
     if (isPointer) {
       return llvm::Type::getFloatPtrTy(gen->context);
@@ -203,6 +186,10 @@ inline llvm::Type *getType(int type, Codegenerator *gen,
     }
     return llvm::Type::getInt32PtrTy(gen->context);
   }
+  //auto found = gen->parser.customStructs.find(name);
+  //if (found != gen->parser.customStructs.end()) {
+  //  return found->second.type;
+  //}
 
   return llvm::Type::getInt32Ty(gen->context);
 }

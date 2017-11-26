@@ -10,6 +10,7 @@ namespace codegen {
 // utility
 
 using diagnostic::IssueCode;
+using parser::StructDefinition;
 inline void logCodegenError(const std::string &msg, Codegenerator *codegen,
                             diagnostic::IssueCode code) {
 
@@ -762,25 +763,34 @@ llvm::Type *StructAST::codegenType(Codegenerator *gen) {
       llvm::ArrayRef<llvm::Type *>(memberValues.data(), memberValues.size()),
       identifierName, false);
 
-  StructDefinition def{this, structDefinition};
-  gen->addCustomStruct(identifierName, def);
+  // updating the struct manager with the new structType*
+  auto found = gen->parser.customStructs.find(identifierName);
+  if (found == gen->parser.customStructs.end()) {
+    logCodegenError("error in finding struct definition during code gen, that "
+                    "struct definition should have been created at parse time",
+                    gen, IssueCode::UNDEFINED_STRUCT);
+    return nullptr;
+  }
+  found->second.type = structDefinition;
   return structDefinition;
 }
 
 llvm::Value *StructInstanceAST::codegen(Codegenerator *gen) {
 
-	auto customStruct = gen->customStructs.find(structType);
-	if( customStruct == gen->customStructs.end())
-	{
-      logCodegenError("struct is not defined: "+structType, gen,
-                      IssueCode::UNDEFINED_STRUCT);
-      return nullptr;
-	}
+  auto customStruct = gen->parser.customStructs.find(structType);
+  if (customStruct == gen->parser.customStructs.end()) {
+    logCodegenError("struct is not defined: " + structType, gen,
+                    IssueCode::UNDEFINED_STRUCT);
+    return nullptr;
+  }
 
-    auto v = gen->builder.CreateAlloca(customStruct->second.type, nullptr, identifierName);
-	return v;
+  auto v = gen->builder.CreateAlloca(customStruct->second.type, nullptr,
+                                     identifierName);
+  // lets update the variables register
 
-
+  gen->namedValues[identifierName] = v;
+  gen->variableTypes[identifierName] = {Token::tok_struct, flags.isPointer, flags.isNull};
+  return v;
 }
 } // namespace codegen
 } // namespace babycpp

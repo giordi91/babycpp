@@ -20,39 +20,39 @@ TEST_CASE("Testing look ahead for repl", "[repl]") {
 
   Codegenerator gen;
   gen.initFromString("int test(float x){return x;}");
-  int res = lookAheadStatement(&gen.lexer);
+  int res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_function_repl);
 
   gen.initFromString("float test;");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_invalid_repl);
 
   gen.initFromString("float test = 2.0;");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_assigment_repl);
 
   gen.initFromString("test = x+ 2.0;");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_anonymous_assigment_repl);
 
   gen.initFromString("x+ 2.0;");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_expression_repl);
 
   gen.initFromString("extern sin(x);");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_extern);
 
   gen.initFromString("5 + 2;");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_expression_repl);
 
   gen.initFromString("(5 + 2);");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_expression_repl);
 
   gen.initFromString("float avg(float x){ return x *2.0;}");
-  res = lookAheadStatement(&gen.lexer);
+  res = lookAheadStatement(&gen.parser);
   REQUIRE(res == Token::tok_function_repl);
 }
 

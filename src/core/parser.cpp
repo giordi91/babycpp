@@ -82,7 +82,7 @@ bool parseStatementsUntillCurly(std::vector<ExprAST *> *statements,
 
 codegen::StructMemberAST *parseStructMemberDeclaration(Parser *parser) {
   Lexer *lex = parser->lex;
-  if (!Parser::isDatatype(lex->currtok)) {
+  if (!parser->isDatatype(lex->currtok, lex->identifierStr)) {
     logParserError("expected datatype in struct memebr got:" +
                        std::to_string(lex->currtok),
                    parser, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
@@ -155,24 +155,31 @@ bool parseDeclarationsUntilClosedCurly(
   return true;
 }
 
-inline bool isPointerCast(Lexer *lex) {
+inline bool isPointerCast(Parser *parser) {
 
+  auto *lex = parser->lex;
   // this function expects 3 look ahead tokens
-  return (Parser::isDatatype(lex->lookAheadToken[0].token) &
+  return (parser->isDatatype(lex->lookAheadToken[0].token,
+                             lex->lookAheadToken[0].identifierStr) &
           (lex->lookAheadToken[1].token == Token::tok_operator) &
           (lex->lookAheadToken[1].identifierStr == "*") &
           (lex->lookAheadToken[2].token == Token::tok_close_round));
 }
-inline bool isDataCast(Lexer *lex) {
+inline bool isDataCast(Parser *parser) {
   // this function expects 2 look ahead tokens
-  return (Parser::isDatatype(lex->lookAheadToken[0].token) &
+  auto *lex = parser->lex;
+
+  std::string name{"", 0};
+  // here we pass an empty name since we cannot cast to struct, and the extra
+  // name is  to figure out if the identifier is a struct
+  return (parser->isDatatype(lex->lookAheadToken[0].token, name) &
           (lex->lookAheadToken[1].token == Token::tok_close_round));
 }
 
 // this call assumes the lookahead to be already done
-inline bool isCastOperation(Lexer *lex) {
+inline bool isCastOperation(Parser *parser) {
 
-  return (isPointerCast(lex) | isDataCast(lex));
+  return (isPointerCast(parser) | isDataCast(parser));
 }
 
 // this function defines whether or not a token is a declaration
@@ -402,6 +409,9 @@ ExprAST *Parser::parseDeclaration() {
   // several cases like, we might have a variable definition, we might have
   // a function definition etc, this require a bit of look ahead!
 
+  auto found = customStructs.find(lex->identifierStr);
+  bool isStruct(found != customStructs.end());
+
   lex->lookAhead(3);
   // looking ahead 2 tokens, which should give us the identifier
   // and the next token
@@ -429,6 +439,19 @@ ExprAST *Parser::parseDeclaration() {
         return nullptr;
       }
       return parseAssigment();
+    }
+    case Token::tok_end_statement: {
+      if (isStruct) {
+        return parseStructInstantiation();
+      } else {
+        logParserError(
+            "got a struct datatype then an identifier, expected a semicolon "
+            "since we do not support struct initialization inline got:"
+            "type, got :" +
+                std::to_string(lex->currtok),
+            this, IssueCode::UNEXPECTED_TOKEN_IN_EXPRESSION);
+        return nullptr;
+      }
     }
     default: {
       logParserError(
@@ -481,7 +504,7 @@ ExprAST *Parser::parseStatement() {
     lex->gettok(); // eat return
     exp = parseExpression();
     exp->flags.isReturn = true;
-  } else if (isDeclarationToken(lex->currtok)) {
+  } else if (isDeclarationToken(lex->currtok, lex->identifierStr)) {
     exp = parseDeclaration();
     if (exp == nullptr) {
       return nullptr;
@@ -490,14 +513,7 @@ ExprAST *Parser::parseStatement() {
       expectSemicolon = false;
     }
   } else if (lex->currtok == Token::tok_identifier) {
-    // if we have an identifier we might have two possibilities either an
-    // expression  or a struct declaration
-    lex->lookAhead(1);
-    if (lex->lookAheadToken[0].token == Token::tok_identifier) {
-      exp = parseStructInstantiation();
-    } else {
-      exp = parseExpression();
-    }
+    exp = parseExpression();
   } else if (lex->currtok == Token::tok_if) {
     exp = parseIfStatement();
     expectSemicolon = false;
@@ -536,7 +552,7 @@ ExprAST *Parser::parseStatement() {
 PrototypeAST *Parser::parseExtern() {
   // eating extern token;
   lex->gettok();
-  if (!isDatatype(lex->currtok)) {
+  if (!isDatatype(lex->currtok, lex->identifierStr)) {
     logParserError("expected return data type after extern got:" +
                        std::to_string(lex->currtok),
                    lex, IssueCode::EXPECTED_TYPE_AFTER_EXTERN);
@@ -545,7 +561,8 @@ PrototypeAST *Parser::parseExtern() {
   return parsePrototype();
 }
 
-bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
+bool parseArguments(Parser *parser, std::vector<Argument> *args) {
+  auto *lex = parser->lex;
   int datatype;
   bool isPointer = false;
   std::string argName;
@@ -557,7 +574,7 @@ bool parseArguments(Lexer *lex, std::vector<Argument> *args) {
       return true;
     }
     // we expect to see seqence of data_type identifier comma
-    if (!Parser::isDatatype(lex->currtok)) {
+    if (!parser->isDatatype(lex->currtok, lex->identifierStr)) {
       logParserError("expected data type identifier for argument got:" +
                          std::to_string(lex->currtok),
                      lex, IssueCode::EXPECTED_DATATYPE_FUNCTION_ARG);
@@ -646,7 +663,7 @@ ExprAST *Parser::parseParen() {
   // here we need to figure out if we have a generic expression or a type cast
   lex->lookAhead(3);
   // now if the next 3 tokens are datatype , operator * and ) we have a cast
-  if (isCastOperation(lex)) {
+  if (isCastOperation(this)) {
     // if we are here we have a cast
     return parseCast();
   }
@@ -765,7 +782,7 @@ codegen::ExprAST *Parser::parseForStatement() {
   // variable + assigment
   lex->lookAhead(2);
   ExprAST *initialisationExp = nullptr;
-  if (isDatatype(lex->currtok)) {
+  if (isDatatype(lex->currtok, lex->identifierStr)) {
     // if is a datatype we then expect an identifier and an assigment
 
     if (lex->lookAheadToken[0].token != Token::tok_identifier) {
@@ -875,14 +892,19 @@ codegen::NumberExprAST *Parser::parseNullptr() {
 
 PrototypeAST *Parser::parsePrototype() {
 
-  if (!isDatatype(lex->currtok)) {
+  if (!isDatatype(lex->currtok, lex->identifierStr)) {
     logParserError(
         "expected return data type in function protoype or extern , got :" +
             std::to_string(lex->currtok),
         this, IssueCode::EXPECTED_RETURN_DATATYPE);
     return nullptr;
   }
+
   int datatype = lex->currtok;
+  if (isCustomDatatype(lex->identifierStr)) {
+    datatype = Token::tok_struct;
+  }
+
   lex->gettok(); // eating datatype
   bool isPointer = false;
   bool isNull = false;
@@ -925,7 +947,7 @@ PrototypeAST *Parser::parsePrototype() {
   // parsing arguments
   lex->gettok(); // eat parenthesis
   std::vector<Argument> args;
-  if (!parseArguments(lex, &args)) {
+  if (!parseArguments(this, &args)) {
     // no need to log error, error already logged
     return nullptr;
   }
@@ -992,7 +1014,7 @@ codegen::ExprAST *Parser::parseToPointerAssigment() {
 codegen::ExprAST *Parser::parseCast() {
   lex->gettok(); // eat (
 
-  if (!isDatatype(lex->currtok)) {
+  if (!isDatatype(lex->currtok, lex->identifierStr)) {
     // should never get to this error since we checked outside but better safe
     // than sorry
     logParserError("expected datatype after ( in cast operation", this,
@@ -1070,24 +1092,33 @@ codegen::StructAST *Parser::parseStruct() {
 
   lex->gettok(); // eat curly
 
-  return factory->allocStructAST(identifierName, statements);
+  auto *structNode = factory->allocStructAST(identifierName, statements);
+  // updating the struct manager, we are passing null to the generated
+  // StructType since  that will happen at code gen, but having those
+  // information at parsing time will make life MUCH  easier in parsing
+  // instances and pointers to struct
+  StructDefinition def{structNode, nullptr};
+  addCustomStruct(identifierName, def);
+  structNode->datatype = Token::tok_struct;
+
+  return structNode;
 }
 
 codegen::StructInstanceAST *Parser::parseStructInstantiation() {
   // struct instance at its current implmentation does not allow any
   // initialization at declaration
   // so we only have identifier identifier semicolon
-	std::string structType = lex->identifierStr;
-	lex->gettok();//eating identifier str
-	if(lex->currtok != Token::tok_identifier)
-	{ 
-    logParserError("error expected struct instance name got: " + std::to_string(lex->currtok), this,
-                   IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
-	return nullptr;
-	}
-	std::string structName = lex->identifierStr;
-	lex->gettok();//eating structName
-	return factory->allocStructInstanceAST(structType, structName);
+  std::string structType = lex->identifierStr;
+  lex->gettok(); // eating identifier str
+  if (lex->currtok != Token::tok_identifier) {
+    logParserError("error expected struct instance name got: " +
+                       std::to_string(lex->currtok),
+                   this, IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+    return nullptr;
+  }
+  std::string structName = lex->identifierStr;
+  lex->gettok(); // eating structName
+  return factory->allocStructInstanceAST(structType, structName);
 }
 } // namespace parser
 } // namespace babycpp

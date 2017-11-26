@@ -6,6 +6,9 @@ namespace babycpp {
 namespace lexer {
 struct Lexer;
 }
+namespace parser{
+struct Parser;
+}
 namespace codegen {
 struct Codegenerator;
 }
@@ -23,7 +26,7 @@ namespace repl {
  * @param lex , lexer pointer
  * @return a repl token represening what the string is
  */
-int lookAheadStatement(lexer::Lexer *lex);
+int lookAheadStatement(parser::Parser *parser);
 
 /**
  * @brief main repl loop

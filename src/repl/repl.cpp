@@ -8,16 +8,17 @@ namespace babycpp {
 namespace repl {
 
 // hardcoded function names used in the jitting
-static const std::string ANONYMOUS_FUNCTION{ "__anonymous__"};
-static const std::string DUMMY_FUNCTION {"__dummy__"};
+static const std::string ANONYMOUS_FUNCTION{"__anonymous__"};
+static const std::string DUMMY_FUNCTION{"__dummy__"};
 
 using babycpp::codegen::Codegenerator;
 using babycpp::codegen::ExprAST;
 using babycpp::codegen::FunctionAST;
 using babycpp::jit::BabycppJIT;
 
-int lookAheadStatement(babycpp::Lexer *lex) {
+int lookAheadStatement(babycpp::Parser *parser) {
   {
+    auto *lex = parser->lex;
     // invalid tokens
     if (lex->currtok == Token::tok_eof) {
       return Token::tok_invalid_repl;
@@ -30,7 +31,7 @@ int lookAheadStatement(babycpp::Lexer *lex) {
     }
 
     // parsing a declaration
-    if (Parser::isDeclarationToken(lex->currtok)) {
+    if (parser->isDeclarationToken(lex->currtok, lex->identifierStr)) {
       bool res = lex->lookAhead(2);
       if (!res) {
         return Token::tok_invalid_repl;
@@ -149,7 +150,7 @@ void handleFunction(codegen::Codegenerator *gen, jit::BabycppJIT *jit,
   if (res == nullptr) {
     return;
   }
-  //generating the code and is added to the module
+  // generating the code and is added to the module
   res->codegen(gen);
 
   // adding function to the jit so it gets compiled
@@ -173,7 +174,7 @@ void loop(Codegenerator *gen, BabycppJIT *jit,
     // we use our code to look ahead withouth invalidating token
     // to trying to understand what we are dealing with
     // and act accordinly
-    int tok = lookAheadStatement(&gen->lexer);
+    int tok = lookAheadStatement(&gen->parser);
     switch (tok) {
     default:
       continue;

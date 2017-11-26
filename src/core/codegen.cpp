@@ -41,13 +41,13 @@ void Codegenerator::doLoadBuiltinFunctions() {
       true);
 
   auto *freeFunc = factory.allocPrototypeAST(
-	  Token::tok_void_ptr, "free",
-	  std::vector<Argument>{
-	  Argument(Token::tok_void_ptr, pointerArgument, true)},
-	  true);
+      Token::tok_void_ptr, "free",
+      std::vector<Argument>{
+          Argument(Token::tok_void_ptr, pointerArgument, true)},
+      true);
   mallocFunc->flags.isPointer = true;
   freeFunc->flags.isPointer = false;
-  freeFunc->flags.isNull= true;
+  freeFunc->flags.isNull = true;
   builtInFunctions["malloc"] = mallocFunc;
   builtInFunctions["free"] = freeFunc;
 }
@@ -130,54 +130,52 @@ llvm::Function *Codegenerator::getFunction(const std::string &name,
       } else {
         FI = builtInFunctions.find(name);
         if (FI != builtInFunctions.end()) {
-            *returnProto = FI->second;
-          }
+          *returnProto = FI->second;
         }
       }
-	else
-	{
-		std::cout << "cannot return proto pointer is null" << std::endl;
-	}
-      return F;
+    } else {
+      std::cout << "cannot return proto pointer is null" << std::endl;
     }
-
-    // If not, check whether we can codegen the declaration from some existing
-    // prototype.
-    auto FI = functionProtos.find(name);
-    if (FI != functionProtos.end()) {
-      auto *f = FI->second->codegen(this);
-      if (returnProto != nullptr)
-        *returnProto = FI->second;
-      if (f == nullptr) {
-        return nullptr;
-      }
-      return static_cast<llvm::Function *>(f);
-    }
-    // lets check the built in functions
-    FI = builtInFunctions.find(name);
-    if (FI != builtInFunctions.end()) {
-      auto *f = FI->second->codegen(this);
-      if (returnProto != nullptr)
-        *returnProto = FI->second;
-      if (f == nullptr) {
-        return nullptr;
-      }
-      return static_cast<llvm::Function *>(f);
-    }
-
-    // If no existing prototype exists, return null.
-    return nullptr;
+    return F;
   }
 
-  void Codegenerator::generateModuleContent() {
-
-    while (lexer.currtok != Token::tok_eof) {
-      ExprAST *res = parser.parseStatement();
-      if (res != nullptr) {
-        res->codegen(this);
-      }
+  // If not, check whether we can codegen the declaration from some existing
+  // prototype.
+  auto FI = functionProtos.find(name);
+  if (FI != functionProtos.end()) {
+    auto *f = FI->second->codegen(this);
+    if (returnProto != nullptr)
+      *returnProto = FI->second;
+    if (f == nullptr) {
+      return nullptr;
     }
+    return static_cast<llvm::Function *>(f);
+  }
+  // lets check the built in functions
+  FI = builtInFunctions.find(name);
+  if (FI != builtInFunctions.end()) {
+    auto *f = FI->second->codegen(this);
+    if (returnProto != nullptr)
+      *returnProto = FI->second;
+    if (f == nullptr) {
+      return nullptr;
+    }
+    return static_cast<llvm::Function *>(f);
   }
 
+  // If no existing prototype exists, return null.
+  return nullptr;
+}
+
+void Codegenerator::generateModuleContent() {
+
+  while (lexer.currtok != Token::tok_eof) {
+    ExprAST *res = parser.parseStatement();
+    if (res != nullptr) {
+      res->codegen(this);
+    }
+  }
+}
+
 } // namespace codegen
-} // namespace codegen
+} // namespace babycpp
