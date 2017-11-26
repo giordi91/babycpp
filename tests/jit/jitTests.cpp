@@ -491,3 +491,38 @@ TEST_CASE("Testing pointer indexing", "[jit]") {
     REQUIRE(func(data.data(), i) == data[i]);
   }
 }
+
+TEST_CASE("Testing return struct", "[jit]") {
+  babycpp::jit::BabycppJIT jit;
+  Codegenerator gen(true);
+  gen.initFromString(
+      "struct Vector{ float x; int* y; float*z;float w;}"
+      "Vector testFunc(int i) { Vector myStruct;  return myStruct;}");
+  auto p = gen.parser.parseStruct();
+  REQUIRE(p != nullptr);
+  auto p2 = gen.parser.parseStatement();
+  REQUIRE(p2 != nullptr);
+
+  // making sure the code is generated
+  auto v = p->codegenType(&gen);
+  REQUIRE(v != nullptr);
+  auto v2 = p2->codegen(&gen);
+  REQUIRE(v2 != nullptr);
+
+  struct Vector {
+    float x;
+    int *y;
+    float *z;
+    float w;
+  };
+  jit.addModule(gen.module);
+  auto symbol = jit.findSymbol("testFunc");
+  auto func = (Vector(*)(int))(intptr_t)llvm::cantFail(symbol.getAddress());
+  REQUIRE(func != nullptr);
+  Vector res = func(1);
+  
+  //OK README HERE!!!!!
+  //function works fine but the return type explodes and we throw, main reason is because of the return
+  //by value C calling convention or whatever it is here the relative link. don't do it:
+  //https://groups.google.com/forum/#!topic/llvm-dev/RSnV-Vr17nI
+}

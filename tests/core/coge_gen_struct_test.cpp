@@ -101,6 +101,9 @@ TEST_CASE("Testing struct as return type codegen", "[codegen]") {
   REQUIRE(p != nullptr);
 
   auto v = p->codegenType(&gen);
+
+  std::string outs = gen.printLlvmData(v);
+  std::cout << outs << std::endl;
   checkGenStructErrors(&gen);
   REQUIRE(v != nullptr);
 
@@ -112,8 +115,9 @@ TEST_CASE("Testing struct as return type codegen", "[codegen]") {
   checkGenStructErrors(&gen);
   REQUIRE(funcv != nullptr);
 
-  std::string outs = gen.printLlvmData(funcv);
-  //gen.dumpLlvmData(funcv, "tests/core/vectorStructReturnType.ll");
+  outs = gen.printLlvmData(funcv);
+  std::cout << outs << std::endl;
+  // gen.dumpLlvmData(funcv, "tests/core/vectorStructReturnType.ll");
   auto expected = getFileStruct("tests/core/vectorStructReturnType.ll");
   REQUIRE(outs == expected);
 }
