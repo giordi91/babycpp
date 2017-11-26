@@ -54,6 +54,7 @@ enum NodeType {
   CastASTNode = 11,
   StructMemberNode = 12,
   StructNode = 13,
+  StructInstanceNode = 14,
 };
 
 struct Codegenerator;
@@ -265,7 +266,7 @@ struct StructMemberAST : public ExprAST {
   std::string identifierName;
   int biteOffset = -1;
   explicit StructMemberAST(int inDatatype, bool isPointer,
-                           std::string inIdentifierName)
+                           std::string& inIdentifierName)
       : ExprAST(), identifierName(inIdentifierName) {
     nodetype = StructMemberNode;
     flags.isPointer = isPointer;
@@ -282,7 +283,7 @@ struct StructAST : public ExprAST {
   std::string identifierName;
   int byteSize= -1;
   std::vector<StructMemberAST *> members;
-  explicit StructAST(std::string inIdentifierName,
+  explicit StructAST(std::string& inIdentifierName,
                      std::vector<StructMemberAST *> &inMembers)
       : ExprAST(), identifierName(inIdentifierName), members(inMembers) {
     nodetype = StructNode;
@@ -291,6 +292,20 @@ struct StructAST : public ExprAST {
   llvm::Value *codegen(Codegenerator *gen) override;
   llvm::Type *codegenType(Codegenerator *gen);
 };
+
+//TODO(giordi) tag structs as custom datatype
+struct StructInstanceAST : public ExprAST {
+
+  std::string structType;
+  std::string identifierName;
+  explicit StructInstanceAST(std::string& inStructType, std::string& inIdentifierName )
+      : ExprAST(), structType(inStructType), identifierName(inIdentifierName) {
+    nodetype = StructInstanceNode;
+  }
+  virtual ~StructInstanceAST() = default;
+  llvm::Value *codegen(Codegenerator *gen) override ;
+};
+
 
 } // namespace codegen
 } // namespace babycpp

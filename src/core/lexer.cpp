@@ -64,14 +64,14 @@ inline bool isNewLine(const std::string &str) {
   return (str[0] == '\r' || str[0] == '\n');
 }
 
-void Lexer::gettok() {
+void Lexer::gettok(bool forceNew) {
   // making sure the lexer is initialized
   if (start == nullptr) {
     currtok = tok_empty_lexer;
     return;
   }
 
-  if (!lookAheadToken.empty()) {
+  if (!lookAheadToken.empty() && !forceNew) {
     const MovableToken &mov = lookAheadToken.front();
     currtok = mov.token;
     identifierStr = mov.identifierStr;
@@ -86,7 +86,7 @@ void Lexer::gettok() {
 
   // in the offset variable we are going to store how many char will be
   // eaten by the token
-  int offset=0;
+  int offset = 0;
   std::string extractedString = extractStringFromMatch(matcher, &offset);
   // handling case of not match
   if (!gotMatch) {
@@ -132,6 +132,22 @@ void Lexer::gettok() {
   }
 }
 bool Lexer::lookAhead(int count) {
+
+  // if we already have enough token in the list we just get out
+  if (count <= lookAheadToken.size()) {
+    return true;
+  }
+
+  // if we already have token in the look ahead we just get the difference
+  bool forceNew = false;
+  if (lookAheadToken.size() != 0) {
+    count -= lookAheadToken.size();
+    // here we set forceNew so the gettok() method wont be popping from the
+    // queue  but only getting extra new token that are needed, that is why we do the
+	//difference
+    forceNew = true;
+  }
+
   std::string old = identifierStr;
   int old_tok = currtok;
   Number oldNumb = value;
@@ -144,13 +160,13 @@ bool Lexer::lookAhead(int count) {
   tempBuffer.reserve(count);
 
   for (int t = 0; t < count; ++t) {
-    gettok();
+    gettok(forceNew);
     if (currtok == tok_eof || currtok == tok_no_match) {
       return false;
     }
-    //TODO(giordi): here we are passing 0 as column offset which is wrong and
-    //might be misleading need to find a nice way to get that offset, probably
-    //having gettok() returning the number of char read
+    // TODO(giordi): here we are passing 0 as column offset which is wrong and
+    // might be misleading need to find a nice way to get that offset, probably
+    // having gettok() returning the number of char read
     tempBuffer.emplace_back(MovableToken{currtok, identifierStr, value, 0});
   }
 

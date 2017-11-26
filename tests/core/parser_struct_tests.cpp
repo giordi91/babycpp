@@ -93,20 +93,27 @@ TEST_CASE("Testing initial struct parsing using top parser", "[parser]") {
 }
 
 TEST_CASE("Testing struct and struct instantiation", "[parser]") {
-	diagnosticParserTests.clear();
-	Lexer lex(&diagnosticParserTests);
-	Parser parser(&lex, &factory, &diagnosticParserTests);
-	lex.initFromString(
-		"struct Vector{ float x; int* y; float*z;float w;}"
-		"int testFunc(int i) { Vector myStruct; int res = i; return res;}");
-	// getting first token
-	lex.gettok();
-	auto *p = parser.parseStatement();
-	checkParserErrors();
-	REQUIRE(p != nullptr);
-	//parsing the function
-	p = parser.parseStatement();
-	checkParserErrors();
-	REQUIRE(p != nullptr);
-
+  diagnosticParserTests.clear();
+  Lexer lex(&diagnosticParserTests);
+  Parser parser(&lex, &factory, &diagnosticParserTests);
+  lex.initFromString(
+      "struct Vector{ float x; int* y; float*z;float w;}"
+      "int testFunc(int i) { Vector myStruct; int res = i; return res;}");
+  // getting first token
+  lex.gettok();
+  auto *p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  // parsing the function
+  p = parser.parseStatement();
+  checkParserErrors();
+  REQUIRE(p != nullptr);
+  auto *p_casted = dynamic_cast<FunctionAST *>(p);
+  REQUIRE(p_casted != nullptr);
+  REQUIRE(p_casted->body.size() != 0);
+  auto *body0 =
+      dynamic_cast<babycpp::codegen::StructInstanceAST *>(p_casted->body[0]);
+  REQUIRE(body0 != nullptr);
+  REQUIRE(body0->identifierName == "myStruct");
+  REQUIRE(body0->structType== "Vector");
 }

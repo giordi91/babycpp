@@ -6,22 +6,6 @@
 
 namespace babycpp {
 
-namespace codegen {
-struct ExprAST;
-struct VariableExprAST;
-struct NumberExprAST;
-struct BinaryExprAST;
-struct CallExprAST;
-struct PrototypeAST;
-struct FunctionAST;
-struct IfAST;
-struct ForAST;
-struct DereferenceAST;
-struct ToPointerAssigmentAST;
-struct StructMemberAST;
-struct StructAST;
-} // namespace codegen
-
 namespace memory {
 struct FactoryAST {
 
@@ -93,6 +77,10 @@ struct FactoryAST {
   template <typename... Args>
   codegen::StructAST*allocStructAST(Args &&... args) {
     return allocASTNode<codegen::StructAST>(args...);
+  }
+  template <typename... Args>
+  codegen::StructInstanceAST*allocStructInstanceAST(Args &&... args) {
+    return allocASTNode<codegen::StructInstanceAST>(args...);
   }
 
   std::vector<codegen::ExprAST *> ptrs;

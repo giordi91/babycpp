@@ -36,7 +36,7 @@ TEST_CASE("Testing struct code gen", "[codegen]") {
   checkGenStructErrors(&gen);
   REQUIRE(v != nullptr);
   std::string outs = gen.printLlvmData(v);
-  gen.dumpLlvmData(v, "tests/core/vectorStruct.ll");
+  //gen.dumpLlvmData(v, "tests/core/vectorStruct.ll");
   auto expected = getFileStruct("tests/core/vectorStruct.ll");
   REQUIRE(outs == expected);
 }
@@ -60,4 +60,33 @@ TEST_CASE("Testing struct member offset code gen", "[codegen]") {
 	REQUIRE(p->members[1]->biteOffset == 4);
 	REQUIRE(p->members[2]->biteOffset == 12);
 	REQUIRE(p->members[3]->biteOffset == 20);
+}
+
+TEST_CASE("Testing struct instancing", "[codegen]") {
+
+	Codegenerator gen{ true };
+	gen.initFromString(
+      "struct Vector{ float x; int* y; float*z;float w;}"
+      "int testFunc(int i) { Vector myStruct; int res = i; return res;}");
+
+	auto p = gen.parser.parseStruct();
+	checkGenStructErrors(&gen);
+	REQUIRE(p != nullptr);
+
+	auto v = p->codegenType(&gen);
+	checkGenStructErrors(&gen);
+	REQUIRE(v != nullptr);
+
+	auto func = gen.parser.parseFunction();
+	checkGenStructErrors(&gen);
+	REQUIRE(func != nullptr);
+
+	auto funcv = func->codegen(&gen);
+	checkGenStructErrors(&gen);
+	REQUIRE(funcv != nullptr);
+
+  std::string outs = gen.printLlvmData(funcv);
+  //gen.dumpLlvmData(funcv, "tests/core/vectorStructAlloc.ll");
+  auto expected = getFileStruct("tests/core/vectorStructAlloc.ll");
+  REQUIRE(outs == expected);
 }

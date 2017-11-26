@@ -134,7 +134,7 @@ struct Codegenerator {
   bool addCustomStruct(std::string identifierName,
                        StructDefinition& definition) {
     auto found = customStructs.find(identifierName);
-    if (found != customStructs.end()) {
+    if (found == customStructs.end()) {
       customStructs[identifierName] = definition;
       return true;
     }

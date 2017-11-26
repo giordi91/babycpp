@@ -490,7 +490,14 @@ ExprAST *Parser::parseStatement() {
       expectSemicolon = false;
     }
   } else if (lex->currtok == Token::tok_identifier) {
-    exp = parseExpression();
+    // if we have an identifier we might have two possibilities either an
+    // expression  or a struct declaration
+    lex->lookAhead(1);
+    if (lex->lookAheadToken[0].token == Token::tok_identifier) {
+      exp = parseStructInstantiation();
+    } else {
+      exp = parseExpression();
+    }
   } else if (lex->currtok == Token::tok_if) {
     exp = parseIfStatement();
     expectSemicolon = false;
@@ -1064,6 +1071,23 @@ codegen::StructAST *Parser::parseStruct() {
   lex->gettok(); // eat curly
 
   return factory->allocStructAST(identifierName, statements);
+}
+
+codegen::StructInstanceAST *Parser::parseStructInstantiation() {
+  // struct instance at its current implmentation does not allow any
+  // initialization at declaration
+  // so we only have identifier identifier semicolon
+	std::string structType = lex->identifierStr;
+	lex->gettok();//eating identifier str
+	if(lex->currtok != Token::tok_identifier)
+	{ 
+    logParserError("error expected struct instance name got: " + std::to_string(lex->currtok), this,
+                   IssueCode::UNEXPECTED_TOKEN_IN_STRUCT);
+	return nullptr;
+	}
+	std::string structName = lex->identifierStr;
+	lex->gettok();//eating structName
+	return factory->allocStructInstanceAST(structType, structName);
 }
 } // namespace parser
 } // namespace babycpp

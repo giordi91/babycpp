@@ -165,8 +165,14 @@ struct Lexer {
 
   /** @brief process the next token and makes it available to
    *         be analized
+   * @param forceNew: this forces the lookAhead token to be ignored. 
+   *                  This is used in the case where a previous iteration asked you 2 look
+   *                  ahead token then another needs 3 look ahead but the 2 previous are not 
+   *                  been consumed, what you do is to end up with 3 look ahead token and do not consume
+   *                  any of the token already parsed. This flag prevent that, use this flag if you really need it
+   *                  and know what you are doing, it is used lookAhead function only
    */
-  void gettok();
+  void gettok(bool forceNew =false);
 
   /** @brief performas a look ahead withouth making the
    * the lexer pointer to move.

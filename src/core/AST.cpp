@@ -724,15 +724,12 @@ llvm::Value *StructAST::codegen(Codegenerator *gen) {
   return nullptr;
 }
 
-int StructMemberAST::getTypeSize()
-{
-	if(flags.isPointer)
-	{ 
-		return 8;
-	}
-	//TODO(giordi) handle having a struct as member type
-	return 4;
-
+int StructMemberAST::getTypeSize() {
+  if (flags.isPointer) {
+    return 8;
+  }
+  // TODO(giordi) handle having a struct as member type
+  return 4;
 }
 llvm::Type *StructAST::codegenType(Codegenerator *gen) {
 
@@ -747,7 +744,7 @@ llvm::Type *StructAST::codegenType(Codegenerator *gen) {
       return nullptr;
     }
     memberValues.push_back(currV);
-	member->biteOffset = globalOffset;
+    member->biteOffset = globalOffset;
     int currOffset = member->getTypeSize();
     if (currOffset == -1) {
       logCodegenError("error in computing member type size", gen,
@@ -756,7 +753,7 @@ llvm::Type *StructAST::codegenType(Codegenerator *gen) {
     }
     globalOffset += currOffset;
   }
-  //setting the struct size, which should now be the global offset
+  // setting the struct size, which should now be the global offset
   byteSize = globalOffset;
   // if we got here we have all the members to create our struct
 
@@ -768,6 +765,22 @@ llvm::Type *StructAST::codegenType(Codegenerator *gen) {
   StructDefinition def{this, structDefinition};
   gen->addCustomStruct(identifierName, def);
   return structDefinition;
+}
+
+llvm::Value *StructInstanceAST::codegen(Codegenerator *gen) {
+
+	auto customStruct = gen->customStructs.find(structType);
+	if( customStruct == gen->customStructs.end())
+	{
+      logCodegenError("struct is not defined: "+structType, gen,
+                      IssueCode::UNDEFINED_STRUCT);
+      return nullptr;
+	}
+
+    auto v = gen->builder.CreateAlloca(customStruct->second.type, nullptr, identifierName);
+	return v;
+
+
 }
 } // namespace codegen
 } // namespace babycpp

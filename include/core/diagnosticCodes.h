@@ -42,6 +42,7 @@ enum class IssueCode {
   UNKNOWN_BIN_OPERATOR = 2008,
   POINTER_ARITHMETIC_ERROR = 2009,
   STRUCT_MEMBER_ERROR = 2010,
+  UNDEFINED_STRUCT= 2011,
 
 };
 
@@ -92,6 +93,7 @@ static const std::unordered_map<IssueCode, std::string> issueCodeLookUp{
     {IssueCode::UNEXPECTED_TOKEN_IN_STRUCT, "UNEXPECTED_TOKEN_IN_STRUCT"},
     {IssueCode::EMPTY_STRUCT, "EMPTY_STRUCT"},
     {IssueCode::STRUCT_MEMBER_ERROR, "STRUCT_MEMBER_ERROR"},
+    {IssueCode::UNDEFINED_STRUCT, "UNDEFINED_STRUCT"},
 
 };
 
