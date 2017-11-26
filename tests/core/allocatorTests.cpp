@@ -142,7 +142,7 @@ TEST_CASE("Testing factory nodes", "[memory]") {
 
   allocSize += sizeof(PrototypeAST);
   std::vector<Argument> protoarg;
-  auto *protoptr = f.allocPrototypeAST(Token::tok_int, std::string("proto"),
+  auto *protoptr = f.allocPrototypeAST(Token::tok_int, std::string("proto"), std::string("int"),
                                        protoarg, false);
   REQUIRE(protoptr != nullptr);
   REQUIRE(protoptr->name == "proto");

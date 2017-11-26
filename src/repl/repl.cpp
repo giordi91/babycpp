@@ -84,7 +84,7 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
   // move the block in the final function, that will let me generate the wrapper
   // function after the body is generated, so I can extract the type
   codegen::PrototypeAST *dummy = gen->factory.allocPrototypeAST(
-      0, DUMMY_FUNCTION, std::vector<codegen::Argument>(), 0);
+      0, DUMMY_FUNCTION,std::string("void"), std::vector<codegen::Argument>(), 0);
   auto *dummyFunc = static_cast<llvm::Function *>(dummy->codegen(gen));
   // Create a new basic block to start insertion into.
   using llvm::BasicBlock;
@@ -102,7 +102,7 @@ void handleExpression(codegen::Codegenerator *gen, BabycppJIT *jit,
   }
   // generating the final return function
   codegen::PrototypeAST *final = gen->factory.allocPrototypeAST(
-      ret_type, ANONYMOUS_FUNCTION, std::vector<codegen::Argument>(), 0);
+      ret_type, ANONYMOUS_FUNCTION,std::string("void"), std::vector<codegen::Argument>(), 0);
   auto *finalFunc = static_cast<llvm::Function *>(final->codegen(gen));
   using llvm::BasicBlock;
   // moving the dummy block under the final function with correct return type

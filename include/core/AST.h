@@ -163,15 +163,16 @@ struct CallExprAST : public ExprAST {
 struct PrototypeAST : public ExprAST {
   /** name of the function to be called, not mangled*/
   std::string name;
+  std::string datatypeName;
   /** Array of arguments of the function can be empty*/
   std::vector<Argument> args;
   /**This bool defines wheter is a forward declarsation for a
    * c function, regular forward declaration is not supported */
   bool isExtern = false;
 
-  explicit PrototypeAST(int retType, const std::string &name,
+  explicit PrototypeAST(int retType, const std::string &name, std::string& inDatatypeName,
                         const std::vector<Argument> &args, bool externProto)
-      : ExprAST(retType), name(name), args(args), isExtern(externProto) {
+      : ExprAST(retType), name(name), datatypeName(inDatatypeName), args(args), isExtern(externProto) {
     nodetype = PrototypeNode;
   }
   virtual ~PrototypeAST() = default;

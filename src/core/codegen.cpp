@@ -35,13 +35,14 @@ void Codegenerator::doLoadBuiltinFunctions() {
   ;
   std::string sizeArgument("size");
   std::string pointerArgument("ptr");
+  std::string typeVoid = "void";
   auto *mallocFunc = factory.allocPrototypeAST(
-      Token::tok_void_ptr, "malloc",
+      Token::tok_void_ptr, "malloc", typeVoid,
       std::vector<Argument>{Argument(Token::tok_int, sizeArgument, false)},
       true);
 
   auto *freeFunc = factory.allocPrototypeAST(
-      Token::tok_void_ptr, "free",
+      Token::tok_void_ptr, "free", typeVoid,
       std::vector<Argument>{
           Argument(Token::tok_void_ptr, pointerArgument, true)},
       true);

@@ -251,7 +251,17 @@ llvm::Value *PrototypeAST::codegen(Codegenerator *gen) {
   if (flags.isNull && !flags.isPointer) {
     returnType = gen->builder.getVoidTy();
   } else {
-    returnType = getType(datatype, gen, flags.isPointer);
+    if (datatype == Token::tok_struct) {
+      auto found = gen->parser.customStructs.find(datatypeName);
+      if (found != gen->parser.customStructs.end()) {
+        returnType = found->second.type;
+      } else {
+        logCodegenError("could not find definition for struct: "+ datatypeName, gen,
+                        IssueCode::UNDEFINED_STRUCT);
+      }
+    } else {
+      returnType = getType(datatype, gen, flags.isPointer);
+    }
   }
   auto *funcType = llvm::FunctionType::get(returnType, funcArgs, false);
 
@@ -789,7 +799,8 @@ llvm::Value *StructInstanceAST::codegen(Codegenerator *gen) {
   // lets update the variables register
 
   gen->namedValues[identifierName] = v;
-  gen->variableTypes[identifierName] = {Token::tok_struct, flags.isPointer, flags.isNull};
+  gen->variableTypes[identifierName] = {Token::tok_struct, flags.isPointer,
+                                        flags.isNull};
   return v;
 }
 } // namespace codegen

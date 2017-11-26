@@ -901,6 +901,7 @@ PrototypeAST *Parser::parsePrototype() {
   }
 
   int datatype = lex->currtok;
+  std::string datatypeName = lex->identifierStr;
   if (isCustomDatatype(lex->identifierStr)) {
     datatype = Token::tok_struct;
   }
@@ -953,7 +954,7 @@ PrototypeAST *Parser::parsePrototype() {
   }
   // need to check semicolon at the end;
   // here we can generate the prototype node;
-  auto *node = factory->allocPrototypeAST(datatype, functionName, args, true);
+  auto *node = factory->allocPrototypeAST(datatype, functionName,datatypeName, args, true);
   node->flags.isPointer = isPointer;
   node->flags.isNull = isNull;
   return node;
