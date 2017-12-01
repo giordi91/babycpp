@@ -94,7 +94,7 @@ TEST_CASE("Testing struct as return type codegen", "[codegen]") {
   Codegenerator gen{true};
   gen.initFromString(
       "struct Vector{ float x; int* y; float*z;float w;}"
-      "Vector testFunc(int i) { Vector myStruct;  return myStruct;}");
+      "Vector testFunc(Vector* myVec) { Vector myStruct;  return myStruct;}");
 
   auto p = gen.parser.parseStruct();
   checkGenStructErrors(&gen);
